@@ -1,6 +1,6 @@
 {
   "name": "@dailydotdev/pulumi-common",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "main": "lib/index.js",
   "scripts": {
     "lint": "eslint . --ext .js,.ts --max-warnings 0",
@@ -17,15 +17,12 @@
     "url": "https://github.com/dailydotdev/pulumi-common/issues"
   },
   "homepage": "https://github.com/dailydotdev/pulumi-common#readme",
-  "peerDependencies": {
-    "@pulumi/gcp": "^5.6.0",
+  "dependencies": {
+    "@pulumi/gcp": "^5.7.0",
     "@pulumi/kubernetes": "^3.3.0",
-    "@pulumi/pulumi": "^3.3.1"
+    "@pulumi/pulumi": "^3.4.0"
   },
   "devDependencies": {
-    "@pulumi/gcp": "^5.6.0",
-    "@pulumi/kubernetes": "^3.3.0",
-    "@pulumi/pulumi": "^3.3.1",
     "@typescript-eslint/eslint-plugin": "^4.26.1",
     "@typescript-eslint/parser": "^4.26.1",
     "eslint": "^7.28.0",
