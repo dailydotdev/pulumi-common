@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "outDir": "lib",
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "sourceMap": false,
+    "experimentalDecorators": true,
+    "pretty": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true
+  },
+  "files": ["src/index.ts"]
+}
