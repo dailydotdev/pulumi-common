@@ -16,4 +16,5 @@ export declare function createCloudRunService(name: string, image: string, envs:
     dependsOn?: Input<Input<Resource>[]>;
     access?: CloudRunAccess;
     iamMemberName?: string;
+    args?: Input<Input<string>[]>;
 }): gcp.cloudrun.Service;
