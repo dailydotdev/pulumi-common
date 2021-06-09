@@ -32,6 +32,7 @@ export function createCloudRunService(
     dependsOn?: Input<Input<Resource>[]>;
     access?: CloudRunAccess;
     iamMemberName?: string;
+    args?: Input<Input<string>[]>;
   },
 ): gcp.cloudrun.Service {
   const additionalAnnotations: Record<string, string> = opts?.minScale
@@ -59,6 +60,7 @@ export function createCloudRunService(
               image,
               resources: { limits },
               envs,
+              args: opts?.args,
             },
           ],
           containerConcurrency: opts?.concurrency,
