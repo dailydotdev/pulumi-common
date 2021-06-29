@@ -1,10 +1,12 @@
 import { Output } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
 import { getCloudRunPubSubInvoker } from './cloudRun';
+import { SubscriptionArgs } from '@pulumi/gcp/pubsub/subscription';
 
 export type Worker = {
   topic: string;
   subscription: string;
+  args?: Partial<SubscriptionArgs>;
 };
 
 export function createSubscriptionsFromWorkers(
@@ -30,6 +32,7 @@ export function createSubscriptionsFromWorkers(
           minimumBackoff: '10s',
           maximumBackoff: '600s',
         },
+        ...worker.args,
       }),
   );
 }
