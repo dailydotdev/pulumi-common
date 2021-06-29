@@ -6,6 +6,7 @@ import { SubscriptionArgs } from '@pulumi/gcp/pubsub/subscription';
 export type Worker = {
   topic: string;
   subscription: string;
+  endpoint?: string;
   args?: Partial<SubscriptionArgs>;
 };
 
@@ -22,7 +23,7 @@ export function createSubscriptionsFromWorkers(
         name: worker.subscription,
         pushConfig: {
           pushEndpoint: serviceUrl.apply(
-            (url) => `${url}/${worker.subscription}`,
+            (url) => `${url}/${worker.endpoint ?? worker.subscription}`,
           ),
           oidcToken: {
             serviceAccountEmail: cloudRunPubSubInvoker.email,
