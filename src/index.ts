@@ -6,3 +6,4 @@ export * from './k8s';
 export * from './serviceAccount';
 export * from './pubsub';
 export * from './scheduler';
+export * from './debezium';
