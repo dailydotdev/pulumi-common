@@ -33,11 +33,19 @@ export function createCloudRunService(
     access?: CloudRunAccess;
     iamMemberName?: string;
     args?: Input<Input<string>[]>;
+    annotations?: Record<string, string | Output<string>>;
+    ingress?: 'all' | 'internal' | 'internal-and-cloud-load-balancing';
   },
 ): gcp.cloudrun.Service {
-  const additionalAnnotations: Record<string, string> = opts?.minScale
-    ? { 'autoscaling.knative.dev/minScale': opts.minScale.toString() }
-    : {};
+  const additionalAnnotations: Record<string, string | Output<string>> =
+    opts?.annotations ?? {};
+  if (opts?.minScale) {
+    additionalAnnotations['autoscaling.knative.dev/minScale'] =
+      opts.minScale.toString();
+  }
+  if (opts?.ingress) {
+    additionalAnnotations['run.googleapis.com/ingress'] = opts.ingress;
+  }
   const service = new gcp.cloudrun.Service(
     name,
     {
