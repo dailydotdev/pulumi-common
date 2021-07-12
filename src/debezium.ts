@@ -42,7 +42,7 @@ export function deployDebeziumToKubernetes(
     createHash('md5').update(props).digest('hex'),
   );
 
-  const debeziumProps = new k8s.core.v1.ConfigMap('debezium-props', {
+  const debeziumProps = new k8s.core.v1.Secret('debezium-props', {
     metadata: {
       name: `${name}-debezium-props`,
       namespace,
@@ -102,8 +102,8 @@ export function deployDebeziumToKubernetes(
               },
               {
                 name: 'props',
-                configMap: {
-                  name: debeziumProps.metadata.name,
+                secret: {
+                  secretName: debeziumProps.metadata.name,
                 },
               },
               {
