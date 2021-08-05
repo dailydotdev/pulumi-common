@@ -48,7 +48,9 @@ export function deployDebeziumToKubernetes(
       namespace,
     },
     data: {
-      'application.properties': debeziumPropsString,
+      'application.properties': debeziumPropsString.apply((str) =>
+        Buffer.from(str).toString('base64'),
+      ),
     },
   });
 
