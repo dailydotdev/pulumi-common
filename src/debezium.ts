@@ -9,6 +9,8 @@ export function deployDebeziumToKubernetes(
   namespace: string | Input<string>,
   debeziumTopicName: Input<string>,
   debeziumPropsString: Output<string>,
+  diskZone: Input<string>,
+  diskSize: number = 10,
 ): void {
   const { serviceAccount: debeziumSa } = createServiceAccountAndGrantRoles(
     'debezium-sa',
@@ -61,6 +63,32 @@ export function deployDebeziumToKubernetes(
     app: 'debezium',
   };
 
+  const disk = new gcp.compute.Disk('debezium-disk', {
+    name: `${name}-debezium-pv`,
+    size: diskSize,
+    zone: diskZone,
+    type: `projects/${gcp.config.project}/zones/${diskZone}/diskTypes/pd-ssd`,
+  });
+
+  new k8s.core.v1.PersistentVolume('debezium-pv', {
+    metadata: {
+      name: `${name}-debezium-pv`,
+      namespace,
+    },
+    spec: {
+      accessModes: ['ReadWriteOnce'],
+      capacity: { storage: `${diskSize}Gi` },
+      claimRef: {
+        name: `${name}-debezium-pvc`,
+        namespace,
+      },
+      gcePersistentDisk: {
+        pdName: disk.name,
+        fsType: 'ext4',
+      },
+    },
+  });
+
   new k8s.core.v1.PersistentVolumeClaim('debezium-pvc', {
     metadata: {
       name: `${name}-debezium-pvc`,
@@ -68,8 +96,8 @@ export function deployDebeziumToKubernetes(
     },
     spec: {
       accessModes: ['ReadWriteOnce'],
-      resources: { requests: { storage: '10Gi' } },
-      storageClassName: 'retain-ssd',
+      resources: { requests: { storage: `${diskSize}Gi` } },
+      volumeName: `${name}-debezium-pv`,
     },
   });
 
