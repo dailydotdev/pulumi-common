@@ -10,7 +10,8 @@ export function deployDebeziumToKubernetes(
   debeziumTopicName: Input<string>,
   debeziumPropsString: Output<string>,
   diskZone: Input<string>,
-  diskSize: number = 10,
+  diskType: Input<string> = 'pd-ssd',
+  diskSize: Input<number> = 10,
 ): void {
   const { serviceAccount: debeziumSa } = createServiceAccountAndGrantRoles(
     'debezium-sa',
@@ -67,7 +68,7 @@ export function deployDebeziumToKubernetes(
     name: `${name}-debezium-pv`,
     size: diskSize,
     zone: diskZone,
-    type: `projects/${gcp.config.project}/zones/${diskZone}/diskTypes/pd-ssd`,
+    type: diskType,
   });
 
   new k8s.core.v1.PersistentVolume('debezium-pv', {
