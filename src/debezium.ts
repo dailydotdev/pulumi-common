@@ -4,14 +4,26 @@ import { createHash } from 'crypto';
 import { createServiceAccountAndGrantRoles } from './serviceAccount';
 import { Input, Output } from '@pulumi/pulumi';
 
+type OptionalArgs = {
+  diskType?: Input<string>;
+  diskSize?: Input<number>;
+  limits?: Input<{ cpu: string; memory: string }>;
+};
+
 export function deployDebeziumToKubernetes(
   name: string,
   namespace: string | Input<string>,
   debeziumTopicName: Input<string>,
   debeziumPropsString: Output<string>,
   diskZone: Input<string>,
-  diskType: Input<string> = 'pd-ssd',
-  diskSize: Input<number> = 10,
+  {
+    diskType = 'pd-ssd',
+    diskSize = 10,
+    limits = {
+      cpu: '1',
+      memory: '1024Mi',
+    },
+  }: OptionalArgs = {},
 ): void {
   const { serviceAccount: debeziumSa } = createServiceAccountAndGrantRoles(
     'debezium-sa',
@@ -101,13 +113,6 @@ export function deployDebeziumToKubernetes(
       volumeName: `${name}-debezium-pv`,
     },
   });
-
-  const limits: Input<{
-    [key: string]: Input<string>;
-  }> = {
-    cpu: '0.5',
-    memory: '512Mi',
-  };
 
   new k8s.apps.v1.Deployment(
     'debezium-deployment',
