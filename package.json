@@ -23,7 +23,7 @@
     "@pulumi/pulumi": "^3.9.1"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.29.0",
+    "@typescript-eslint/eslint-plugin": "^4.29.2",
     "@typescript-eslint/parser": "^4.29.0",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
