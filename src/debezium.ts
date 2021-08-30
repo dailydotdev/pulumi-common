@@ -3,11 +3,14 @@ import * as k8s from '@pulumi/kubernetes';
 import { createHash } from 'crypto';
 import { createServiceAccountAndGrantRoles } from './serviceAccount';
 import { Input, Output } from '@pulumi/pulumi';
+import * as pulumi from '@pulumi/pulumi';
+import { input as inputs } from '@pulumi/kubernetes/types';
 
 type OptionalArgs = {
   diskType?: Input<string>;
   diskSize?: Input<number>;
   limits?: Input<{ cpu: string; memory: string }>;
+  env?: pulumi.Input<inputs.core.v1.EnvVar>[];
 };
 
 export function deployDebeziumToKubernetes(
@@ -23,6 +26,7 @@ export function deployDebeziumToKubernetes(
       cpu: '1',
       memory: '1024Mi',
     },
+    env = [],
   }: OptionalArgs = {},
 ): void {
   const { serviceAccount: debeziumSa } = createServiceAccountAndGrantRoles(
@@ -123,6 +127,9 @@ export function deployDebeziumToKubernetes(
       },
       spec: {
         replicas: 1,
+        strategy: {
+          type: 'Recreate',
+        },
         selector: { matchLabels: labels },
         template: {
           metadata: {
@@ -178,6 +185,7 @@ export function deployDebeziumToKubernetes(
                     name: 'GOOGLE_APPLICATION_CREDENTIALS',
                     value: '/var/secrets/google/key.json',
                   },
+                  ...env,
                 ],
                 resources: {
                   limits,
