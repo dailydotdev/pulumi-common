@@ -11,12 +11,13 @@ type OptionalArgs = {
   diskSize?: Input<number>;
   limits?: Input<{ cpu: string; memory: string }>;
   env?: pulumi.Input<inputs.core.v1.EnvVar>[];
+  image?: string;
 };
 
 export function deployDebeziumToKubernetes(
   name: string,
   namespace: string | Input<string>,
-  debeziumTopicName: Input<string>,
+  debeziumTopic: gcp.pubsub.Topic,
   debeziumPropsString: Output<string>,
   diskZone: Input<string>,
   {
@@ -27,6 +28,7 @@ export function deployDebeziumToKubernetes(
       memory: '1024Mi',
     },
     env = [],
+    image = 'debezium/server:1.5',
   }: OptionalArgs = {},
 ): void {
   const { serviceAccount: debeziumSa } = createServiceAccountAndGrantRoles(
@@ -53,9 +55,9 @@ export function deployDebeziumToKubernetes(
     },
   });
 
-  const debeziumTopic = new gcp.pubsub.Topic('debezium-topic', {
-    name: debeziumTopicName,
-  });
+  // const debeziumTopic = new gcp.pubsub.Topic('debezium-topic', {
+  //   name: debeziumTopicName,
+  // });
 
   const propsHash = debeziumPropsString.apply((props) =>
     createHash('md5').update(props).digest('hex'),
@@ -170,7 +172,7 @@ export function deployDebeziumToKubernetes(
             containers: [
               {
                 name: 'debezium',
-                image: 'debezium/server:1.5',
+                image,
                 ports: [{ name: 'http', containerPort: 8080, protocol: 'TCP' }],
                 volumeMounts: [
                   { name: 'props', mountPath: '/debezium/conf' },
