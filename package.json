@@ -18,9 +18,9 @@
   },
   "homepage": "https://github.com/dailydotdev/pulumi-common#readme",
   "dependencies": {
-    "@pulumi/gcp": "^5.21.0",
-    "@pulumi/kubernetes": "^3.8.0",
-    "@pulumi/pulumi": "^3.14.0"
+    "@pulumi/gcp": "^5.26.0",
+    "@pulumi/kubernetes": "^3.8.3",
+    "@pulumi/pulumi": "^3.17.0"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.33.0",
@@ -29,6 +29,6 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^3.4.1",
     "prettier": "^2.4.1",
-    "typescript": "^4.4.3"
+    "typescript": "^4.4.4"
   }
 }

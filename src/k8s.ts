@@ -1,7 +1,7 @@
 import * as k8s from '@pulumi/kubernetes';
 import { Input, Output } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
-import { core } from '@pulumi/kubernetes/types/input';
+import { autoscaling, core } from '@pulumi/kubernetes/types/input';
 import EnvVar = core.v1.EnvVar;
 
 export function k8sServiceAccountToIdentity(
@@ -66,3 +66,37 @@ export function createMigrationJob(
     { deleteBeforeReplace: true },
   );
 }
+
+export function getTargetRef(
+  deployment: Input<string>,
+): Input<autoscaling.v1.CrossVersionObjectReference> {
+  return {
+    apiVersion: 'apps/v1',
+    kind: 'Deployment',
+    name: deployment,
+  };
+}
+
+export function createVerticalPodAutoscaler(
+  name: string,
+  metadata: Input<k8s.types.input.meta.v1.ObjectMeta>,
+  targetRef: Input<autoscaling.v1.CrossVersionObjectReference>,
+): k8s.apiextensions.CustomResource {
+  return new k8s.apiextensions.CustomResource(name, {
+    apiVersion: 'autoscaling.k8s.io/v1',
+    kind: 'VerticalPodAutoscaler',
+    metadata,
+    spec: {
+      targetRef,
+      updatePolicy: {
+        updateMode: 'Off',
+      },
+    },
+  });
+}
+
+export const getFullSubscriptionLabel = (label: string): string =>
+  `metadata.user_labels.${label}`;
+
+export const getPubSubUndeliveredMessagesMetric = (): string =>
+  'pubsub.googleapis.com|subscription|num_undelivered_messages';
