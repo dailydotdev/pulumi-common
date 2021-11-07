@@ -46,3 +46,18 @@ export function createSubscriptionsFromWorkers(
       ),
   );
 }
+
+export function addLabelsToWorkers(
+  workers: Worker[],
+  labels: Input<{
+    [key: string]: Input<string>;
+  }>,
+): Worker[] {
+  return workers.map((worker: Worker) => ({
+    ...worker,
+    args: {
+      ...worker.args,
+      labels,
+    },
+  }));
+}

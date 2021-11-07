@@ -103,7 +103,7 @@ export const getPubSubUndeliveredMessagesMetric = (): string =>
   'pubsub.googleapis.com|subscription|num_undelivered_messages';
 
 export const getMemoryAndCpuMetrics = (
-  cpuUtilization = 60,
+  cpuUtilization = 70,
   memoryUtilization = cpuUtilization,
 ): Input<Input<k8s.types.input.autoscaling.v2beta2.MetricSpec>[]> => [
   {
@@ -168,6 +168,10 @@ type KubernetesApplicationArgs = {
   shouldCreatePDB?: boolean;
 };
 
+type KubernetesApplicationReturn = {
+  labels: Input<{ [key: string]: Input<string> }>;
+};
+
 export const createAutoscaledApplication = ({
   name,
   namespace,
@@ -182,9 +186,7 @@ export const createAutoscaledApplication = ({
   tolerations,
   labels: extraLabels,
   shouldCreatePDB = true,
-}: KubernetesApplicationArgs): {
-  labels: Input<{ [key: string]: Input<string> }>;
-} => {
+}: KubernetesApplicationArgs): KubernetesApplicationReturn => {
   const labels: Input<{
     [key: string]: Input<string>;
   }> = {
@@ -269,7 +271,7 @@ export const createAutoscaledApplication = ({
 
 export const createAutoscaledExposedApplication = (
   args: KubernetesApplicationArgs,
-): void => {
+): KubernetesApplicationReturn => {
   const { resourcePrefix = '', name, namespace } = args;
   const { labels } = createAutoscaledApplication(args);
   new k8s.core.v1.Service(`${resourcePrefix}service`, {
@@ -284,4 +286,5 @@ export const createAutoscaledExposedApplication = (
       selector: labels,
     },
   });
+  return { labels };
 };
