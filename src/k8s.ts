@@ -3,6 +3,7 @@ import { Input, Output } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
 import { autoscaling, core } from '@pulumi/kubernetes/types/input';
 import EnvVar = core.v1.EnvVar;
+import { Resource } from '@pulumi/pulumi/resource';
 
 export function k8sServiceAccountToIdentity(
   serviceAccount: k8s.core.v1.ServiceAccount,
@@ -100,3 +101,187 @@ export const getFullSubscriptionLabel = (label: string): string =>
 
 export const getPubSubUndeliveredMessagesMetric = (): string =>
   'pubsub.googleapis.com|subscription|num_undelivered_messages';
+
+export const getMemoryAndCpuMetrics = (
+  cpuUtilization = 60,
+  memoryUtilization = cpuUtilization,
+): Input<Input<k8s.types.input.autoscaling.v2beta2.MetricSpec>[]> => [
+  {
+    type: 'Resource',
+    resource: {
+      name: 'cpu',
+      target: {
+        type: 'Utilization',
+        averageUtilization: cpuUtilization,
+      },
+    },
+  },
+  {
+    type: 'Resource',
+    resource: {
+      name: 'memory',
+      target: {
+        type: 'Utilization',
+        averageUtilization: memoryUtilization,
+      },
+    },
+  },
+];
+
+export const bindK8sServiceAccountToGCP = (
+  resourcePrefix: string,
+  name: string,
+  namespace: string,
+  serviceAccount: gcp.serviceaccount.Account,
+): k8s.core.v1.ServiceAccount => {
+  const k8sServiceAccount = createK8sServiceAccountFromGCPServiceAccount(
+    `${resourcePrefix}k8s-sa`,
+    name,
+    namespace,
+    serviceAccount,
+  );
+
+  new gcp.serviceaccount.IAMBinding(`${resourcePrefix}k8s-iam-binding`, {
+    role: 'roles/iam.workloadIdentityUser',
+    serviceAccountId: serviceAccount.id,
+    members: [k8sServiceAccountToIdentity(k8sServiceAccount)],
+  });
+
+  return k8sServiceAccount;
+};
+
+type KubernetesApplicationArgs = {
+  name: string;
+  namespace: string;
+  version: string;
+  serviceAccount: k8s.core.v1.ServiceAccount;
+  containers: Input<Input<k8s.types.input.core.v1.Container>[]>;
+  minReplicas?: number;
+  maxReplicas: number;
+  metrics: Input<Input<k8s.types.input.autoscaling.v2beta2.MetricSpec>[]>;
+  resourcePrefix?: string;
+  deploymentDependsOn?: Input<Resource>[];
+  tolerations?: Input<Input<k8s.types.input.core.v1.Toleration>[]>;
+  labels?: {
+    [key: string]: Input<string>;
+  };
+  shouldCreatePDB?: boolean;
+};
+
+export const createAutoscaledApplication = ({
+  name,
+  namespace,
+  version,
+  serviceAccount,
+  containers,
+  minReplicas = 2,
+  maxReplicas,
+  metrics,
+  resourcePrefix = '',
+  deploymentDependsOn = [],
+  tolerations,
+  labels: extraLabels,
+  shouldCreatePDB = true,
+}: KubernetesApplicationArgs): {
+  labels: Input<{ [key: string]: Input<string> }>;
+} => {
+  const labels: Input<{
+    [key: string]: Input<string>;
+  }> = {
+    app: name,
+    ...extraLabels,
+  };
+
+  const versionLabels: Input<{
+    [key: string]: Input<string>;
+  }> = {
+    ...labels,
+    version,
+  };
+
+  new k8s.apps.v1.Deployment(
+    `${resourcePrefix}deployment`,
+    {
+      metadata: {
+        name,
+        namespace: namespace,
+        labels: versionLabels,
+      },
+      spec: {
+        replicas: minReplicas,
+        selector: { matchLabels: labels },
+        template: {
+          metadata: { labels },
+          spec: {
+            containers,
+            serviceAccountName: serviceAccount.metadata.name,
+            tolerations,
+          },
+        },
+      },
+    },
+    { dependsOn: deploymentDependsOn },
+  );
+
+  const targetRef = getTargetRef(name);
+  createVerticalPodAutoscaler(
+    `${resourcePrefix}vpa`,
+    {
+      name,
+      namespace: namespace,
+      labels,
+    },
+    targetRef,
+  );
+
+  new k8s.autoscaling.v2beta2.HorizontalPodAutoscaler(`${resourcePrefix}hpa`, {
+    metadata: {
+      name,
+      namespace: namespace,
+      labels,
+    },
+    spec: {
+      minReplicas,
+      maxReplicas: maxReplicas,
+      metrics,
+      scaleTargetRef: targetRef,
+    },
+  });
+
+  if (shouldCreatePDB) {
+    new k8s.policy.v1beta1.PodDisruptionBudget(`${resourcePrefix}pdb`, {
+      metadata: {
+        name,
+        namespace: namespace,
+        labels,
+      },
+      spec: {
+        minAvailable: 1,
+        selector: {
+          matchLabels: labels,
+        },
+      },
+    });
+  }
+
+  return { labels };
+};
+
+export const createAutoscaledExposedApplication = (
+  args: KubernetesApplicationArgs,
+): void => {
+  const { resourcePrefix = '', name, namespace } = args;
+  const { labels } = createAutoscaledApplication(args);
+  new k8s.core.v1.Service(`${resourcePrefix}service`, {
+    metadata: {
+      name,
+      namespace,
+      labels,
+    },
+    spec: {
+      type: 'NodePort',
+      ports: [{ port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' }],
+      selector: labels,
+    },
+  });
+};
