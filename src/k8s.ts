@@ -4,6 +4,7 @@ import * as gcp from '@pulumi/gcp';
 import { autoscaling, core } from '@pulumi/kubernetes/types/input';
 import EnvVar = core.v1.EnvVar;
 import { Resource } from '@pulumi/pulumi/resource';
+import { camelToUnderscore } from './utils';
 
 export function k8sServiceAccountToIdentity(
   serviceAccount: k8s.core.v1.ServiceAccount,
@@ -288,3 +289,50 @@ export const createAutoscaledExposedApplication = (
   });
   return { labels };
 };
+
+export function createKubernetesSecretFromRecord({
+  data,
+  resourceName,
+  name,
+  namespace,
+}: {
+  data: Record<string, Input<string>>;
+  resourceName: string;
+  name: string;
+  namespace: string;
+}): k8s.core.v1.Secret {
+  return new k8s.core.v1.Secret(resourceName, {
+    metadata: {
+      name,
+      namespace,
+      labels: {
+        app: name,
+      },
+    },
+    stringData: Object.keys(data).reduce(
+      (acc, key): Record<string, string> => ({
+        ...acc,
+        [camelToUnderscore(key)]: data[key],
+      }),
+      {},
+    ),
+  });
+}
+
+export function convertRecordToContainerEnvVars({
+  secretName,
+  data,
+}: {
+  secretName: string;
+  data: Record<string, Input<string>>;
+}): k8s.types.input.core.v1.EnvVar[] {
+  return Object.keys(data).map((key) => ({
+    name: camelToUnderscore(key),
+    valueFrom: {
+      secretKeyRef: {
+        name: secretName,
+        key: camelToUnderscore(key),
+      },
+    },
+  }));
+}
