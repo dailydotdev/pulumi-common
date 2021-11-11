@@ -312,7 +312,7 @@ export function createKubernetesSecretFromRecord({
     stringData: Object.keys(data).reduce(
       (acc, key): Record<string, string> => ({
         ...acc,
-        [camelToUnderscore(key)]: data[key],
+        [camelToUnderscore(key)]: data[key].toString(),
       }),
       {},
     ),
