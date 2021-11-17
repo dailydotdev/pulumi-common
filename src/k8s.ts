@@ -278,7 +278,7 @@ export const createAutoscaledExposedApplication = ({
 }): KubernetesApplicationReturn => {
   const { resourcePrefix = '', name, namespace } = args;
   const { labels } = createAutoscaledApplication(args);
-  let annotations: Record<string, Output<string>> = {};
+  const annotations: Record<string, Output<string>> = {};
   if (enableCdn) {
     const config = new k8s.apiextensions.CustomResource(
       `${resourcePrefix}backend-config`,
