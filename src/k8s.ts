@@ -1,5 +1,5 @@
 import * as k8s from '@pulumi/kubernetes';
-import { Input, Output } from '@pulumi/pulumi';
+import { Input, Output, interpolate } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
 import { autoscaling, core } from '@pulumi/kubernetes/types/input';
 import EnvVar = core.v1.EnvVar;
@@ -341,9 +341,9 @@ export function createKubernetesSecretFromRecord({
       },
     },
     stringData: Object.keys(data).reduce(
-      (acc, key): Record<string, string> => ({
+      (acc, key): Record<string, Output<string>> => ({
         ...acc,
-        [camelToUnderscore(key)]: data[key].toString(),
+        [camelToUnderscore(key)]: interpolate`${data[key]}`,
       }),
       {},
     ),
