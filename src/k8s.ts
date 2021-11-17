@@ -270,16 +270,47 @@ export const createAutoscaledApplication = ({
   return { labels };
 };
 
-export const createAutoscaledExposedApplication = (
-  args: KubernetesApplicationArgs,
-): KubernetesApplicationReturn => {
+export const createAutoscaledExposedApplication = ({
+  enableCdn = false,
+  ...args
+}: KubernetesApplicationArgs & {
+  enableCdn?: boolean;
+}): KubernetesApplicationReturn => {
   const { resourcePrefix = '', name, namespace } = args;
   const { labels } = createAutoscaledApplication(args);
+  let annotations: Record<string, Output<string>> = {};
+  if (enableCdn) {
+    const config = new k8s.apiextensions.CustomResource(
+      `${resourcePrefix}backend-config`,
+      {
+        apiVersion: 'cloud.google.com/v1',
+        kind: 'BackendConfig',
+        metadata: {
+          name,
+          namespace,
+          labels,
+        },
+        spec: {
+          cdn: {
+            enabled: true,
+            cachePolicy: {
+              includeHost: true,
+              includeProtocol: true,
+              includeQueryString: true,
+            },
+          },
+        },
+      },
+    );
+    annotations['beta.cloud.google.com/backend-config'] =
+      config.metadata.name.apply((name) => `{"ports": {"http": "${name}"}}`);
+  }
   new k8s.core.v1.Service(`${resourcePrefix}service`, {
     metadata: {
       name,
       namespace,
       labels,
+      annotations,
     },
     spec: {
       type: 'NodePort',
