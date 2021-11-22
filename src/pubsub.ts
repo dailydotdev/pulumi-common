@@ -15,8 +15,13 @@ export type Worker = {
 export function createSubscriptionsFromWorkers(
   name: string,
   workers: Worker[],
-  serviceUrl: Output<string>,
-  dependsOn?: Input<Input<Resource>[]> | Input<Resource>,
+  {
+    serviceUrl,
+    dependsOn,
+  }: {
+    serviceUrl?: Output<string>;
+    dependsOn?: Input<Input<Resource>[]> | Input<Resource>;
+  } = {},
 ): gcp.pubsub.Subscription[] {
   const cloudRunPubSubInvoker = getCloudRunPubSubInvoker();
   return workers.map(
@@ -26,17 +31,19 @@ export function createSubscriptionsFromWorkers(
         {
           topic: worker.topic,
           name: worker.subscription,
-          pushConfig: {
-            pushEndpoint: serviceUrl.apply(
-              (url) => `${url}/${worker.endpoint ?? worker.subscription}`,
-            ),
-            oidcToken: {
-              serviceAccountEmail: cloudRunPubSubInvoker.email,
-            },
-          },
+          pushConfig: serviceUrl
+            ? {
+                pushEndpoint: serviceUrl.apply(
+                  (url) => `${url}/${worker.endpoint ?? worker.subscription}`,
+                ),
+                oidcToken: {
+                  serviceAccountEmail: cloudRunPubSubInvoker.email,
+                },
+              }
+            : undefined,
           retryPolicy: {
-            minimumBackoff: '10s',
-            maximumBackoff: '600s',
+            minimumBackoff: '1s',
+            maximumBackoff: '60s',
           },
           ...worker.args,
         },
