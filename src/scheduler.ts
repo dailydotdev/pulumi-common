@@ -2,17 +2,21 @@ import { Output } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
 import { getCloudRunPubSubInvoker } from './cloudRun';
 
-export type Cron = {
+type Cron = {
   name: string;
-  endpoint?: string;
   schedule: string;
-  headers?: Record<string, string>;
   body?: string;
+};
+
+export type CronPubSub = Cron & { topic: string };
+export type CronHttp = Cron & {
+  endpoint?: string;
+  headers?: Record<string, string>;
 };
 
 export function createCronJobs(
   name: string,
-  crons: Cron[],
+  crons: CronHttp[],
   serviceUrl: Output<string>,
 ): gcp.cloudscheduler.Job[] {
   const cloudRunPubSubInvoker = getCloudRunPubSubInvoker();
@@ -37,4 +41,38 @@ export function createCronJobs(
       },
     });
   });
+}
+
+const mapUnique = <Source, Target>(
+  array: Source[],
+  callback: (value: Source) => Target,
+): Target[] => Array.from(new Set(array)).map(callback);
+
+export function createPubSubCronJobs(
+  name: string,
+  crons: CronPubSub[],
+): gcp.cloudscheduler.Job[] {
+  const { project } = gcp.config;
+  const topics = mapUnique(
+    crons.map((cron) => cron.topic),
+    (topic) =>
+      new gcp.pubsub.Topic(`${name}-cron-topic-${topic}`, {
+        name: topic,
+      }),
+  );
+  return crons.map(
+    (cron) =>
+      new gcp.cloudscheduler.Job(
+        `${name}-job-${cron.name}`,
+        {
+          name: `${name}-${cron.name}`,
+          schedule: cron.schedule,
+          pubsubTarget: {
+            data: Buffer.from(cron.body ?? '{}', 'utf8').toString('base64'),
+            topicName: `projects/${project}/topics/${cron.topic}`,
+          },
+        },
+        { dependsOn: topics },
+      ),
+  );
 }
