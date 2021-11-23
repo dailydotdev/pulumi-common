@@ -8,7 +8,7 @@ type Cron = {
   body?: string;
 };
 
-export type CronPubSub = Cron & { topic: string };
+export type CronPubSub = Cron & { topic?: string };
 export type CronHttp = Cron & {
   endpoint?: string;
   headers?: Record<string, string>;
@@ -54,7 +54,7 @@ export function createPubSubCronJobs(
 ): gcp.cloudscheduler.Job[] {
   const { project } = gcp.config;
   const topics = mapUnique(
-    crons.map((cron) => cron.topic),
+    crons.map((cron) => cron.topic || cron.name),
     (topic) =>
       new gcp.pubsub.Topic(`${name}-cron-topic-${topic}`, {
         name: topic,
@@ -69,7 +69,7 @@ export function createPubSubCronJobs(
           schedule: cron.schedule,
           pubsubTarget: {
             data: Buffer.from(cron.body ?? '{}', 'utf8').toString('base64'),
-            topicName: `projects/${project}/topics/${cron.topic}`,
+            topicName: `projects/${project}/topics/${cron.topic || cron.name}`,
           },
         },
         { dependsOn: topics },
