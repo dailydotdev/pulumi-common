@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/dailydotdev/pulumi-common#readme",
   "dependencies": {
-    "@pulumi/gcp": "^5.26.0",
+    "@pulumi/gcp": "^6.10.0",
     "@pulumi/kubernetes": "^3.10.1",
     "@pulumi/pulumi": "^3.18.0"
   },
