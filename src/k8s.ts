@@ -162,11 +162,13 @@ type KubernetesApplicationArgs = {
   metrics: Input<Input<k8s.types.input.autoscaling.v2beta2.MetricSpec>[]>;
   resourcePrefix?: string;
   deploymentDependsOn?: Input<Resource>[];
-  tolerations?: Input<Input<k8s.types.input.core.v1.Toleration>[]>;
   labels?: {
     [key: string]: Input<string>;
   };
   shouldCreatePDB?: boolean;
+  podSpec?: Input<
+    Omit<k8s.types.input.core.v1.PodSpec, 'containers' | 'serviceAccountName'>
+  >;
 };
 
 type KubernetesApplicationReturn = {
@@ -184,7 +186,7 @@ export const createAutoscaledApplication = ({
   metrics,
   resourcePrefix = '',
   deploymentDependsOn = [],
-  tolerations,
+  podSpec,
   labels: extraLabels,
   shouldCreatePDB = true,
 }: KubernetesApplicationArgs): KubernetesApplicationReturn => {
@@ -218,7 +220,7 @@ export const createAutoscaledApplication = ({
           spec: {
             containers,
             serviceAccountName: serviceAccount.metadata.name,
-            tolerations,
+            ...podSpec,
           },
         },
       },
