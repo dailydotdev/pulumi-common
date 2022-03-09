@@ -188,7 +188,7 @@ export const createAutoscaledApplication = ({
   deploymentDependsOn = [],
   podSpec,
   labels: extraLabels,
-  shouldCreatePDB = true,
+  shouldCreatePDB = false,
 }: KubernetesApplicationArgs): KubernetesApplicationReturn => {
   const labels: Input<{
     [key: string]: Input<string>;
@@ -274,12 +274,13 @@ export const createAutoscaledApplication = ({
 
 export const createAutoscaledExposedApplication = ({
   enableCdn = false,
+  shouldCreatePDB = true,
   ...args
 }: KubernetesApplicationArgs & {
   enableCdn?: boolean;
 }): KubernetesApplicationReturn => {
   const { resourcePrefix = '', name, namespace } = args;
-  const { labels } = createAutoscaledApplication(args);
+  const { labels } = createAutoscaledApplication({ ...args, shouldCreatePDB });
   const annotations: Record<string, Output<string>> = {};
   if (enableCdn) {
     const config = new k8s.apiextensions.CustomResource(
