@@ -6,4 +6,4 @@ export const stack = pulumi.getStack();
 export const location = gcp.config.region || 'us-central1';
 export const getImageTag = (): string => config.require('tag');
 
-export const infra = new pulumi.StackReference(`idoshamun/infra/${stack}`);
+export const infra = new pulumi.StackReference(`dailydotdev/infra/${stack}`);
