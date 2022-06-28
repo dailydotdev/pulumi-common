@@ -1,13 +1,15 @@
-import { Input, Output } from '@pulumi/pulumi';
+import { Input, Output, StackReference } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
-import { getInfra, location } from './config';
+import { location } from './config';
 import { cloudrun } from '@pulumi/gcp/types/input';
 import ServiceTemplateSpecContainerEnv = cloudrun.ServiceTemplateSpecContainerEnv;
 import { Resource } from '@pulumi/pulumi/resource';
 import { serviceAccountToMember } from './serviceAccount';
 
-export function getCloudRunPubSubInvoker(): Output<gcp.serviceaccount.Account> {
-  return getInfra().getOutput(
+export function getCloudRunPubSubInvoker(
+  infra: StackReference,
+): Output<gcp.serviceaccount.Account> {
+  return infra.getOutput(
     'cloudRunPubSubInvoker',
   ) as Output<gcp.serviceaccount.Account>;
 }
@@ -35,6 +37,7 @@ export function createCloudRunService(
     args?: Input<Input<string>[]>;
     annotations?: Record<string, string | Output<string>>;
     ingress?: 'all' | 'internal' | 'internal-and-cloud-load-balancing';
+    infra: StackReference;
   },
 ): gcp.cloudrun.Service {
   const additionalAnnotations: Record<string, string | Output<string>> =
@@ -81,7 +84,7 @@ export function createCloudRunService(
     const member =
       opts.access === CloudRunAccess.Public
         ? 'allUsers'
-        : serviceAccountToMember(getCloudRunPubSubInvoker());
+        : serviceAccountToMember(getCloudRunPubSubInvoker(opts.infra));
     new gcp.cloudrun.IamMember(opts.iamMemberName, {
       service: service.name,
       location,

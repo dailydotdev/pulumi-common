@@ -1,6 +1,5 @@
 import { Output } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
-import { getCloudRunPubSubInvoker } from './cloudRun';
 
 type Cron = {
   name: string;
@@ -18,8 +17,8 @@ export function createCronJobs(
   name: string,
   crons: CronHttp[],
   serviceUrl: Output<string>,
+  serviceAccount: Output<gcp.serviceaccount.Account>,
 ): gcp.cloudscheduler.Job[] {
-  const cloudRunPubSubInvoker = getCloudRunPubSubInvoker();
   return crons.map((cron) => {
     const uri = serviceUrl.apply(
       (url) => `${url}/${cron.endpoint ?? cron.name}`,
@@ -31,7 +30,7 @@ export function createCronJobs(
         uri,
         httpMethod: 'POST',
         oidcToken: {
-          serviceAccountEmail: cloudRunPubSubInvoker.email,
+          serviceAccountEmail: serviceAccount.email,
           audience: uri,
         },
         headers: cron.headers,

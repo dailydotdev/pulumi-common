@@ -1,6 +1,5 @@
 import { Output } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
-import { getCloudRunPubSubInvoker } from './cloudRun';
 import { SubscriptionArgs } from '@pulumi/gcp/pubsub/subscription';
 import { Input } from '@pulumi/pulumi/output';
 import { Resource } from '@pulumi/pulumi/resource';
@@ -18,12 +17,16 @@ export function createSubscriptionsFromWorkers(
   {
     serviceUrl,
     dependsOn,
+    serviceAccount,
   }: {
     serviceUrl?: Output<string>;
     dependsOn?: Input<Input<Resource>[]> | Input<Resource>;
+    serviceAccount?: Output<gcp.serviceaccount.Account>;
   } = {},
 ): gcp.pubsub.Subscription[] {
-  const cloudRunPubSubInvoker = getCloudRunPubSubInvoker();
+  if (!serviceAccount && serviceUrl) {
+    throw new Error('service account must be provided');
+  }
   return workers.map(
     (worker) =>
       new gcp.pubsub.Subscription(
@@ -37,7 +40,7 @@ export function createSubscriptionsFromWorkers(
                   (url) => `${url}/${worker.endpoint ?? worker.subscription}`,
                 ),
                 oidcToken: {
-                  serviceAccountEmail: cloudRunPubSubInvoker.email,
+                  serviceAccountEmail: serviceAccount?.email ?? '',
                 },
               }
             : undefined,
