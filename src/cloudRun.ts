@@ -1,13 +1,13 @@
 import { Input, Output } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
-import { infra, location } from './config';
+import { getInfra, location } from './config';
 import { cloudrun } from '@pulumi/gcp/types/input';
 import ServiceTemplateSpecContainerEnv = cloudrun.ServiceTemplateSpecContainerEnv;
 import { Resource } from '@pulumi/pulumi/resource';
 import { serviceAccountToMember } from './serviceAccount';
 
 export function getCloudRunPubSubInvoker(): Output<gcp.serviceaccount.Account> {
-  return infra.getOutput(
+  return getInfra().getOutput(
     'cloudRunPubSubInvoker',
   ) as Output<gcp.serviceaccount.Account>;
 }
