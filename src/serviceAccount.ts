@@ -20,6 +20,7 @@ export function addIAMRolesToServiceAccount(
   return roles.map(
     (role) =>
       new gcp.projects.IAMMember(`${prefix}-iam-${role.name}`, {
+        project: gcp.config.project || '',
         role: role.role,
         member,
       }),
