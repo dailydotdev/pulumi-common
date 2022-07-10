@@ -106,7 +106,7 @@ export const getPubSubUndeliveredMessagesMetric = (): string =>
 export const getMemoryAndCpuMetrics = (
   cpuUtilization = 70,
   memoryUtilization = cpuUtilization,
-): Input<Input<k8s.types.input.autoscaling.v2.MetricSpec>[]> => [
+): Input<Input<k8s.types.input.autoscaling.v2beta2.MetricSpec>[]> => [
   {
     type: 'Resource',
     resource: {
@@ -159,7 +159,7 @@ type KubernetesApplicationArgs = {
   containers: Input<Input<k8s.types.input.core.v1.Container>[]>;
   minReplicas?: number;
   maxReplicas: number;
-  metrics: Input<Input<k8s.types.input.autoscaling.v2.MetricSpec>[]>;
+  metrics: Input<Input<k8s.types.input.autoscaling.v2beta2.MetricSpec>[]>;
   resourcePrefix?: string;
   deploymentDependsOn?: Input<Resource>[];
   labels?: {
@@ -239,7 +239,7 @@ export const createAutoscaledApplication = ({
     targetRef,
   );
 
-  new k8s.autoscaling.v2.HorizontalPodAutoscaler(`${resourcePrefix}hpa`, {
+  new k8s.autoscaling.v2beta2.HorizontalPodAutoscaler(`${resourcePrefix}hpa`, {
     metadata: {
       name,
       namespace: namespace,
