@@ -7,3 +7,4 @@ export * from './serviceAccount';
 export * from './pubsub';
 export * from './scheduler';
 export * from './debezium';
+export * from './providers/GkeCluster';

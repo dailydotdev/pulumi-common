@@ -1,10 +1,11 @@
 import * as k8s from '@pulumi/kubernetes';
-import { Input, Output, interpolate } from '@pulumi/pulumi';
+import { Input, Output, interpolate, ProviderResource } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
 import { autoscaling, core } from '@pulumi/kubernetes/types/input';
 import EnvVar = core.v1.EnvVar;
 import { Resource } from '@pulumi/pulumi/resource';
 import { camelToUnderscore } from './utils';
+import { getInfra } from './config';
 
 export function k8sServiceAccountToIdentity(
   serviceAccount: k8s.core.v1.ServiceAccount,
@@ -20,16 +21,21 @@ export function createK8sServiceAccountFromGCPServiceAccount(
   name: string,
   namespace: string,
   serviceAccount: gcp.serviceaccount.Account,
+  provider?: ProviderResource,
 ): k8s.core.v1.ServiceAccount {
-  return new k8s.core.v1.ServiceAccount(resourceName, {
-    metadata: {
-      namespace,
-      name,
-      annotations: {
-        'iam.gke.io/gcp-service-account': serviceAccount.email,
+  return new k8s.core.v1.ServiceAccount(
+    resourceName,
+    {
+      metadata: {
+        namespace,
+        name,
+        annotations: {
+          'iam.gke.io/gcp-service-account': serviceAccount.email,
+        },
       },
     },
-  });
+    { provider },
+  );
 }
 
 export function createMigrationJob(
@@ -39,9 +45,13 @@ export function createMigrationJob(
   args: string[],
   env: Input<Input<EnvVar>[]>,
   serviceAccount: k8s.core.v1.ServiceAccount,
+  {
+    provider,
+    resourcePrefix = '',
+  }: { provider?: ProviderResource; resourcePrefix?: string },
 ): k8s.batch.v1.Job {
   return new k8s.batch.v1.Job(
-    name,
+    resourcePrefix + name,
     {
       metadata: {
         name,
@@ -65,7 +75,7 @@ export function createMigrationJob(
         },
       },
     },
-    { deleteBeforeReplace: true },
+    { deleteBeforeReplace: true, provider },
   );
 }
 
@@ -83,18 +93,23 @@ export function createVerticalPodAutoscaler(
   name: string,
   metadata: Input<k8s.types.input.meta.v1.ObjectMeta>,
   targetRef: Input<autoscaling.v1.CrossVersionObjectReference>,
+  provider?: ProviderResource,
 ): k8s.apiextensions.CustomResource {
-  return new k8s.apiextensions.CustomResource(name, {
-    apiVersion: 'autoscaling.k8s.io/v1',
-    kind: 'VerticalPodAutoscaler',
-    metadata,
-    spec: {
-      targetRef,
-      updatePolicy: {
-        updateMode: 'Off',
+  return new k8s.apiextensions.CustomResource(
+    name,
+    {
+      apiVersion: 'autoscaling.k8s.io/v1',
+      kind: 'VerticalPodAutoscaler',
+      metadata,
+      spec: {
+        targetRef,
+        updatePolicy: {
+          updateMode: 'Off',
+        },
       },
     },
-  });
+    { provider },
+  );
 }
 
 export const getFullSubscriptionLabel = (label: string): string =>
@@ -134,12 +149,14 @@ export const bindK8sServiceAccountToGCP = (
   name: string,
   namespace: string,
   serviceAccount: gcp.serviceaccount.Account,
+  provider?: ProviderResource,
 ): k8s.core.v1.ServiceAccount => {
   const k8sServiceAccount = createK8sServiceAccountFromGCPServiceAccount(
     `${resourcePrefix}k8s-sa`,
     name,
     namespace,
     serviceAccount,
+    provider,
   );
 
   new gcp.serviceaccount.IAMBinding(`${resourcePrefix}k8s-iam-binding`, {
@@ -169,6 +186,7 @@ type KubernetesApplicationArgs = {
   podSpec?: Input<
     Omit<k8s.types.input.core.v1.PodSpec, 'containers' | 'serviceAccountName'>
   >;
+  provider?: ProviderResource;
 };
 
 type KubernetesApplicationReturn = {
@@ -189,6 +207,7 @@ export const createAutoscaledApplication = ({
   podSpec,
   labels: extraLabels,
   shouldCreatePDB = false,
+  provider,
 }: KubernetesApplicationArgs): KubernetesApplicationReturn => {
   const labels: Input<{
     [key: string]: Input<string>;
@@ -225,7 +244,7 @@ export const createAutoscaledApplication = ({
         },
       },
     },
-    { dependsOn: deploymentDependsOn },
+    { dependsOn: deploymentDependsOn, provider },
   );
 
   const targetRef = getTargetRef(name);
@@ -237,36 +256,45 @@ export const createAutoscaledApplication = ({
       labels,
     },
     targetRef,
+    provider,
   );
 
-  new k8s.autoscaling.v2beta2.HorizontalPodAutoscaler(`${resourcePrefix}hpa`, {
-    metadata: {
-      name,
-      namespace: namespace,
-      labels,
-    },
-    spec: {
-      minReplicas,
-      maxReplicas: maxReplicas,
-      metrics,
-      scaleTargetRef: targetRef,
-    },
-  });
-
-  if (shouldCreatePDB) {
-    new k8s.policy.v1.PodDisruptionBudget(`${resourcePrefix}pdb`, {
+  new k8s.autoscaling.v2beta2.HorizontalPodAutoscaler(
+    `${resourcePrefix}hpa`,
+    {
       metadata: {
         name,
         namespace: namespace,
         labels,
       },
       spec: {
-        minAvailable: 1,
-        selector: {
-          matchLabels: labels,
+        minReplicas,
+        maxReplicas: maxReplicas,
+        metrics,
+        scaleTargetRef: targetRef,
+      },
+    },
+    { provider },
+  );
+
+  if (shouldCreatePDB) {
+    new k8s.policy.v1.PodDisruptionBudget(
+      `${resourcePrefix}pdb`,
+      {
+        metadata: {
+          name,
+          namespace: namespace,
+          labels,
+        },
+        spec: {
+          minAvailable: 1,
+          selector: {
+            matchLabels: labels,
+          },
         },
       },
-    });
+      { provider },
+    );
   }
 
   return { labels };
@@ -275,12 +303,17 @@ export const createAutoscaledApplication = ({
 export const createAutoscaledExposedApplication = ({
   enableCdn = false,
   shouldCreatePDB = true,
+  provider,
   ...args
 }: KubernetesApplicationArgs & {
   enableCdn?: boolean;
 }): KubernetesApplicationReturn => {
   const { resourcePrefix = '', name, namespace } = args;
-  const { labels } = createAutoscaledApplication({ ...args, shouldCreatePDB });
+  const { labels } = createAutoscaledApplication({
+    ...args,
+    shouldCreatePDB,
+    provider,
+  });
   const annotations: Record<string, Output<string>> = {};
   if (enableCdn) {
     const config = new k8s.apiextensions.CustomResource(
@@ -304,23 +337,30 @@ export const createAutoscaledExposedApplication = ({
           },
         },
       },
+      { provider },
     );
     annotations['beta.cloud.google.com/backend-config'] =
       config.metadata.name.apply((name) => `{"ports": {"http": "${name}"}}`);
   }
-  new k8s.core.v1.Service(`${resourcePrefix}service`, {
-    metadata: {
-      name,
-      namespace,
-      labels,
-      annotations,
+  new k8s.core.v1.Service(
+    `${resourcePrefix}service`,
+    {
+      metadata: {
+        name,
+        namespace,
+        labels,
+        annotations,
+      },
+      spec: {
+        type: 'NodePort',
+        ports: [
+          { port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' },
+        ],
+        selector: labels,
+      },
     },
-    spec: {
-      type: 'NodePort',
-      ports: [{ port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' }],
-      selector: labels,
-    },
-  });
+    { provider },
+  );
   return { labels };
 };
 
@@ -329,28 +369,34 @@ export function createKubernetesSecretFromRecord({
   resourceName,
   name,
   namespace,
+  provider,
 }: {
   data: Record<string, Input<string>>;
   resourceName: string;
   name: string;
   namespace: string;
+  provider?: ProviderResource;
 }): k8s.core.v1.Secret {
-  return new k8s.core.v1.Secret(resourceName, {
-    metadata: {
-      name,
-      namespace,
-      labels: {
-        app: name,
+  return new k8s.core.v1.Secret(
+    resourceName,
+    {
+      metadata: {
+        name,
+        namespace,
+        labels: {
+          app: name,
+        },
       },
+      stringData: Object.keys(data).reduce(
+        (acc, key): Record<string, Output<string>> => ({
+          ...acc,
+          [camelToUnderscore(key)]: interpolate`${data[key]}`,
+        }),
+        {},
+      ),
     },
-    stringData: Object.keys(data).reduce(
-      (acc, key): Record<string, Output<string>> => ({
-        ...acc,
-        [camelToUnderscore(key)]: interpolate`${data[key]}`,
-      }),
-      {},
-    ),
-  });
+    { provider },
+  );
 }
 
 export function convertRecordToContainerEnvVars({
