@@ -6,12 +6,12 @@ import { getInfra } from '../config';
 
 // https://www.pulumi.com/registry/packages/kubernetes/how-to-guides/kubernetes-ts-multicloud/
 export class GkeCluster extends pulumi.ComponentResource {
-  public cluster: Output<gcp.container.Cluster>;
+  public cluster: Output<gcp.container.Cluster> | gcp.container.Cluster;
   public provider: k8s.Provider;
 
   constructor(
     name: string,
-    cluster: Output<gcp.container.Cluster>,
+    cluster: Output<gcp.container.Cluster> | gcp.container.Cluster,
     opts: pulumi.ComponentResourceOptions = {},
   ) {
     super('dailydotdev:kubernetes:GkeCluster', name, {}, opts);

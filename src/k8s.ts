@@ -192,6 +192,16 @@ type KubernetesApplicationReturn = {
   labels: Input<{ [key: string]: Input<string> }>;
 };
 
+export const gracefulTerminationHook = (
+  delay = 15,
+): k8s.types.input.core.v1.Lifecycle => ({
+  preStop: {
+    exec: {
+      command: ['/bin/bash', '-c', `sleep ${delay}`],
+    },
+  },
+});
+
 export const createAutoscaledApplication = ({
   name,
   namespace,
