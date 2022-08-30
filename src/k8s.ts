@@ -47,7 +47,7 @@ export function createMigrationJob(
   {
     provider,
     resourcePrefix = '',
-  }: { provider?: ProviderResource; resourcePrefix?: string },
+  }: { provider?: ProviderResource; resourcePrefix?: string } = {},
 ): k8s.batch.v1.Job {
   return new k8s.batch.v1.Job(
     resourcePrefix + name,
