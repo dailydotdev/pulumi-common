@@ -5,7 +5,6 @@ import { autoscaling, core } from '@pulumi/kubernetes/types/input';
 import EnvVar = core.v1.EnvVar;
 import { Resource } from '@pulumi/pulumi/resource';
 import { camelToUnderscore } from './utils';
-import { getInfra } from './config';
 
 export function k8sServiceAccountToIdentity(
   serviceAccount: k8s.core.v1.ServiceAccount,
