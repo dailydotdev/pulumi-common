@@ -190,6 +190,7 @@ type KubernetesApplicationArgs = {
 
 type KubernetesApplicationReturn = {
   labels: Input<{ [key: string]: Input<string> }>;
+  deployment: k8s.apps.v1.Deployment;
 };
 
 export const gracefulTerminationHook = (
@@ -232,7 +233,7 @@ export const createAutoscaledApplication = ({
     version,
   };
 
-  new k8s.apps.v1.Deployment(
+  const deployment = new k8s.apps.v1.Deployment(
     `${resourcePrefix}deployment`,
     {
       metadata: {
@@ -306,7 +307,7 @@ export const createAutoscaledApplication = ({
     );
   }
 
-  return { labels };
+  return { labels, deployment };
 };
 
 export const createAutoscaledExposedApplication = ({
@@ -316,13 +317,14 @@ export const createAutoscaledExposedApplication = ({
   ...args
 }: KubernetesApplicationArgs & {
   enableCdn?: boolean;
-}): KubernetesApplicationReturn => {
+}): KubernetesApplicationReturn & { service: k8s.core.v1.Service } => {
   const { resourcePrefix = '', name, namespace } = args;
-  const { labels } = createAutoscaledApplication({
+  const returnObj = createAutoscaledApplication({
     ...args,
     shouldCreatePDB,
     provider,
   });
+  const { labels } = returnObj;
   const annotations: Record<string, Output<string>> = {};
   if (enableCdn) {
     const config = new k8s.apiextensions.CustomResource(
@@ -351,7 +353,7 @@ export const createAutoscaledExposedApplication = ({
     annotations['beta.cloud.google.com/backend-config'] =
       config.metadata.name.apply((name) => `{"ports": {"http": "${name}"}}`);
   }
-  new k8s.core.v1.Service(
+  const service = new k8s.core.v1.Service(
     `${resourcePrefix}service`,
     {
       metadata: {
@@ -370,7 +372,7 @@ export const createAutoscaledExposedApplication = ({
     },
     { provider },
   );
-  return { labels };
+  return { ...returnObj, service };
 };
 
 export function createKubernetesSecretFromRecord({
