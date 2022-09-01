@@ -314,9 +314,11 @@ export const createAutoscaledExposedApplication = ({
   enableCdn = false,
   shouldCreatePDB = true,
   provider,
+  serviceType = 'NodePort',
   ...args
 }: KubernetesApplicationArgs & {
   enableCdn?: boolean;
+  serviceType?: k8s.types.enums.core.v1.ServiceSpecType;
 }): KubernetesApplicationReturn & { service: k8s.core.v1.Service } => {
   const { resourcePrefix = '', name, namespace } = args;
   const returnObj = createAutoscaledApplication({
@@ -363,7 +365,7 @@ export const createAutoscaledExposedApplication = ({
         annotations,
       },
       spec: {
-        type: 'NodePort',
+        type: serviceType,
         ports: [
           { port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' },
         ],
