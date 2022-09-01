@@ -6,7 +6,7 @@
     "lint": "eslint . --ext .js,.ts --max-warnings 0",
     "build": "tsc",
     "prebuild": "rm -rf lib",
-    "prepublish": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
