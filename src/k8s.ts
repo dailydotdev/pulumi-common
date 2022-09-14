@@ -167,7 +167,7 @@ export const bindK8sServiceAccountToGCP = (
   return k8sServiceAccount;
 };
 
-type KubernetesApplicationArgs = {
+export type KubernetesApplicationArgs = {
   name: string;
   namespace: string;
   version: string;
@@ -188,7 +188,7 @@ type KubernetesApplicationArgs = {
   provider?: ProviderResource;
 };
 
-type KubernetesApplicationReturn = {
+export type KubernetesApplicationReturn = {
   labels: Input<{ [key: string]: Input<string> }>;
   deployment: k8s.apps.v1.Deployment;
 };

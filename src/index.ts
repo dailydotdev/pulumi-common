@@ -8,3 +8,5 @@ export * from './pubsub';
 export * from './scheduler';
 export * from './debezium';
 export * from './providers/GkeCluster';
+export * from './suite/types';
+export * from './suite/index';
