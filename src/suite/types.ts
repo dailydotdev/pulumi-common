@@ -55,7 +55,7 @@ export type ApplicationSuiteArgs = {
   name: string;
   namespace: string;
   serviceAccount: gcp.serviceaccount.Account;
-  secrets: Record<string, Input<string>>;
+  secrets?: Record<string, Input<string>>;
   image: string;
   imageTag: string;
   apps: ApplicationArgs[];

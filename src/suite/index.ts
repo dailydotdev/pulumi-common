@@ -200,17 +200,19 @@ function deployApplicationSuiteToProvider({
   // Convert the secrets to k8s container env vars
   const containerEnvVars = convertRecordToContainerEnvVars({
     secretName: name,
-    data: secrets,
+    data: secrets || {},
   });
 
-  // Create the secret object
-  createKubernetesSecretFromRecord({
-    data: secrets,
-    resourceName: `${resourcePrefix}k8s-secret`,
-    name,
-    namespace,
-    provider,
-  });
+  if (secrets) {
+    // Create the secret object
+    createKubernetesSecretFromRecord({
+      data: secrets,
+      resourceName: `${resourcePrefix}k8s-secret`,
+      name,
+      namespace,
+      provider,
+    });
+  }
 
   // Run migration if needed
   const dependsOn: Input<Resource>[] = [];
