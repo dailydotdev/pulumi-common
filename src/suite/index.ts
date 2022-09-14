@@ -167,7 +167,7 @@ function deployApplication(
  * An application suite consists of several deployable units (i.e api, background worker).
  * A suite can also require a migration job and/or a debezium instance.
  */
-function deployApplicationSuiteToProvider({
+export function deployApplicationSuiteToProvider({
   name,
   namespace,
   serviceAccount,
