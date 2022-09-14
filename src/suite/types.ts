@@ -34,6 +34,7 @@ export type ApplicationArgs = {
   labels?: { [key: string]: string };
   command?: Input<Input<string>[]>;
   args?: Input<Input<string>[]>;
+  enableCdn?: boolean;
 };
 
 export type ApplicationReturn = KubernetesApplicationReturn & {

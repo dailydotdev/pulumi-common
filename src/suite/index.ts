@@ -117,6 +117,7 @@ function deployApplication(
     labels,
     command,
     args,
+    enableCdn,
   }: ApplicationArgs,
 ): ApplicationReturn {
   const appResourcePrefix = `${resourcePrefix}${
@@ -157,6 +158,7 @@ function deployApplication(
     return createAutoscaledExposedApplication({
       ...appArgs,
       serviceType: vpcNative ? 'ClusterIP' : serviceType,
+      enableCdn,
     });
   }
   return createAutoscaledApplication(appArgs);
