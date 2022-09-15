@@ -2,7 +2,7 @@ import * as gcp from '@pulumi/gcp';
 import * as k8s from '@pulumi/kubernetes';
 import { createHash } from 'crypto';
 import { createServiceAccountAndGrantRoles } from './serviceAccount';
-import { Input, Output, ProviderResource } from '@pulumi/pulumi';
+import { Input, Output, ProviderResource, interpolate } from '@pulumi/pulumi';
 import * as pulumi from '@pulumi/pulumi';
 import { input as inputs } from '@pulumi/kubernetes/types';
 
@@ -16,25 +16,25 @@ type OptionalArgs = {
   provider?: ProviderResource;
 };
 
-export function deployDebeziumToKubernetes(
+const DEFAULT_DISK_SIZE = 10;
+
+/**
+ * Deploys only the shared dependencies for Debezium.
+ * This includes disk and service account.
+ */
+export function deployDebeziumSharedDependencies(
   name: string,
-  namespace: string | Input<string>,
-  debeziumTopic: gcp.pubsub.Topic,
-  debeziumPropsString: Output<string>,
   diskZone: Input<string>,
   {
     diskType = 'pd-ssd',
-    diskSize = 10,
-    limits = {
-      cpu: '1',
-      memory: '1024Mi',
-    },
-    env = [],
-    image = 'debezium/server:1.5',
+    diskSize = DEFAULT_DISK_SIZE,
     resourcePrefix = '',
-    provider,
-  }: OptionalArgs = {},
-): void {
+  }: Pick<OptionalArgs, 'resourcePrefix' | 'diskSize' | 'diskType'> = {},
+): {
+  debeziumSa: gcp.serviceaccount.Account;
+  debeziumKey: gcp.serviceaccount.Key;
+  disk: gcp.compute.Disk;
+} {
   const { serviceAccount: debeziumSa } = createServiceAccountAndGrantRoles(
     `${resourcePrefix}debezium-sa`,
     `${name}-debezium`,
@@ -52,6 +52,40 @@ export function deployDebeziumToKubernetes(
     },
   );
 
+  const disk = new gcp.compute.Disk(`${resourcePrefix}debezium-disk`, {
+    name: `${name}-debezium-pv`,
+    size: diskSize,
+    zone: diskZone,
+    type: diskType,
+  });
+
+  return { debeziumSa, debeziumKey, disk };
+}
+
+/**
+ * Deploys only the Kubernetes resources for Debezium
+ */
+export function deployDebeziumKubernetesResources(
+  name: string,
+  namespace: string | Input<string>,
+  debeziumTopic: gcp.pubsub.Topic,
+  debeziumPropsString: Output<string>,
+  debeziumKey: gcp.serviceaccount.Key,
+  disk: gcp.compute.Disk,
+  {
+    limits = {
+      cpu: '1',
+      memory: '1024Mi',
+    },
+    env = [],
+    image = 'debezium/server:1.6',
+    resourcePrefix = '',
+    provider,
+  }: Pick<
+    OptionalArgs,
+    'limits' | 'env' | 'image' | 'resourcePrefix' | 'provider'
+  > = {},
+): void {
   const debeziumSecretSa = new k8s.core.v1.Secret(
     `${resourcePrefix}debezium-secret-sa`,
     {
@@ -65,10 +99,6 @@ export function deployDebeziumToKubernetes(
     },
     { provider },
   );
-
-  // const debeziumTopic = new gcp.pubsub.Topic('debezium-topic', {
-  //   name: debeziumTopicName,
-  // });
 
   const propsHash = debeziumPropsString.apply((props) =>
     createHash('md5').update(props).digest('hex'),
@@ -97,13 +127,6 @@ export function deployDebeziumToKubernetes(
     app: 'debezium',
   };
 
-  const disk = new gcp.compute.Disk(`${resourcePrefix}debezium-disk`, {
-    name: `${name}-debezium-pv`,
-    size: diskSize,
-    zone: diskZone,
-    type: diskType,
-  });
-
   new k8s.core.v1.PersistentVolume(
     `${resourcePrefix}debezium-pv`,
     {
@@ -113,7 +136,7 @@ export function deployDebeziumToKubernetes(
       },
       spec: {
         accessModes: ['ReadWriteOnce'],
-        capacity: { storage: `${diskSize}Gi` },
+        capacity: { storage: interpolate`${disk.size}Gi` },
         claimRef: {
           name: `${name}-debezium-pvc`,
           namespace,
@@ -136,7 +159,7 @@ export function deployDebeziumToKubernetes(
       },
       spec: {
         accessModes: ['ReadWriteOnce'],
-        resources: { requests: { storage: `${diskSize}Gi` } },
+        resources: { requests: { storage: interpolate`${disk.size}Gi` } },
         volumeName: `${name}-debezium-pv`,
       },
     },
@@ -161,6 +184,7 @@ export function deployDebeziumToKubernetes(
             labels: { ...labels, props: propsHash },
           },
           spec: {
+            nodeSelector: { 'topology.kubernetes.io/zone': disk.zone },
             volumes: [
               {
                 name: 'service-account-key',
@@ -228,5 +252,40 @@ export function deployDebeziumToKubernetes(
       },
     },
     { dependsOn: [debeziumTopic], provider },
+  );
+}
+
+export function deployDebeziumWithDependencies(
+  name: string,
+  namespace: string | Input<string>,
+  debeziumTopic: gcp.pubsub.Topic,
+  debeziumPropsString: Output<string>,
+  diskZone: Input<string>,
+  {
+    diskType,
+    diskSize,
+    limits = {
+      cpu: '1',
+      memory: '1024Mi',
+    },
+    env = [],
+    image = 'debezium/server:1.6',
+    resourcePrefix = '',
+    provider,
+  }: OptionalArgs = {},
+): void {
+  const { debeziumKey, disk } = deployDebeziumSharedDependencies(
+    name,
+    diskZone,
+    { diskType, diskSize, resourcePrefix },
+  );
+  deployDebeziumKubernetesResources(
+    name,
+    namespace,
+    debeziumTopic,
+    debeziumPropsString,
+    debeziumKey,
+    disk,
+    { limits, env, image, resourcePrefix, provider },
   );
 }

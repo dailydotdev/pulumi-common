@@ -1,5 +1,5 @@
 import { readFile } from 'fs/promises';
-import { Input, Output } from '@pulumi/pulumi';
+import { Input, Output, all } from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
 import { Resource } from '@pulumi/pulumi/resource';
 import * as gcp from '@pulumi/gcp';
@@ -25,7 +25,10 @@ import {
   ApplicationSuiteArgs,
   CustomMetric,
 } from './types';
-import { deployDebeziumToKubernetes } from '../debezium';
+import {
+  deployDebeziumKubernetesResources,
+  deployDebeziumSharedDependencies,
+} from '../debezium';
 import { location } from '../config';
 
 /**
@@ -71,16 +74,16 @@ export function customMetricToK8s(
  */
 function getDebeziumProps(
   propsPath: string,
-  propsVars: { [key: string]: string },
+  propsVars: Record<string, Input<string>>,
 ): Output<string> {
-  const func = async (): Promise<string> => {
+  const func = async (vars: Record<string, string>): Promise<string> => {
     const props = await readFile(propsPath, 'utf-8');
-    return Object.keys(propsVars).reduce(
-      (acc, key) => acc.replace(`%${key}%`, propsVars[key]),
+    return Object.keys(vars).reduce(
+      (acc, key) => acc.replace(`%${key}%`, vars[key]),
       props,
     );
   };
-  return Output.create(func());
+  return all(propsVars).apply(func);
 }
 
 /**
@@ -118,6 +121,8 @@ function deployApplication(
     command,
     args,
     enableCdn,
+    volumes,
+    volumeMounts,
   }: ApplicationArgs,
 ): ApplicationReturn {
   const appResourcePrefix = `${resourcePrefix}${
@@ -134,6 +139,9 @@ function deployApplication(
     minReplicas,
     maxReplicas,
     metrics: customMetricToK8s(metric),
+    podSpec: {
+      volumes,
+    },
     containers: [
       {
         name: 'app',
@@ -148,6 +156,7 @@ function deployApplication(
         env: [...globalEnvVars, ...env],
         resources: { requests: limits, limits },
         lifecycle: createService ? gracefulTerminationHook() : undefined,
+        volumeMounts,
       },
     ],
     deploymentDependsOn: dependsOn,
@@ -236,20 +245,32 @@ export function deployApplicationSuiteToProvider({
       ...debezium.propsVars,
       topic: debezium.topicName,
     });
+    const diskSize = 100;
     // IMPORTANT: do not set resource prefix here, otherwise it might create new disk and other resources
-    deployDebeziumToKubernetes(
+    const { debeziumKey, disk } = deployDebeziumSharedDependencies(
       name,
-      namespace,
-      debezium.topic,
-      props,
       `${location}-f`,
       {
         diskType: 'pd-ssd',
-        diskSize: 100,
-        image: 'debezium/server:1.6',
-        provider,
+        diskSize,
       },
     );
+    // Useful if we want to migrate Debezium without affecting its dependencies
+    if (!debezium.dependenciesOnly) {
+      deployDebeziumKubernetesResources(
+        name,
+        namespace,
+        debezium.topic,
+        props,
+        debeziumKey,
+        disk,
+        {
+          image: 'debezium/server:1.6',
+          provider,
+          resourcePrefix,
+        },
+      );
+    }
   }
 
   // Deploy the applications

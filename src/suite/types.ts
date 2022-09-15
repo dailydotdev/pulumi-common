@@ -35,6 +35,8 @@ export type ApplicationArgs = {
   command?: Input<Input<string>[]>;
   args?: Input<Input<string>[]>;
   enableCdn?: boolean;
+  volumes?: Input<Input<k8s.types.input.core.v1.Volume>[]>;
+  volumeMounts?: Input<Input<k8s.types.input.core.v1.VolumeMount>[]>;
 };
 
 export type ApplicationReturn = KubernetesApplicationReturn & {
@@ -49,7 +51,8 @@ export type DebeziumArgs = {
   topic: gcp.pubsub.Topic;
   topicName: string;
   propsPath: string;
-  propsVars: { [key: string]: string };
+  propsVars: Record<string, Input<string>>;
+  dependenciesOnly?: boolean;
 };
 
 export type ApplicationSuiteArgs = {
