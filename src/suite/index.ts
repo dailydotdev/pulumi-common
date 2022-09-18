@@ -30,6 +30,7 @@ import {
   deployDebeziumSharedDependencies,
 } from '../debezium';
 import { location } from '../config';
+import { stripCpuFromRequests } from '../utils';
 
 /**
  * Takes a custom definition of an autoscaling metric and turn it into a k8s definition
@@ -129,11 +130,6 @@ function deployApplication(
     nameSuffix ? `${nameSuffix}-` : ''
   }`;
   const appName = `${name}${nameSuffix ? `-${nameSuffix}` : ''}`;
-  const limits = { ...requests };
-  // Do not limit cpu (https://home.robusta.dev/blog/stop-using-cpu-limits/)
-  if ('cpu' in limits) {
-    delete limits.cpu;
-  }
   const appArgs: KubernetesApplicationArgs = {
     resourcePrefix: appResourcePrefix,
     name: appName,
@@ -159,7 +155,7 @@ function deployApplication(
         readinessProbe,
         livenessProbe,
         env: [...globalEnvVars, ...env],
-        resources: { requests, limits },
+        resources: { requests, limits: stripCpuFromRequests(requests) },
         lifecycle: createService ? gracefulTerminationHook() : undefined,
         volumeMounts,
       },

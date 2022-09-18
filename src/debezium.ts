@@ -5,6 +5,7 @@ import { createServiceAccountAndGrantRoles } from './serviceAccount';
 import { Input, Output, ProviderResource, interpolate } from '@pulumi/pulumi';
 import * as pulumi from '@pulumi/pulumi';
 import { input as inputs } from '@pulumi/kubernetes/types';
+import { stripCpuFromRequests } from './utils';
 
 type OptionalArgs = {
   diskType?: Input<string>;
@@ -73,7 +74,7 @@ export function deployDebeziumKubernetesResources(
   debeziumKey: gcp.serviceaccount.Key,
   disk: gcp.compute.Disk,
   {
-    limits = {
+    limits: requests = {
       cpu: '1',
       memory: '1024Mi',
     },
@@ -237,8 +238,8 @@ export function deployDebeziumKubernetesResources(
                   ...env,
                 ],
                 resources: {
-                  limits,
-                  requests: limits,
+                  limits: stripCpuFromRequests(requests),
+                  requests,
                 },
                 livenessProbe: {
                   httpGet: { path: '/q/health', port: 'http' },

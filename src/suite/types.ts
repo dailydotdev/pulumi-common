@@ -22,7 +22,7 @@ export type ApplicationArgs = {
   nameSuffix?: string;
   minReplicas?: number;
   maxReplicas: number;
-  limits: Input<{ [key: string]: Input<string> }>;
+  limits: Input<{ cpu: string; memory: string }>;
   dependsOn?: Input<Resource>[];
   port?: number;
   readinessProbe?: Input<k8s.types.input.core.v1.Probe>;
