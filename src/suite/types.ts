@@ -1,7 +1,7 @@
 import { Input, ProviderResource } from '@pulumi/pulumi';
 import { Resource } from '@pulumi/pulumi/resource';
 import * as k8s from '@pulumi/kubernetes';
-import { KubernetesApplicationReturn } from '../k8s';
+import { KubernetesApplicationReturn, Limits } from '../k8s';
 import * as gcp from '@pulumi/gcp';
 
 export type MetricMemoryCPU = {
@@ -22,7 +22,7 @@ export type ApplicationArgs = {
   nameSuffix?: string;
   minReplicas?: number;
   maxReplicas: number;
-  limits: Input<{ cpu: string; memory: string }>;
+  limits: Input<Limits>;
   dependsOn?: Input<Resource>[];
   port?: number;
   readinessProbe?: Input<k8s.types.input.core.v1.Probe>;

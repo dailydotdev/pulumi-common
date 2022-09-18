@@ -6,11 +6,12 @@ import { Input, Output, ProviderResource, interpolate } from '@pulumi/pulumi';
 import * as pulumi from '@pulumi/pulumi';
 import { input as inputs } from '@pulumi/kubernetes/types';
 import { stripCpuFromRequests } from './utils';
+import { Limits } from './k8s';
 
 type OptionalArgs = {
   diskType?: Input<string>;
   diskSize?: Input<number>;
-  limits?: Input<{ cpu: string; memory: string }>;
+  limits?: Input<Limits>;
   env?: pulumi.Input<inputs.core.v1.EnvVar>[];
   image?: string;
   resourcePrefix?: string;
