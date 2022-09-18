@@ -108,7 +108,7 @@ function deployApplication(
     nameSuffix,
     minReplicas = 2,
     maxReplicas,
-    limits,
+    limits: requests,
     dependsOn,
     port,
     readinessProbe,
@@ -129,6 +129,11 @@ function deployApplication(
     nameSuffix ? `${nameSuffix}-` : ''
   }`;
   const appName = `${name}${nameSuffix ? `-${nameSuffix}` : ''}`;
+  const limits = { ...requests };
+  // Do not limit cpu (https://home.robusta.dev/blog/stop-using-cpu-limits/)
+  if ('cpu' in limits) {
+    delete limits.cpu;
+  }
   const appArgs: KubernetesApplicationArgs = {
     resourcePrefix: appResourcePrefix,
     name: appName,
@@ -154,7 +159,7 @@ function deployApplication(
         readinessProbe,
         livenessProbe,
         env: [...globalEnvVars, ...env],
-        resources: { requests: limits, limits },
+        resources: { requests, limits },
         lifecycle: createService ? gracefulTerminationHook() : undefined,
         volumeMounts,
       },

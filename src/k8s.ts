@@ -352,8 +352,9 @@ export const createAutoscaledExposedApplication = ({
       },
       { provider },
     );
-    annotations['beta.cloud.google.com/backend-config'] =
-      config.metadata.name.apply((name) => `{"ports": {"http": "${name}"}}`);
+    annotations['cloud.google.com/backend-config'] = config.metadata.name.apply(
+      (name) => `{"default": "${name}"}`,
+    );
   }
   const service = new k8s.core.v1.Service(
     `${resourcePrefix}service`,
