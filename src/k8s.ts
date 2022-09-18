@@ -260,16 +260,6 @@ export const createAutoscaledApplication = ({
   );
 
   const targetRef = getTargetRef(name);
-  createVerticalPodAutoscaler(
-    `${resourcePrefix}vpa`,
-    {
-      name,
-      namespace: namespace,
-      labels,
-    },
-    targetRef,
-    provider,
-  );
 
   new k8s.autoscaling.v2beta2.HorizontalPodAutoscaler(
     `${resourcePrefix}hpa`,
