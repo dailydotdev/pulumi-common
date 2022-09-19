@@ -53,6 +53,8 @@ export type DebeziumArgs = {
   propsPath: string;
   propsVars: Record<string, Input<string>>;
   dependenciesOnly?: boolean;
+  version?: string;
+  limits?: Limits;
 };
 
 export type ApplicationSuiteArgs = {

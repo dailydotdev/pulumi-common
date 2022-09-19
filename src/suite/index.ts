@@ -266,9 +266,10 @@ export function deployApplicationSuiteToProvider({
         debeziumKey,
         disk,
         {
-          image: 'debezium/server:1.6',
+          image: `debezium/server:${debezium.version ?? '1.6'}`,
           provider,
           resourcePrefix,
+          limits: debezium.limits,
         },
       );
     }
