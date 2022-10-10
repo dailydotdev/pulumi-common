@@ -47,6 +47,20 @@ export type MigrationArgs = {
   args: string[];
 };
 
+export type CronArgs = {
+  nameSuffix?: string;
+  schedule: string;
+  concurrencyPolicy?: string;
+  limits: Input<Limits>;
+  dependsOn?: Input<Resource>[];
+  env?: Input<k8s.types.input.core.v1.EnvVar>[];
+  labels?: { [key: string]: string };
+  command?: Input<Input<string>[]>;
+  args?: Input<Input<string>[]>;
+  volumes?: Input<Input<k8s.types.input.core.v1.Volume>[]>;
+  volumeMounts?: Input<Input<k8s.types.input.core.v1.VolumeMount>[]>;
+};
+
 export type DebeziumArgs = {
   topic: gcp.pubsub.Topic;
   topicName: string;
@@ -70,6 +84,7 @@ export type ApplicationSuiteArgs = {
   vpcNative?: boolean;
   migration?: MigrationArgs;
   debezium?: DebeziumArgs;
+  crons?: CronArgs[];
 };
 
 export type ApplicationContext = {

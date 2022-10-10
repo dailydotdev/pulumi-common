@@ -23,6 +23,7 @@ import {
   ApplicationContext,
   ApplicationReturn,
   ApplicationSuiteArgs,
+  CronArgs,
   CustomMetric,
 } from './types';
 import {
@@ -85,6 +86,88 @@ function getDebeziumProps(
     );
   };
   return all(propsVars).apply(func);
+}
+
+/**
+ * Deploys a cron job to k8s.
+ */
+function deployCron(
+  {
+    resourcePrefix,
+    name,
+    namespace,
+    image,
+    provider,
+    envVars: globalEnvVars,
+    serviceAccount,
+  }: ApplicationContext,
+  {
+    nameSuffix,
+    schedule,
+    concurrencyPolicy = 'Forbid',
+    volumes,
+    volumeMounts,
+    env = [],
+    args,
+    labels = {},
+    command,
+    limits: requests,
+    dependsOn,
+  }: CronArgs,
+): k8s.batch.v1.CronJob {
+  const appResourcePrefix = `${resourcePrefix}${
+    nameSuffix ? `${nameSuffix}-` : ''
+  }`;
+  const appName = `${name}${nameSuffix ? `-${nameSuffix}` : ''}`;
+  return new k8s.batch.v1.CronJob(
+    `${appResourcePrefix}cron`,
+    {
+      metadata: {
+        name: appName,
+        namespace,
+        labels: {
+          app: appName,
+          ...labels,
+        },
+      },
+      spec: {
+        schedule,
+        concurrencyPolicy,
+        jobTemplate: {
+          spec: {
+            template: {
+              metadata: {
+                labels: {
+                  app: appName,
+                  ...labels,
+                },
+              },
+              spec: {
+                restartPolicy: 'OnFailure',
+                volumes,
+                serviceAccountName: serviceAccount.metadata.name,
+                containers: [
+                  {
+                    name: 'app',
+                    image,
+                    command,
+                    args,
+                    volumeMounts,
+                    env: [...globalEnvVars, ...env],
+                    resources: {
+                      requests,
+                      limits: stripCpuFromRequests(requests),
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    { provider, dependsOn },
+  );
 }
 
 /**
@@ -192,6 +275,7 @@ export function deployApplicationSuiteToProvider({
   vpcNative = false,
   migration,
   debezium,
+  crons,
 }: ApplicationSuiteArgs): ApplicationReturn[] {
   // Create an equivalent k8s service account to an existing gcp service account
   const k8sServiceAccount = createK8sServiceAccountFromGCPServiceAccount(
@@ -215,19 +299,20 @@ export function deployApplicationSuiteToProvider({
     data: secrets || {},
   });
 
+  const dependsOn: Input<Resource>[] = [];
   if (secrets) {
     // Create the secret object
-    createKubernetesSecretFromRecord({
+    const secretK8s = createKubernetesSecretFromRecord({
       data: secrets,
       resourceName: `${resourcePrefix}k8s-secret`,
       name,
       namespace,
       provider,
     });
+    dependsOn.push(secretK8s);
   }
 
   // Run migration if needed
-  const dependsOn: Input<Resource>[] = [];
   if (migration) {
     const migrationJob = createMigrationJob(
       `${name}-migration`,
@@ -275,23 +360,35 @@ export function deployApplicationSuiteToProvider({
     }
   }
 
+  const context: ApplicationContext = {
+    resourcePrefix,
+    name,
+    namespace,
+    serviceAccount: k8sServiceAccount,
+    envVars: containerEnvVars,
+    imageTag,
+    image,
+    provider,
+    vpcNative,
+  };
   // Deploy the applications
-  return apps.map((app) =>
-    deployApplication(
-      {
-        resourcePrefix,
-        name,
-        namespace,
-        serviceAccount: k8sServiceAccount,
-        envVars: containerEnvVars,
-        imageTag,
-        image,
-        provider,
-        vpcNative,
-      },
-      { ...app, dependsOn: [...dependsOn, ...(app.dependsOn || [])] },
-    ),
+  const appsRet = apps.map((app) =>
+    deployApplication(context, {
+      ...app,
+      dependsOn: [...dependsOn, ...(app.dependsOn || [])],
+    }),
   );
+
+  if (crons) {
+    crons.map((cron) =>
+      deployCron(context, {
+        ...cron,
+        dependsOn: [...dependsOn, ...(cron.dependsOn || [])],
+      }),
+    );
+  }
+
+  return appsRet;
 }
 
 /**
@@ -301,6 +398,7 @@ export function deployApplicationSuite(
   {
     migration,
     debezium,
+    crons,
     ...suite
   }: Omit<ApplicationSuiteArgs, 'provider' | 'resourcePrefix' | 'vpcNative'>,
   vpcNativeProvider = getVpcNativeCluster(),
@@ -310,6 +408,7 @@ export function deployApplicationSuite(
     ...suite,
     migration,
     debezium,
+    crons,
   });
   const vpcNativeApps = deployApplicationSuiteToProvider({
     ...suite,
