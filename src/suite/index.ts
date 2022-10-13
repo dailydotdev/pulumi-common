@@ -276,6 +276,7 @@ export function deployApplicationSuiteToProvider({
   migration,
   debezium,
   crons,
+  shouldBindIamUser,
 }: ApplicationSuiteArgs): ApplicationReturn[] {
   // Create an equivalent k8s service account to an existing gcp service account
   const k8sServiceAccount = createK8sServiceAccountFromGCPServiceAccount(
@@ -286,12 +287,14 @@ export function deployApplicationSuiteToProvider({
     provider,
   );
 
-  // Add workloadIdentityUser role to gcp service account
-  new gcp.serviceaccount.IAMBinding(`${resourcePrefix}k8s-iam-binding`, {
-    role: 'roles/iam.workloadIdentityUser',
-    serviceAccountId: serviceAccount.id,
-    members: [k8sServiceAccountToIdentity(k8sServiceAccount)],
-  });
+  if (shouldBindIamUser) {
+    // Add workloadIdentityUser role to gcp service account
+    new gcp.serviceaccount.IAMBinding('k8s-iam-binding', {
+      role: 'roles/iam.workloadIdentityUser',
+      serviceAccountId: serviceAccount.id,
+      members: [k8sServiceAccountToIdentity(k8sServiceAccount)],
+    });
+  }
 
   // Convert the secrets to k8s container env vars
   const containerEnvVars = convertRecordToContainerEnvVars({
@@ -400,7 +403,10 @@ export function deployApplicationSuite(
     debezium,
     crons,
     ...suite
-  }: Omit<ApplicationSuiteArgs, 'provider' | 'resourcePrefix' | 'vpcNative'>,
+  }: Omit<
+    ApplicationSuiteArgs,
+    'provider' | 'resourcePrefix' | 'vpcNative' | 'shouldBindIamUser'
+  >,
   vpcNativeProvider = getVpcNativeCluster(),
 ): ApplicationReturn[][] {
   // We need to run migration and debezium only on one provider
@@ -409,12 +415,14 @@ export function deployApplicationSuite(
     migration,
     debezium,
     crons,
+    shouldBindIamUser: true,
   });
   const vpcNativeApps = deployApplicationSuiteToProvider({
     ...suite,
     provider: vpcNativeProvider.provider,
     resourcePrefix: 'vpc-native-',
     vpcNative: true,
+    shouldBindIamUser: false,
   });
   return [legacyApps, vpcNativeApps];
 }

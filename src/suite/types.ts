@@ -85,6 +85,7 @@ export type ApplicationSuiteArgs = {
   migration?: MigrationArgs;
   debezium?: DebeziumArgs;
   crons?: CronArgs[];
+  shouldBindIamUser: boolean;
 };
 
 export type ApplicationContext = {
