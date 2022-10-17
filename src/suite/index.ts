@@ -133,6 +133,8 @@ function deployCron(
       spec: {
         schedule,
         concurrencyPolicy,
+        successfulJobsHistoryLimit: 3,
+        failedJobsHistoryLimit: 3,
         jobTemplate: {
           spec: {
             template: {
