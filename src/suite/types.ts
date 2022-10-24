@@ -62,7 +62,6 @@ export type CronArgs = {
 };
 
 export type DebeziumArgs = {
-  topic: gcp.pubsub.Topic;
   topicName: string;
   propsPath: string;
   propsVars: Record<string, Input<string>>;

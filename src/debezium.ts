@@ -70,7 +70,6 @@ export function deployDebeziumSharedDependencies(
 export function deployDebeziumKubernetesResources(
   name: string,
   namespace: string | Input<string>,
-  debeziumTopic: gcp.pubsub.Topic,
   debeziumPropsString: Output<string>,
   debeziumKey: gcp.serviceaccount.Key,
   disk: gcp.compute.Disk,
@@ -253,14 +252,13 @@ export function deployDebeziumKubernetesResources(
         },
       },
     },
-    { dependsOn: [debeziumTopic], provider },
+    { provider },
   );
 }
 
 export function deployDebeziumWithDependencies(
   name: string,
   namespace: string | Input<string>,
-  debeziumTopic: gcp.pubsub.Topic,
   debeziumPropsString: Output<string>,
   diskZone: Input<string>,
   {
@@ -284,7 +282,6 @@ export function deployDebeziumWithDependencies(
   deployDebeziumKubernetesResources(
     name,
     namespace,
-    debeziumTopic,
     debeziumPropsString,
     debeziumKey,
     disk,

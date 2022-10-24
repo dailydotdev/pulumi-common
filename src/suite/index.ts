@@ -351,7 +351,6 @@ export function deployApplicationSuiteToProvider({
       deployDebeziumKubernetesResources(
         name,
         namespace,
-        debezium.topic,
         props,
         debeziumKey,
         disk,
