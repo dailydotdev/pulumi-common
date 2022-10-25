@@ -411,19 +411,19 @@ export function deployApplicationSuite(
   vpcNativeProvider = getVpcNativeCluster(),
 ): ApplicationReturn[][] {
   // We need to run migration and debezium only on one provider
-  const legacyApps = deployApplicationSuiteToProvider({
+  const vpcNativeApps = deployApplicationSuiteToProvider({
     ...suite,
     migration,
     debezium,
     crons,
     shouldBindIamUser: true,
-  });
-  const vpcNativeApps = deployApplicationSuiteToProvider({
-    ...suite,
     provider: vpcNativeProvider.provider,
     resourcePrefix: 'vpc-native-',
     vpcNative: true,
+  });
+  const legacyApps = deployApplicationSuiteToProvider({
+    ...suite,
     shouldBindIamUser: false,
   });
-  return [legacyApps, vpcNativeApps];
+  return [vpcNativeApps, legacyApps];
 }

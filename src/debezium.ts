@@ -148,7 +148,7 @@ export function deployDebeziumKubernetesResources(
         },
       },
     },
-    { provider },
+    { provider, ignoreChanges: ['spec.claimRef'] },
   );
 
   new k8s.core.v1.PersistentVolumeClaim(

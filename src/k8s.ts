@@ -256,7 +256,14 @@ export const createAutoscaledApplication = ({
         },
       },
     },
-    { dependsOn: deploymentDependsOn, provider },
+    {
+      dependsOn: deploymentDependsOn,
+      provider,
+      ignoreChanges: [
+        'spec.replicas',
+        'spec.template.spec.containers[0].resources.requests.memory',
+      ],
+    },
   );
 
   const targetRef = getTargetRef(name);
