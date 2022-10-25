@@ -40,7 +40,7 @@ export function createK8sServiceAccountFromGCPServiceAccount(
 }
 
 export function createMigrationJob(
-  name: string,
+  baseName: string,
   namespace: string,
   image: string,
   args: string[],
@@ -51,6 +51,7 @@ export function createMigrationJob(
     resourcePrefix = '',
   }: { provider?: ProviderResource; resourcePrefix?: string } = {},
 ): k8s.batch.v1.Job {
+  const name = `${baseName}-${image.split(':')[1]}`;
   return new k8s.batch.v1.Job(
     resourcePrefix + name,
     {
@@ -76,7 +77,10 @@ export function createMigrationJob(
         },
       },
     },
-    { deleteBeforeReplace: true, provider },
+    {
+      deleteBeforeReplace: true,
+      provider,
+    },
   );
 }
 
@@ -261,6 +265,7 @@ export const createAutoscaledApplication = ({
     {
       dependsOn: deploymentDependsOn,
       provider,
+      ignoreChanges: ['spec.replicas'],
     },
   );
 
