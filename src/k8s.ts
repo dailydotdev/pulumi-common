@@ -242,9 +242,11 @@ export const createAutoscaledApplication = ({
         name,
         namespace: namespace,
         labels: versionLabels,
+        annotations: {
+          'pulumi.com/patchForce': 'true',
+        },
       },
       spec: {
-        replicas: minReplicas,
         selector: { matchLabels: labels },
         template: {
           metadata: { labels },
@@ -259,10 +261,6 @@ export const createAutoscaledApplication = ({
     {
       dependsOn: deploymentDependsOn,
       provider,
-      ignoreChanges: [
-        'spec.replicas',
-        'spec.template.spec.containers[0].resources.requests.memory',
-      ],
     },
   );
 
@@ -275,6 +273,9 @@ export const createAutoscaledApplication = ({
         name,
         namespace: namespace,
         labels,
+        annotations: {
+          'pulumi.com/patchForce': 'true',
+        },
       },
       spec: {
         minReplicas,
