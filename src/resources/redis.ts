@@ -35,7 +35,7 @@ export class Redis extends pulumi.ComponentResource {
     return this.instance?.port || pulumi.output(REDIS_LOCAL_PORT);
   }
 
-  get authString(): pulumi.Output<string | undefined> {
+  get authString(): pulumi.Output<string> {
     return this.instance?.authString || pulumi.output(REDIS_LOCAL_AUTH);
   }
 }
