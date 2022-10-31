@@ -9,3 +9,14 @@ export const getInfra = (stack = pulumi.getStack()): pulumi.StackReference =>
   new pulumi.StackReference(`dailydotdev/infra/${stack}`);
 
 export const detectIsAdhocEnv = (): boolean => pulumi.getStack() === 'adhoc';
+
+export const getImageAndTag = (
+  image: string,
+): { image: string; imageTag: string } => {
+  const userImage = config.get<string>('image');
+  if (userImage) {
+    return { image: userImage, imageTag: userImage.split(':')[1] };
+  }
+  const imageTag = getImageTag();
+  return { image: `${image}:${imageTag}`, imageTag };
+};
