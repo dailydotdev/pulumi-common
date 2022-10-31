@@ -73,7 +73,7 @@ export type DebeziumArgs = {
 export type ApplicationSuiteArgs = {
   name: string;
   namespace: string;
-  serviceAccount: gcp.serviceaccount.Account;
+  serviceAccount?: gcp.serviceaccount.Account;
   secrets?: Record<string, Input<string>>;
   image: string;
   imageTag: string;
@@ -85,16 +85,18 @@ export type ApplicationSuiteArgs = {
   debezium?: DebeziumArgs;
   crons?: CronArgs[];
   shouldBindIamUser: boolean;
+  isAdhocEnv?: boolean;
 };
 
 export type ApplicationContext = {
   resourcePrefix: string;
   name: string;
   namespace: string;
-  serviceAccount: k8s.core.v1.ServiceAccount;
+  serviceAccount?: k8s.core.v1.ServiceAccount;
   image: string;
   imageTag: string;
   envVars: k8s.types.input.core.v1.EnvVar[];
   provider?: ProviderResource;
   vpcNative: boolean;
+  isAdhocEnv?: boolean;
 };

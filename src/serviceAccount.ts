@@ -32,10 +32,15 @@ export function createServiceAccountAndGrantRoles(
   baseName: string,
   serviceAccountId: string,
   roles: IAMRole[],
+  isAdhocEnv?: boolean,
 ): {
-  serviceAccount: gcp.serviceaccount.Account;
+  serviceAccount?: gcp.serviceaccount.Account;
   iamMembers: gcp.projects.IAMMember[];
 } {
+  if (isAdhocEnv) {
+    return { serviceAccount: undefined, iamMembers: [] };
+  }
+
   const serviceAccount = new gcp.serviceaccount.Account(resourceName, {
     accountId: serviceAccountId,
     displayName: serviceAccountId,

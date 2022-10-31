@@ -3,6 +3,7 @@ import * as gcp from '@pulumi/gcp';
 import { SubscriptionArgs } from '@pulumi/gcp/pubsub/subscription';
 import { Input } from '@pulumi/pulumi/output';
 import { Resource } from '@pulumi/pulumi/resource';
+import { StreamSubscription } from './resources/stream';
 
 export type Worker = {
   topic: string;
@@ -13,6 +14,7 @@ export type Worker = {
 
 export function createSubscriptionsFromWorkers(
   name: string,
+  isAdhocEnv: boolean,
   workers: Worker[],
   {
     serviceUrl,
@@ -23,15 +25,16 @@ export function createSubscriptionsFromWorkers(
     dependsOn?: Input<Input<Resource>[]> | Input<Resource>;
     serviceAccount?: Output<gcp.serviceaccount.Account>;
   } = {},
-): gcp.pubsub.Subscription[] {
+): StreamSubscription[] {
   if (!serviceAccount && serviceUrl) {
     throw new Error('service account must be provided');
   }
   return workers.map(
     (worker) =>
-      new gcp.pubsub.Subscription(
+      new StreamSubscription(
         `${name}-sub-${worker.subscription}`,
         {
+          isAdhocEnv,
           topic: worker.topic,
           name: worker.subscription,
           pushConfig: serviceUrl

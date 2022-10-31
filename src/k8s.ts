@@ -45,7 +45,7 @@ export function createMigrationJob(
   image: string,
   args: string[],
   env: Input<Input<EnvVar>[]>,
-  serviceAccount: k8s.core.v1.ServiceAccount,
+  serviceAccount: k8s.core.v1.ServiceAccount | undefined,
   {
     provider,
     resourcePrefix = '',
@@ -71,7 +71,7 @@ export function createMigrationJob(
                 env,
               },
             ],
-            serviceAccountName: serviceAccount.metadata.name,
+            serviceAccountName: serviceAccount?.metadata.name,
             restartPolicy: 'Never',
           },
         },
@@ -177,7 +177,7 @@ export type KubernetesApplicationArgs = {
   name: string;
   namespace: string;
   version: string;
-  serviceAccount: k8s.core.v1.ServiceAccount;
+  serviceAccount?: k8s.core.v1.ServiceAccount;
   containers: Input<Input<k8s.types.input.core.v1.Container>[]>;
   minReplicas?: number;
   maxReplicas: number;
@@ -192,6 +192,7 @@ export type KubernetesApplicationArgs = {
     Omit<k8s.types.input.core.v1.PodSpec, 'containers' | 'serviceAccountName'>
   >;
   provider?: ProviderResource;
+  isAdhocEnv?: boolean;
 };
 
 export type KubernetesApplicationReturn = {
@@ -224,6 +225,7 @@ export const createAutoscaledApplication = ({
   labels: extraLabels,
   shouldCreatePDB = false,
   provider,
+  isAdhocEnv,
 }: KubernetesApplicationArgs): KubernetesApplicationReturn => {
   const labels: Input<{
     [key: string]: Input<string>;
@@ -256,7 +258,7 @@ export const createAutoscaledApplication = ({
           metadata: { labels },
           spec: {
             containers,
-            serviceAccountName: serviceAccount.metadata.name,
+            serviceAccountName: serviceAccount?.metadata.name,
             ...podSpec,
           },
         },
@@ -269,47 +271,49 @@ export const createAutoscaledApplication = ({
     },
   );
 
-  const targetRef = getTargetRef(name);
+  if (!isAdhocEnv) {
+    const targetRef = getTargetRef(name);
 
-  new k8s.autoscaling.v2beta2.HorizontalPodAutoscaler(
-    `${resourcePrefix}hpa`,
-    {
-      metadata: {
-        name,
-        namespace: namespace,
-        labels,
-        annotations: {
-          'pulumi.com/patchForce': 'true',
-        },
-      },
-      spec: {
-        minReplicas,
-        maxReplicas: maxReplicas,
-        metrics,
-        scaleTargetRef: targetRef,
-      },
-    },
-    { provider },
-  );
-
-  if (shouldCreatePDB) {
-    new k8s.policy.v1.PodDisruptionBudget(
-      `${resourcePrefix}pdb`,
+    new k8s.autoscaling.v2beta2.HorizontalPodAutoscaler(
+      `${resourcePrefix}hpa`,
       {
         metadata: {
           name,
           namespace: namespace,
           labels,
+          annotations: {
+            'pulumi.com/patchForce': 'true',
+          },
         },
         spec: {
-          minAvailable: 1,
-          selector: {
-            matchLabels: labels,
-          },
+          minReplicas,
+          maxReplicas: maxReplicas,
+          metrics,
+          scaleTargetRef: targetRef,
         },
       },
       { provider },
     );
+
+    if (shouldCreatePDB) {
+      new k8s.policy.v1.PodDisruptionBudget(
+        `${resourcePrefix}pdb`,
+        {
+          metadata: {
+            name,
+            namespace: namespace,
+            labels,
+          },
+          spec: {
+            minAvailable: 1,
+            selector: {
+              matchLabels: labels,
+            },
+          },
+        },
+        { provider },
+      );
+    }
   }
 
   return { labels, deployment };

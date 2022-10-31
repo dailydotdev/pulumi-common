@@ -1,5 +1,5 @@
 import { readFile } from 'fs/promises';
-import { Input, Output, all } from '@pulumi/pulumi';
+import { Input, Output, all, ProviderResource } from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
 import { Resource } from '@pulumi/pulumi/resource';
 import * as gcp from '@pulumi/gcp';
@@ -17,7 +17,7 @@ import {
   k8sServiceAccountToIdentity,
   KubernetesApplicationArgs,
 } from '../k8s';
-import { getVpcNativeCluster } from '../providers/GkeCluster';
+import { getVpcNativeCluster, GkeCluster } from '../providers/gkeCluster';
 import {
   ApplicationArgs,
   ApplicationContext,
@@ -71,19 +71,55 @@ export function customMetricToK8s(
   }
 }
 
+function createAndBindK8sServiceAccount(
+  resourcePrefix: string | undefined,
+  name: string,
+  namespace: string,
+  gcpServiceAccount: gcp.serviceaccount.Account | undefined,
+  provider: ProviderResource | undefined,
+  shouldBindIamUser: boolean,
+): k8s.core.v1.ServiceAccount | undefined {
+  if (gcpServiceAccount) {
+    // Create an equivalent k8s service account to an existing gcp service account
+    const k8sServiceAccount = createK8sServiceAccountFromGCPServiceAccount(
+      `${resourcePrefix}k8s-sa`,
+      name,
+      namespace,
+      gcpServiceAccount,
+      provider,
+    );
+
+    if (shouldBindIamUser) {
+      // Add workloadIdentityUser role to gcp service account
+      new gcp.serviceaccount.IAMBinding('k8s-iam-binding', {
+        role: 'roles/iam.workloadIdentityUser',
+        serviceAccountId: gcpServiceAccount.id,
+        members: [k8sServiceAccountToIdentity(k8sServiceAccount)],
+      });
+    }
+    return k8sServiceAccount;
+  }
+  return undefined;
+}
+
 /**
  * Reads a Debezium properties file and replace the variables with the actual values
  */
 function getDebeziumProps(
   propsPath: string,
   propsVars: Record<string, Input<string>>,
+  isAdhocEnv?: boolean,
 ): Output<string> {
   const func = async (vars: Record<string, string>): Promise<string> => {
     const props = await readFile(propsPath, 'utf-8');
-    return Object.keys(vars).reduce(
+    const propsStr = Object.keys(vars).reduce(
       (acc, key) => acc.replace(`%${key}%`, vars[key]),
       props,
     );
+    if (isAdhocEnv) {
+      return `${propsStr}\ndebezium.sink.pubsub.address=pubsub:8085\ndebezium.sink.pubsub.project.id=local\ndebezium.source.topic.prefix=t`;
+    }
+    return propsStr;
   };
   return all(propsVars).apply(func);
 }
@@ -147,7 +183,7 @@ function deployCron(
               spec: {
                 restartPolicy: 'OnFailure',
                 volumes,
-                serviceAccountName: serviceAccount.metadata.name,
+                serviceAccountName: serviceAccount?.metadata.name,
                 containers: [
                   {
                     name: 'app',
@@ -189,6 +225,7 @@ function deployApplication(
     envVars: globalEnvVars,
     provider,
     vpcNative,
+    isAdhocEnv,
   }: ApplicationContext,
   {
     nameSuffix,
@@ -240,14 +277,18 @@ function deployApplication(
         readinessProbe,
         livenessProbe,
         env: [...globalEnvVars, ...env],
-        resources: { requests, limits: stripCpuFromRequests(requests) },
-        lifecycle: createService ? gracefulTerminationHook() : undefined,
+        resources: !isAdhocEnv
+          ? { requests, limits: stripCpuFromRequests(requests) }
+          : undefined,
+        lifecycle:
+          createService && !isAdhocEnv ? gracefulTerminationHook() : undefined,
         volumeMounts,
       },
     ],
     deploymentDependsOn: dependsOn,
     shouldCreatePDB: createService,
     provider,
+    isAdhocEnv,
   };
   if (createService) {
     return createAutoscaledExposedApplication({
@@ -279,24 +320,17 @@ export function deployApplicationSuiteToProvider({
   debezium,
   crons,
   shouldBindIamUser,
+  isAdhocEnv,
 }: ApplicationSuiteArgs): ApplicationReturn[] {
   // Create an equivalent k8s service account to an existing gcp service account
-  const k8sServiceAccount = createK8sServiceAccountFromGCPServiceAccount(
-    `${resourcePrefix}k8s-sa`,
+  const k8sServiceAccount = createAndBindK8sServiceAccount(
+    resourcePrefix,
     name,
     namespace,
     serviceAccount,
     provider,
+    shouldBindIamUser,
   );
-
-  if (shouldBindIamUser) {
-    // Add workloadIdentityUser role to gcp service account
-    new gcp.serviceaccount.IAMBinding('k8s-iam-binding', {
-      role: 'roles/iam.workloadIdentityUser',
-      serviceAccountId: serviceAccount.id,
-      members: [k8sServiceAccountToIdentity(k8sServiceAccount)],
-    });
-  }
 
   // Convert the secrets to k8s container env vars
   const containerEnvVars = convertRecordToContainerEnvVars({
@@ -332,10 +366,14 @@ export function deployApplicationSuiteToProvider({
   }
 
   if (debezium) {
-    const props = getDebeziumProps(debezium.propsPath, {
-      ...debezium.propsVars,
-      topic: debezium.topicName,
-    });
+    const props = getDebeziumProps(
+      debezium.propsPath,
+      {
+        ...debezium.propsVars,
+        topic: debezium.topicName,
+      },
+      isAdhocEnv,
+    );
     const diskSize = 100;
     // IMPORTANT: do not set resource prefix here, otherwise it might create new disk and other resources
     const { debeziumKey, disk } = deployDebeziumSharedDependencies(
@@ -344,10 +382,12 @@ export function deployApplicationSuiteToProvider({
       {
         diskType: 'pd-ssd',
         diskSize,
+        isAdhocEnv,
       },
     );
     // Useful if we want to migrate Debezium without affecting its dependencies
     if (!debezium.dependenciesOnly) {
+      const debeziumDefault = isAdhocEnv ? '2.0' : '1.6';
       deployDebeziumKubernetesResources(
         name,
         namespace,
@@ -355,10 +395,11 @@ export function deployApplicationSuiteToProvider({
         debeziumKey,
         disk,
         {
-          image: `debezium/server:${debezium.version ?? '1.6'}`,
+          image: `debezium/server:${debezium.version ?? debeziumDefault}`,
           provider,
           resourcePrefix,
           limits: debezium.limits,
+          isAdhocEnv,
         },
       );
     }
@@ -374,6 +415,7 @@ export function deployApplicationSuiteToProvider({
     image,
     provider,
     vpcNative,
+    isAdhocEnv,
   };
   // Deploy the applications
   const appsRet = apps.map((app) =>
@@ -408,22 +450,33 @@ export function deployApplicationSuite(
     ApplicationSuiteArgs,
     'provider' | 'resourcePrefix' | 'vpcNative' | 'shouldBindIamUser'
   >,
-  vpcNativeProvider = getVpcNativeCluster(),
+  vpcNativeProvider?: GkeCluster,
 ): ApplicationReturn[][] {
-  // We need to run migration and debezium only on one provider
-  const vpcNativeApps = deployApplicationSuiteToProvider({
-    ...suite,
-    migration,
-    debezium,
-    crons,
-    shouldBindIamUser: true,
-    provider: vpcNativeProvider.provider,
-    resourcePrefix: 'vpc-native-',
-    vpcNative: true,
-  });
-  const legacyApps = deployApplicationSuiteToProvider({
-    ...suite,
-    shouldBindIamUser: false,
-  });
-  return [vpcNativeApps, legacyApps];
+  if (suite.isAdhocEnv) {
+    const apps = deployApplicationSuiteToProvider({
+      ...suite,
+      migration,
+      debezium,
+      crons,
+      shouldBindIamUser: false,
+    });
+    return [apps];
+  } else {
+    // We need to run migration and debezium only on one provider
+    const vpcNativeApps = deployApplicationSuiteToProvider({
+      ...suite,
+      migration,
+      debezium,
+      crons,
+      shouldBindIamUser: true,
+      provider: (vpcNativeProvider || getVpcNativeCluster()).provider,
+      resourcePrefix: 'vpc-native-',
+      vpcNative: true,
+    });
+    const legacyApps = deployApplicationSuiteToProvider({
+      ...suite,
+      shouldBindIamUser: false,
+    });
+    return [vpcNativeApps, legacyApps];
+  }
 }
