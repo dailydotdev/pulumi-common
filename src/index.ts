@@ -13,3 +13,4 @@ export * from './suite/types';
 export * from './suite/index';
 export * from './resources/redis';
 export * from './resources/stream';
+export * from './resources/sql';

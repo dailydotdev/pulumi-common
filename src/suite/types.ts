@@ -86,6 +86,7 @@ export type ApplicationSuiteArgs = {
   crons?: CronArgs[];
   shouldBindIamUser: boolean;
   isAdhocEnv?: boolean;
+  dependsOn?: Input<Resource>[];
 };
 
 export type ApplicationContext = {

@@ -3,9 +3,10 @@ import * as gcp from '@pulumi/gcp';
 import { PubSub, ServiceError } from '@google-cloud/pubsub';
 import { Status } from '@grpc/grpc-js/build/src/constants';
 import * as resource from '@pulumi/pulumi/resource';
+import { config } from '../config';
 
-const PUBSUB_LOCAL_URL = process.env.PUBSUB_EMULATOR_HOST || 'localhost:8085';
-const PUBSUB_LOCAL_PROJECT = process.env.PUBSUB_PROJECT_ID || 'local';
+const PUBSUB_LOCAL_URL = config.get<string>('pubsubUrl') || 'localhost:8085';
+const PUBSUB_LOCAL_PROJECT = config.get<string>('pubsubProjectId') || 'local';
 let _pubsub: PubSub;
 
 function getPubsub(): PubSub {

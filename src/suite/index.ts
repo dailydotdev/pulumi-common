@@ -117,7 +117,7 @@ function getDebeziumProps(
       props,
     );
     if (isAdhocEnv) {
-      return `${propsStr}\ndebezium.sink.pubsub.address=pubsub:8085\ndebezium.sink.pubsub.project.id=local\ndebezium.source.topic.prefix=t`;
+      return `${propsStr}\ndebezium.sink.pubsub.address=pubsub:8085\ndebezium.sink.pubsub.project.id=local\ndebezium.source.topic.prefix=t\ndebezium.source.tombstones.on.delete=false`;
     }
     return propsStr;
   };
@@ -321,6 +321,7 @@ export function deployApplicationSuiteToProvider({
   crons,
   shouldBindIamUser,
   isAdhocEnv,
+  dependsOn: suiteDependsOn,
 }: ApplicationSuiteArgs): ApplicationReturn[] {
   // Create an equivalent k8s service account to an existing gcp service account
   const k8sServiceAccount = createAndBindK8sServiceAccount(
@@ -338,7 +339,7 @@ export function deployApplicationSuiteToProvider({
     data: secrets || {},
   });
 
-  const dependsOn: Input<Resource>[] = [];
+  const dependsOn: Input<Resource>[] = suiteDependsOn ?? [];
   if (secrets) {
     // Create the secret object
     const secretK8s = createKubernetesSecretFromRecord({
@@ -360,7 +361,7 @@ export function deployApplicationSuiteToProvider({
       migration.args,
       containerEnvVars,
       k8sServiceAccount,
-      { provider, resourcePrefix },
+      { provider, resourcePrefix, dependsOn: suiteDependsOn },
     );
     dependsOn.push(migrationJob);
   }

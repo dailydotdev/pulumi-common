@@ -9,8 +9,8 @@ import {
 export type StreamArgs = gcp.pubsub.TopicArgs & { isAdhocEnv: boolean };
 
 export class Stream extends pulumi.ComponentResource {
-  private instance: gcp.pubsub.Topic | undefined;
-  private topicName: pulumi.Input<string>;
+  private readonly instance: gcp.pubsub.Topic | undefined;
+  private readonly topicName: pulumi.Input<string>;
 
   constructor(
     name: string,

@@ -49,7 +49,12 @@ export function createMigrationJob(
   {
     provider,
     resourcePrefix = '',
-  }: { provider?: ProviderResource; resourcePrefix?: string } = {},
+    dependsOn,
+  }: {
+    provider?: ProviderResource;
+    resourcePrefix?: string;
+    dependsOn?: Input<Resource>[];
+  } = {},
 ): k8s.batch.v1.Job {
   const name = `${baseName}-${image.split(':')[1]}`;
   return new k8s.batch.v1.Job(
@@ -80,6 +85,7 @@ export function createMigrationJob(
     {
       deleteBeforeReplace: true,
       provider,
+      dependsOn,
     },
   );
 }
@@ -382,7 +388,7 @@ export const createAutoscaledExposedApplication = ({
         selector: labels,
       },
     },
-    { provider },
+    { provider, dependsOn: [returnObj.deployment] },
   );
   return { ...returnObj, service };
 };
