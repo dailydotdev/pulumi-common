@@ -442,12 +442,7 @@ export function deployApplicationSuiteToProvider({
  * Deploys an application suite to multiple providers based on our best practices
  */
 export function deployApplicationSuite(
-  {
-    migration,
-    debezium,
-    crons,
-    ...suite
-  }: Omit<
+  suite: Omit<
     ApplicationSuiteArgs,
     'provider' | 'resourcePrefix' | 'vpcNative' | 'shouldBindIamUser'
   >,
@@ -456,9 +451,6 @@ export function deployApplicationSuite(
   if (suite.isAdhocEnv) {
     const apps = deployApplicationSuiteToProvider({
       ...suite,
-      migration,
-      debezium,
-      crons,
       shouldBindIamUser: false,
     });
     return [apps];
@@ -466,18 +458,11 @@ export function deployApplicationSuite(
     // We need to run migration and debezium only on one provider
     const vpcNativeApps = deployApplicationSuiteToProvider({
       ...suite,
-      migration,
-      debezium,
-      crons,
       shouldBindIamUser: true,
       provider: (vpcNativeProvider || getVpcNativeCluster()).provider,
       resourcePrefix: 'vpc-native-',
       vpcNative: true,
     });
-    const legacyApps = deployApplicationSuiteToProvider({
-      ...suite,
-      shouldBindIamUser: false,
-    });
-    return [vpcNativeApps, legacyApps];
+    return [vpcNativeApps];
   }
 }
