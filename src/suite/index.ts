@@ -141,6 +141,7 @@ function deployCron(
     nameSuffix,
     schedule,
     concurrencyPolicy = 'Forbid',
+    activeDeadlineSeconds,
     volumes,
     volumeMounts,
     env = [],
@@ -173,6 +174,7 @@ function deployCron(
         failedJobsHistoryLimit: 3,
         jobTemplate: {
           spec: {
+            activeDeadlineSeconds: activeDeadlineSeconds,
             template: {
               metadata: {
                 labels: {

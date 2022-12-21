@@ -51,6 +51,7 @@ export type CronArgs = {
   nameSuffix?: string;
   schedule: string;
   concurrencyPolicy?: string;
+  activeDeadlineSeconds?: number;
   limits: Input<Limits>;
   dependsOn?: Input<Resource>[];
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
