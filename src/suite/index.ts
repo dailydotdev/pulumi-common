@@ -248,6 +248,7 @@ function deployApplication(
     enableCdn,
     volumes,
     volumeMounts,
+    disableLifecycle,
   }: ApplicationArgs,
 ): ApplicationReturn {
   const appResourcePrefix = `${resourcePrefix}${
@@ -283,7 +284,9 @@ function deployApplication(
           ? { requests, limits: stripCpuFromRequests(requests) }
           : undefined,
         lifecycle:
-          createService && !isAdhocEnv ? gracefulTerminationHook() : undefined,
+          createService && !isAdhocEnv && !disableLifecycle
+            ? gracefulTerminationHook()
+            : undefined,
         volumeMounts,
       },
     ],
