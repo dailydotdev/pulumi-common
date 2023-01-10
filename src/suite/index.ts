@@ -307,7 +307,7 @@ function deployApplication(
 
 /**
  * Deploys an application suite to a single provider.
- * An application suite consists of several deployable units (i.e api, background worker).
+ * An application suite consists of several deployable units (i.e. api, background worker).
  * A suite can also require a migration job and/or a debezium instance.
  */
 export function deployApplicationSuiteToProvider({
@@ -372,14 +372,13 @@ export function deployApplicationSuiteToProvider({
   }
 
   if (debezium) {
-    const props = getDebeziumProps(
-      debezium.propsPath,
-      {
-        ...debezium.propsVars,
-        topic: debezium.topicName,
-      },
-      isAdhocEnv,
-    );
+    const propsVars = {
+      ...debezium.propsVars,
+    };
+    if (debezium.topicName) {
+      propsVars.topic = debezium.topicName;
+    }
+    const props = getDebeziumProps(debezium.propsPath, propsVars, isAdhocEnv);
     const diskSize = 100;
     // IMPORTANT: do not set resource prefix here, otherwise it might create new disk and other resources
     const { debeziumKey, disk } = deployDebeziumSharedDependencies(
