@@ -64,7 +64,7 @@ export type CronArgs = {
 };
 
 export type DebeziumArgs = {
-  topicName: string;
+  topicName?: string;
   propsPath: string;
   propsVars: Record<string, Input<string>>;
   dependenciesOnly?: boolean;
