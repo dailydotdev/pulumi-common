@@ -72,11 +72,17 @@ export type DebeziumArgs = {
   limits?: Limits;
 };
 
+export type AdditionalSecret = {
+  name: string;
+  data: Input<{ [key: string]: Input<string> }>;
+};
+
 export type ApplicationSuiteArgs = {
   name: string;
   namespace: string;
   serviceAccount?: gcp.serviceaccount.Account;
   secrets?: Record<string, Input<string>>;
+  additionalSecrets?: AdditionalSecret[];
   image: string;
   imageTag: string;
   apps: ApplicationArgs[];

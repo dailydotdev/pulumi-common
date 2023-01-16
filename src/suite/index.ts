@@ -315,6 +315,7 @@ export function deployApplicationSuiteToProvider({
   namespace,
   serviceAccount,
   secrets,
+  additionalSecrets,
   image,
   imageTag,
   apps,
@@ -355,6 +356,23 @@ export function deployApplicationSuiteToProvider({
       provider,
     });
     dependsOn.push(secretK8s);
+  }
+  if (additionalSecrets) {
+    const secretK8s = additionalSecrets.map(
+      ({ name, data }) =>
+        new k8s.core.v1.Secret(
+          `${resourcePrefix}${name}`,
+          {
+            metadata: {
+              name,
+              namespace,
+            },
+            data,
+          },
+          { provider },
+        ),
+    );
+    dependsOn.concat(secretK8s);
   }
 
   // Run migration if needed
