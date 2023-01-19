@@ -249,6 +249,7 @@ function deployApplication(
     volumes,
     volumeMounts,
     disableLifecycle,
+    podAnnotations,
   }: ApplicationArgs,
 ): ApplicationReturn {
   const appResourcePrefix = `${resourcePrefix}${
@@ -268,6 +269,7 @@ function deployApplication(
     podSpec: {
       volumes,
     },
+    podAnnotations,
     containers: [
       {
         name: 'app',

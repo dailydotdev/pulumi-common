@@ -197,6 +197,7 @@ export type KubernetesApplicationArgs = {
   podSpec?: Input<
     Omit<k8s.types.input.core.v1.PodSpec, 'containers' | 'serviceAccountName'>
   >;
+  podAnnotations?: Input<{ [key: string]: Input<string> }>;
   provider?: ProviderResource;
   isAdhocEnv?: boolean;
 };
@@ -228,6 +229,7 @@ export const createAutoscaledApplication = ({
   resourcePrefix = '',
   deploymentDependsOn = [],
   podSpec,
+  podAnnotations,
   labels: extraLabels,
   shouldCreatePDB = false,
   provider,
@@ -261,7 +263,7 @@ export const createAutoscaledApplication = ({
       spec: {
         selector: { matchLabels: labels },
         template: {
-          metadata: { labels },
+          metadata: { labels, annotations: podAnnotations },
           spec: {
             containers,
             serviceAccountName: serviceAccount?.metadata.name,

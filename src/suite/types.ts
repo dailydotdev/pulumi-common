@@ -38,6 +38,7 @@ export type ApplicationArgs = {
   volumes?: Input<Input<k8s.types.input.core.v1.Volume>[]>;
   volumeMounts?: Input<Input<k8s.types.input.core.v1.VolumeMount>[]>;
   disableLifecycle?: boolean;
+  podAnnotations?: Input<{ [key: string]: Input<string> }>;
 };
 
 export type ApplicationReturn = KubernetesApplicationReturn & {
