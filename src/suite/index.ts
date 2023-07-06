@@ -425,6 +425,7 @@ export function deployApplicationSuiteToProvider({
           resourcePrefix,
           limits: debezium.limits,
           isAdhocEnv,
+          env: debezium.env,
         },
       );
     }

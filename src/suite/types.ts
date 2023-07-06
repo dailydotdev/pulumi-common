@@ -71,6 +71,7 @@ export type DebeziumArgs = {
   dependenciesOnly?: boolean;
   version?: string;
   limits?: Limits;
+  env?: Input<k8s.types.input.core.v1.EnvVar>[];
 };
 
 export type AdditionalSecret = {
