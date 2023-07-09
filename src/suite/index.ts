@@ -38,7 +38,7 @@ import { stripCpuFromRequests } from '../utils';
  */
 export function customMetricToK8s(
   metric: CustomMetric,
-): Input<Input<k8s.types.input.autoscaling.v2beta2.MetricSpec>[]> {
+): Input<Input<k8s.types.input.autoscaling.v2.MetricSpec>[]> {
   switch (metric.type) {
     case 'pubsub':
       // Expand the short label keys to full labels
