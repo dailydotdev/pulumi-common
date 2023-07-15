@@ -112,12 +112,16 @@ function getDebeziumProps(
 ): Output<string> {
   const func = async (vars: Record<string, string>): Promise<string> => {
     const props = await readFile(propsPath, 'utf-8');
-    const propsStr = Object.keys(vars).reduce(
+    let propsStr = Object.keys(vars).reduce(
       (acc, key) => acc.replace(`%${key}%`, vars[key]),
       props,
     );
     if (isAdhocEnv) {
-      return `${propsStr}\ndebezium.sink.pubsub.address=pubsub:8085\ndebezium.sink.pubsub.project.id=local\ndebezium.source.topic.prefix=t\ndebezium.source.tombstones.on.delete=false`;
+      if (!propsStr.includes('debezium.source.topic.prefix')) {
+        propsStr +=
+          '\ndebezium.source.topic.prefix=t\ndebezium.source.tombstones.on.delete=false';
+      }
+      return `${propsStr}\ndebezium.sink.pubsub.address=pubsub:8085\ndebezium.sink.pubsub.project.id=local`;
     }
     return propsStr;
   };
@@ -426,6 +430,7 @@ export function deployApplicationSuiteToProvider({
           limits: debezium.limits,
           isAdhocEnv,
           env: debezium.env,
+          disableHealthCheck: debezium.disableHealthCheck,
         },
       );
     }

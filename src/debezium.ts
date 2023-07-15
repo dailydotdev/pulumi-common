@@ -17,6 +17,7 @@ type OptionalArgs = {
   resourcePrefix?: string;
   provider?: ProviderResource;
   isAdhocEnv?: boolean;
+  disableHealthCheck?: boolean;
 };
 
 const DEFAULT_DISK_SIZE = 10;
@@ -93,9 +94,16 @@ export function deployDebeziumKubernetesResources(
     resourcePrefix = '',
     provider,
     isAdhocEnv,
+    disableHealthCheck,
   }: Pick<
     OptionalArgs,
-    'limits' | 'env' | 'image' | 'resourcePrefix' | 'provider' | 'isAdhocEnv'
+    | 'limits'
+    | 'env'
+    | 'image'
+    | 'resourcePrefix'
+    | 'provider'
+    | 'isAdhocEnv'
+    | 'disableHealthCheck'
   > = {},
 ): void {
   const propsHash = debeziumPropsString.apply((props) =>
@@ -223,6 +231,15 @@ export function deployDebeziumKubernetesResources(
     });
   }
 
+  let livenessProbe: k8s.types.input.core.v1.Probe | undefined;
+  if (!disableHealthCheck) {
+    livenessProbe = {
+      httpGet: { path: '/q/health', port: 'http' },
+      initialDelaySeconds: 60,
+      periodSeconds: 30,
+    };
+  }
+
   new k8s.apps.v1.Deployment(
     `${resourcePrefix}debezium-deployment`,
     {
@@ -265,11 +282,7 @@ export function deployDebeziumKubernetesResources(
                       requests,
                     }
                   : undefined,
-                livenessProbe: {
-                  httpGet: { path: '/q/health', port: 'http' },
-                  initialDelaySeconds: 60,
-                  periodSeconds: 30,
-                },
+                livenessProbe,
               },
             ],
           },
@@ -297,6 +310,7 @@ export function deployDebeziumWithDependencies(
     resourcePrefix = '',
     provider,
     isAdhocEnv,
+    disableHealthCheck,
   }: OptionalArgs = {},
 ): void {
   const { debeziumKey, disk } = deployDebeziumSharedDependencies(
@@ -310,6 +324,14 @@ export function deployDebeziumWithDependencies(
     debeziumPropsString,
     debeziumKey,
     disk,
-    { limits, env, image, resourcePrefix, provider, isAdhocEnv },
+    {
+      limits,
+      env,
+      image,
+      resourcePrefix,
+      provider,
+      isAdhocEnv,
+      disableHealthCheck,
+    },
   );
 }
