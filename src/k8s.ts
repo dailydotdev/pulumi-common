@@ -313,7 +313,7 @@ export const createAutoscaledApplication = ({
             labels,
           },
           spec: {
-            minAvailable: 1,
+            maxUnavailable: 1,
             selector: {
               matchLabels: labels,
             },
