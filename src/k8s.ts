@@ -200,6 +200,7 @@ export type KubernetesApplicationArgs = {
   podAnnotations?: Input<{ [key: string]: Input<string> }>;
   provider?: ProviderResource;
   isAdhocEnv?: boolean;
+  strategy?: k8s.types.input.apps.v1.DeploymentStrategy;
 };
 
 export type KubernetesApplicationReturn = {
@@ -234,6 +235,7 @@ export const createAutoscaledApplication = ({
   shouldCreatePDB = false,
   provider,
   isAdhocEnv,
+  strategy,
 }: KubernetesApplicationArgs): KubernetesApplicationReturn => {
   const labels: Input<{
     [key: string]: Input<string>;
@@ -262,6 +264,7 @@ export const createAutoscaledApplication = ({
       },
       spec: {
         selector: { matchLabels: labels },
+        strategy,
         template: {
           metadata: { labels, annotations: podAnnotations },
           spec: {
@@ -332,6 +335,12 @@ export const createAutoscaledExposedApplication = ({
   shouldCreatePDB = true,
   provider,
   serviceType = 'NodePort',
+  strategy = {
+    type: 'RollingUpdate',
+    rollingUpdate: {
+      maxUnavailable: 1,
+    },
+  },
   ...args
 }: KubernetesApplicationArgs & {
   enableCdn?: boolean;
@@ -342,6 +351,7 @@ export const createAutoscaledExposedApplication = ({
     ...args,
     shouldCreatePDB,
     provider,
+    strategy,
   });
   const { labels } = returnObj;
   const annotations: Record<string, Output<string>> = {};
