@@ -258,9 +258,6 @@ export const createAutoscaledApplication = ({
         name,
         namespace: namespace,
         labels: versionLabels,
-        annotations: {
-          'pulumi.com/patchForce': 'true',
-        },
       },
       spec: {
         selector: { matchLabels: labels },
@@ -278,7 +275,6 @@ export const createAutoscaledApplication = ({
     {
       dependsOn: deploymentDependsOn,
       provider,
-      ignoreChanges: ['spec.replicas'],
     },
   );
 
