@@ -29,6 +29,7 @@ export type ApplicationArgs = {
   livenessProbe?: Input<k8s.types.input.core.v1.Probe>;
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
   createService?: boolean;
+  isApi?: boolean;
   serviceType?: k8s.types.enums.core.v1.ServiceSpecType;
   metric: CustomMetric;
   labels?: { [key: string]: string };

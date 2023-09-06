@@ -252,8 +252,9 @@ function deployApplication(
     enableCdn,
     volumes,
     volumeMounts,
-    disableLifecycle,
+    disableLifecycle = true,
     podAnnotations,
+    isApi = createService,
   }: ApplicationArgs,
 ): ApplicationReturn {
   const appResourcePrefix = `${resourcePrefix}${
@@ -290,14 +291,14 @@ function deployApplication(
           ? { requests, limits: stripCpuFromRequests(requests) }
           : undefined,
         lifecycle:
-          createService && !isAdhocEnv && !disableLifecycle
+          isApi && !isAdhocEnv && !disableLifecycle
             ? gracefulTerminationHook()
             : undefined,
         volumeMounts,
       },
     ],
     deploymentDependsOn: dependsOn,
-    shouldCreatePDB: createService,
+    shouldCreatePDB: isApi,
     provider,
     isAdhocEnv,
   };
