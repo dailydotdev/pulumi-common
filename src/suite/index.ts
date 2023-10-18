@@ -255,6 +255,7 @@ function deployApplication(
     disableLifecycle = true,
     podAnnotations,
     isApi = createService,
+    extraServicePorts = [],
   }: ApplicationArgs,
 ): ApplicationReturn {
   const appResourcePrefix = `${resourcePrefix}${
@@ -301,6 +302,7 @@ function deployApplication(
     shouldCreatePDB: isApi,
     provider,
     isAdhocEnv,
+    extraServicePorts,
   };
   if (createService) {
     return createAutoscaledExposedApplication({
