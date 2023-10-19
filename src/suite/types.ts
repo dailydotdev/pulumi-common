@@ -24,6 +24,7 @@ export type ApplicationArgs = {
   maxReplicas: number;
   limits: Input<Limits>;
   dependsOn?: Input<Resource>[];
+  /** @deprecated please use the new ports */
   port?: number;
   readinessProbe?: Input<k8s.types.input.core.v1.Probe>;
   livenessProbe?: Input<k8s.types.input.core.v1.Probe>;
@@ -40,6 +41,8 @@ export type ApplicationArgs = {
   volumeMounts?: Input<Input<k8s.types.input.core.v1.VolumeMount>[]>;
   disableLifecycle?: boolean;
   podAnnotations?: Input<{ [key: string]: Input<string> }>;
+  ports?: k8s.types.input.core.v1.ContainerPort[];
+  servicePorts?: k8s.types.input.core.v1.ServicePort[];
 };
 
 export type ApplicationReturn = KubernetesApplicationReturn & {

@@ -239,7 +239,6 @@ function deployApplication(
     maxReplicas,
     limits: requests,
     dependsOn,
-    port,
     readinessProbe,
     livenessProbe = readinessProbe,
     env = [],
@@ -255,6 +254,8 @@ function deployApplication(
     disableLifecycle = true,
     podAnnotations,
     isApi = createService,
+    ports = [],
+    servicePorts = [],
   }: ApplicationArgs,
 ): ApplicationReturn {
   const appResourcePrefix = `${resourcePrefix}${
@@ -281,9 +282,7 @@ function deployApplication(
         image,
         command,
         args,
-        ports: port
-          ? [{ name: 'http', containerPort: port, protocol: 'TCP' }]
-          : undefined,
+        ports,
         readinessProbe,
         livenessProbe,
         env: [...globalEnvVars, ...env],
@@ -301,6 +300,8 @@ function deployApplication(
     shouldCreatePDB: isApi,
     provider,
     isAdhocEnv,
+    ports,
+    servicePorts,
   };
   if (createService) {
     return createAutoscaledExposedApplication({
@@ -450,12 +451,15 @@ export function deployApplicationSuiteToProvider({
     isAdhocEnv,
   };
   // Deploy the applications
-  const appsRet = apps.map((app) =>
-    deployApplication(context, {
+  const appsRet = apps.map((app) => {
+    if (app.port && !app.ports) {
+      app.ports = [{ name: 'http', containerPort: app.port, protocol: 'TCP' }];
+    }
+    return deployApplication(context, {
       ...app,
       dependsOn: [...dependsOn, ...(app.dependsOn || [])],
-    }),
-  );
+    });
+  });
 
   if (crons) {
     crons.map((cron) =>

@@ -201,6 +201,8 @@ export type KubernetesApplicationArgs = {
   provider?: ProviderResource;
   isAdhocEnv?: boolean;
   strategy?: k8s.types.input.apps.v1.DeploymentStrategy;
+  ports?: k8s.types.input.core.v1.ContainerPort[];
+  servicePorts?: k8s.types.input.core.v1.ServicePort[];
 };
 
 export type KubernetesApplicationReturn = {
@@ -337,6 +339,7 @@ export const createAutoscaledExposedApplication = ({
       maxUnavailable: 1,
     },
   },
+  servicePorts = [],
   ...args
 }: KubernetesApplicationArgs & {
   enableCdn?: boolean;
@@ -379,6 +382,12 @@ export const createAutoscaledExposedApplication = ({
       (name) => `{"default": "${name}"}`,
     );
   }
+
+  const ports =
+    servicePorts.length > 0
+      ? servicePorts
+      : [{ port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' }];
+
   const service = new k8s.core.v1.Service(
     `${resourcePrefix}service`,
     {
@@ -390,9 +399,7 @@ export const createAutoscaledExposedApplication = ({
       },
       spec: {
         type: serviceType,
-        ports: [
-          { port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' },
-        ],
+        ports,
         selector: labels,
       },
     },
