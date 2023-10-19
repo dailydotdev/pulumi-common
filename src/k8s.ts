@@ -382,6 +382,12 @@ export const createAutoscaledExposedApplication = ({
       (name) => `{"default": "${name}"}`,
     );
   }
+
+  const ports =
+    servicePorts && servicePorts.length > 0
+      ? servicePorts
+      : [{ port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' }];
+
   const service = new k8s.core.v1.Service(
     `${resourcePrefix}service`,
     {
@@ -393,9 +399,7 @@ export const createAutoscaledExposedApplication = ({
       },
       spec: {
         type: serviceType,
-        ports: servicePorts ?? [
-          { port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' },
-        ],
+        ports,
         selector: labels,
       },
     },
