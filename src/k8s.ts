@@ -384,7 +384,7 @@ export const createAutoscaledExposedApplication = ({
   }
 
   const ports =
-    servicePorts && servicePorts.length > 0
+    servicePorts?.length > 0
       ? servicePorts
       : [{ port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' }];
 
