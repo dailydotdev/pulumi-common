@@ -303,7 +303,7 @@ function deployApplication(
     ports,
     servicePorts,
   };
-  if (createService) {
+  if (createService || servicePorts.length > 0) {
     return createAutoscaledExposedApplication({
       ...appArgs,
       serviceType: vpcNative ? 'ClusterIP' : serviceType,
