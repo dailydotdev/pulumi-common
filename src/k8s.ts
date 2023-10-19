@@ -339,7 +339,7 @@ export const createAutoscaledExposedApplication = ({
       maxUnavailable: 1,
     },
   },
-  servicePorts,
+  servicePorts = [],
   ...args
 }: KubernetesApplicationArgs & {
   enableCdn?: boolean;
@@ -384,7 +384,7 @@ export const createAutoscaledExposedApplication = ({
   }
 
   const ports =
-    servicePorts?.length > 0
+    servicePorts.length > 0
       ? servicePorts
       : [{ port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' }];
 
