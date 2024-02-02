@@ -249,6 +249,7 @@ function deployApplication(
     command,
     args,
     enableCdn,
+    serviceTimeout,
     volumes,
     volumeMounts,
     disableLifecycle = true,
@@ -308,6 +309,7 @@ function deployApplication(
       ...appArgs,
       serviceType: vpcNative ? 'ClusterIP' : serviceType,
       enableCdn,
+      serviceTimeout,
     });
   }
   return createAutoscaledApplication(appArgs);

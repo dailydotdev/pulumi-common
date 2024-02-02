@@ -37,6 +37,7 @@ export type ApplicationArgs = {
   command?: Input<Input<string>[]>;
   args?: Input<Input<string>[]>;
   enableCdn?: boolean;
+  serviceTimeout?: number;
   volumes?: Input<Input<k8s.types.input.core.v1.Volume>[]>;
   volumeMounts?: Input<Input<k8s.types.input.core.v1.VolumeMount>[]>;
   disableLifecycle?: boolean;
