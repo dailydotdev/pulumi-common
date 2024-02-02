@@ -330,6 +330,7 @@ export const createAutoscaledApplication = ({
 
 export const createAutoscaledExposedApplication = ({
   enableCdn = false,
+  serviceTimeout,
   shouldCreatePDB = true,
   provider,
   serviceType = 'NodePort',
@@ -343,6 +344,7 @@ export const createAutoscaledExposedApplication = ({
   ...args
 }: KubernetesApplicationArgs & {
   enableCdn?: boolean;
+  serviceTimeout?: number;
   serviceType?: k8s.types.enums.core.v1.ServiceSpecType;
 }): KubernetesApplicationReturn & { service: k8s.core.v1.Service } => {
   const { resourcePrefix = '', name, namespace } = args;
@@ -354,7 +356,21 @@ export const createAutoscaledExposedApplication = ({
   });
   const { labels } = returnObj;
   const annotations: Record<string, Output<string>> = {};
-  if (enableCdn) {
+  if (enableCdn || serviceTimeout) {
+    const spec: Record<string, unknown> = {};
+    if (enableCdn) {
+      spec.cdn = {
+        enabled: true,
+        cachePolicy: {
+          includeHost: true,
+          includeProtocol: true,
+          includeQueryString: true,
+        },
+      };
+    }
+    if (serviceTimeout) {
+      spec.timeoutSec = serviceTimeout;
+    }
     const config = new k8s.apiextensions.CustomResource(
       `${resourcePrefix}backend-config`,
       {
@@ -365,16 +381,7 @@ export const createAutoscaledExposedApplication = ({
           namespace,
           labels,
         },
-        spec: {
-          cdn: {
-            enabled: true,
-            cachePolicy: {
-              includeHost: true,
-              includeProtocol: true,
-              includeQueryString: true,
-            },
-          },
-        },
+        spec,
       },
       { provider },
     );
