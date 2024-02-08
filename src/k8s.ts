@@ -56,7 +56,8 @@ export function createMigrationJob(
     dependsOn?: Input<Resource>[];
   } = {},
 ): k8s.batch.v1.Job {
-  const name = `${baseName}-${image.split(':')[1]}`;
+  const hash = image.split(':')[1];
+  const name = `${baseName}-${hash.substring(hash.length - 8)}`;
   return new k8s.batch.v1.Job(
     resourcePrefix + name,
     {
