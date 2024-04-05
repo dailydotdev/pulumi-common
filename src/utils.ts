@@ -14,7 +14,7 @@ export function nodeOptions(memory: number): { name: string; value: string } {
 }
 
 // Do not limit cpu (https://home.robusta.dev/blog/stop-using-cpu-limits/)
-export function stripCpuFromRequests(
+export function stripCpuFromLimits(
   requests: Input<Limits>,
 ): Output<Omit<Limits, 'cpu'>> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

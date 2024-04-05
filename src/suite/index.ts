@@ -31,7 +31,7 @@ import {
   deployDebeziumSharedDependencies,
 } from '../debezium';
 import { location } from '../config';
-import { stripCpuFromRequests } from '../utils';
+import { stripCpuFromLimits } from '../utils';
 
 /**
  * Takes a custom definition of an autoscaling metric and turn it into a k8s definition
@@ -200,7 +200,7 @@ function deployCron(
                     env: [...globalEnvVars, ...env],
                     resources: {
                       requests,
-                      limits: stripCpuFromRequests(requests),
+                      limits: stripCpuFromLimits(requests),
                     },
                   },
                 ],
@@ -288,7 +288,7 @@ function deployApplication(
         livenessProbe,
         env: [...globalEnvVars, ...env],
         resources: !isAdhocEnv
-          ? { requests, limits: stripCpuFromRequests(requests) }
+          ? { requests, limits: stripCpuFromLimits(requests) }
           : undefined,
         lifecycle:
           isApi && !isAdhocEnv && !disableLifecycle

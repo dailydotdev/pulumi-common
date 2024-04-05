@@ -5,7 +5,7 @@ import { createServiceAccountAndGrantRoles } from './serviceAccount';
 import { Input, Output, ProviderResource, interpolate } from '@pulumi/pulumi';
 import * as pulumi from '@pulumi/pulumi';
 import { input as inputs } from '@pulumi/kubernetes/types';
-import { stripCpuFromRequests } from './utils';
+import { stripCpuFromLimits } from './utils';
 import { Limits } from './k8s';
 
 type OptionalArgs = {
@@ -278,7 +278,7 @@ export function deployDebeziumKubernetesResources(
                 ],
                 resources: !isAdhocEnv
                   ? {
-                      limits: stripCpuFromRequests(requests),
+                      limits: stripCpuFromLimits(requests),
                       requests,
                     }
                   : undefined,
