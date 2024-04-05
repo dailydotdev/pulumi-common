@@ -23,6 +23,7 @@ export type ApplicationArgs = {
   minReplicas?: number;
   maxReplicas: number;
   limits: Input<PodResources>;
+  requests?: Input<PodResources>;
   dependsOn?: Input<Resource>[];
   /** @deprecated please use the new ports */
   port?: number;
