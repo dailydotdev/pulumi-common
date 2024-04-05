@@ -61,6 +61,7 @@ export type CronArgs = {
   concurrencyPolicy?: string;
   activeDeadlineSeconds?: number;
   limits: Input<PodResources>;
+  requests?: Input<PodResources>;
   dependsOn?: Input<Resource>[];
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
   labels?: { [key: string]: string };
