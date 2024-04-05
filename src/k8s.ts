@@ -6,7 +6,7 @@ import EnvVar = core.v1.EnvVar;
 import { Resource } from '@pulumi/pulumi/resource';
 import { camelToUnderscore } from './utils';
 
-export type Limits = { cpu?: string; memory?: string };
+export type PodResources = { cpu?: string; memory?: string };
 
 export function k8sServiceAccountToIdentity(
   serviceAccount: k8s.core.v1.ServiceAccount,
