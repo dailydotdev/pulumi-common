@@ -1,5 +1,5 @@
 import { all, Input, Output } from '@pulumi/pulumi';
-import { Limits } from './k8s';
+import { PodResources } from './k8s';
 
 export function camelToUnderscore(key: string): string {
   const result = key.replace(/([A-Z])/g, ' $1');
@@ -14,9 +14,9 @@ export function nodeOptions(memory: number): { name: string; value: string } {
 }
 
 // Do not limit cpu (https://home.robusta.dev/blog/stop-using-cpu-limits/)
-export function stripCpuFromRequests(
-  requests: Input<Limits>,
-): Output<Omit<Limits, 'cpu'>> {
+export function stripCpuFromLimits(
+  requests: Input<PodResources>,
+): Output<Omit<PodResources, 'cpu'>> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return all([requests]).apply(([{ cpu, ...rest }]) => rest);
 }

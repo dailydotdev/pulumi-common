@@ -5,13 +5,13 @@ import { createServiceAccountAndGrantRoles } from './serviceAccount';
 import { Input, Output, ProviderResource, interpolate } from '@pulumi/pulumi';
 import * as pulumi from '@pulumi/pulumi';
 import { input as inputs } from '@pulumi/kubernetes/types';
-import { stripCpuFromRequests } from './utils';
-import { Limits } from './k8s';
+import { stripCpuFromLimits } from './utils';
+import { PodResources } from './k8s';
 
 type OptionalArgs = {
   diskType?: Input<string>;
   diskSize?: Input<number>;
-  limits?: Input<Limits>;
+  limits?: Input<PodResources>;
   env?: pulumi.Input<inputs.core.v1.EnvVar>[];
   image?: string;
   resourcePrefix?: string;
@@ -278,7 +278,7 @@ export function deployDebeziumKubernetesResources(
                 ],
                 resources: !isAdhocEnv
                   ? {
-                      limits: stripCpuFromRequests(requests),
+                      limits: stripCpuFromLimits(requests),
                       requests,
                     }
                   : undefined,

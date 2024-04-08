@@ -1,7 +1,7 @@
 import { Input, ProviderResource } from '@pulumi/pulumi';
 import { Resource } from '@pulumi/pulumi/resource';
 import * as k8s from '@pulumi/kubernetes';
-import { KubernetesApplicationReturn, Limits } from '../k8s';
+import { KubernetesApplicationReturn, PodResources } from '../k8s';
 import * as gcp from '@pulumi/gcp';
 
 export type MetricMemoryCPU = {
@@ -22,7 +22,8 @@ export type ApplicationArgs = {
   nameSuffix?: string;
   minReplicas?: number;
   maxReplicas: number;
-  limits: Input<Limits>;
+  limits: Input<PodResources>;
+  requests?: Input<PodResources>;
   dependsOn?: Input<Resource>[];
   /** @deprecated please use the new ports */
   port?: number;
@@ -59,7 +60,8 @@ export type CronArgs = {
   schedule: string;
   concurrencyPolicy?: string;
   activeDeadlineSeconds?: number;
-  limits: Input<Limits>;
+  limits: Input<PodResources>;
+  requests?: Input<PodResources>;
   dependsOn?: Input<Resource>[];
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
   labels?: { [key: string]: string };
@@ -75,7 +77,7 @@ export type DebeziumArgs = {
   propsVars: Record<string, Input<string>>;
   dependenciesOnly?: boolean;
   version?: string;
-  limits?: Limits;
+  limits?: PodResources;
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
   disableHealthCheck?: boolean;
 };
