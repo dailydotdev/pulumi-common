@@ -169,6 +169,7 @@ function deployCron(
         namespace,
         labels: {
           app: appName,
+          'app-type': 'cron',
           ...labels,
         },
       },
