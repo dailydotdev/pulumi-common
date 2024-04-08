@@ -1,6 +1,8 @@
 import { all, Input, Output } from '@pulumi/pulumi';
 import { PodResources } from './k8s';
 
+export type AdhocEnv = { isAdhocEnv: boolean };
+
 export function camelToUnderscore(key: string): string {
   const result = key.replace(/([A-Z])/g, ' $1');
   return result.split(' ').join('_').toUpperCase();
