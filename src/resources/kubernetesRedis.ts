@@ -27,10 +27,13 @@ export type K8sRedisArgs = AdhocEnv & {
   namespace: pulumi.Input<string>;
   architecture?: pulumi.Input<'standalone' | 'replication'>;
   image?: Image;
-  tolerations?: pulumi.Input<Tolerations>;
   persistence?: pulumi.Input<{
     enabled?: pulumi.Input<boolean>;
     [key: string]: unknown;
+  }>;
+  tolerations?: pulumi.Input<{
+    master?: Tolerations;
+    replicas?: Tolerations;
   }>;
   nodeSelector?: pulumi.Input<{
     master?: NodeAffinity;
@@ -44,6 +47,13 @@ loadmodule /opt/redis-stack/lib/redisearch.so
 loadmodule /opt/redis-stack/lib/rejson.so
 `;
 
+const defaultImage = {
+  repository: 'redis/redis-stack-server',
+  tag: '7.2.0-v10',
+};
+
+const chartVersion = '19.0.2';
+
 export class KubernetesRedis extends pulumi.ComponentResource {
   constructor(
     name: string,
@@ -52,7 +62,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
   ) {
     super(`${urnPrefix}:KubernetesRedis`, name, args, opts);
 
-    const tolerations = args.tolerations || [];
+    // const tolerations = args.tolerations || [];
     const persistence = {
       ...args.persistence,
       size: pulumi
@@ -78,7 +88,6 @@ export class KubernetesRedis extends pulumi.ComponentResource {
 
     const redisInstance = {
       persistence,
-      tolerations,
       resources,
     };
 
@@ -89,7 +98,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
 
     new k8s.helm.v3.Release(name, {
       chart: 'redis',
-      version: '19.0.2',
+      version: chartVersion,
       namespace: args.namespace,
       repositoryOpts: {
         repo: 'https://charts.bitnami.com/bitnami',
@@ -99,25 +108,27 @@ export class KubernetesRedis extends pulumi.ComponentResource {
       values: {
         fullnameOverride: name,
         image: {
-          repository: args.image?.repository || 'redis/redis-stack-server',
-          tag: args.image?.tag || '7.2.0-v10',
+          repository: args.image?.repository || defaultImage.repository,
+          tag: args.image?.tag || defaultImage.tag,
         },
         architecture: args.architecture || 'replication',
         commonConfiguration,
         auth,
-        master: {
-          ...redisInstance,
-          nodeAffinityPreset: pulumi
-            .all([args.nodeSelector])
-            .apply(([nodeSelector]) => nodeSelector?.master),
-        },
-        replica: {
-          ...redisInstance,
-          replicaCount: args.replicas || 3,
-          nodeAffinityPreset: pulumi
-            .all([args.nodeSelector])
-            .apply(([nodeSelector]) => nodeSelector?.replicas),
-        },
+        master: pulumi
+          .all([args.nodeSelector, args.tolerations])
+          .apply(([nodeSelector, tolerations]) => ({
+            ...redisInstance,
+            nodeAffinityPreset: nodeSelector?.master,
+            tolerations: tolerations?.master,
+          })),
+        replica: pulumi
+          .all([args.nodeSelector, args.tolerations])
+          .apply(([nodeSelector, tolerations]) => ({
+            ...redisInstance,
+            replicaCount: args.replicas || 3,
+            nodeAffinityPreset: nodeSelector?.replicas,
+            tolerations: tolerations?.replicas,
+          })),
       },
     });
   }
