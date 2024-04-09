@@ -117,7 +117,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
         architecture: args.architecture || 'replication',
         commonConfiguration,
         auth,
-        metrics: args.metrics || true,
+        metrics: args.metrics ?? true,
         master: pulumi
           .all([args.nodeSelector, args.tolerations])
           .apply(([nodeSelector, tolerations]) => ({
