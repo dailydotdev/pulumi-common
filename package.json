@@ -18,13 +18,13 @@
   },
   "homepage": "https://github.com/dailydotdev/pulumi-common#readme",
   "dependencies": {
-    "@google-cloud/pubsub": "^4.0.6",
-    "@pulumi/gcp": "^6.67.0",
-    "@pulumi/kubernetes": "^4.4.0",
-    "@pulumi/pulumi": "^3.89.0",
-    "knex": "^3.0.1",
+    "@google-cloud/pubsub": "^4.3.3",
+    "@pulumi/gcp": "^7.17.0",
+    "@pulumi/kubernetes": "^4.9.1",
+    "@pulumi/pulumi": "^3.112.0",
+    "knex": "^3.1.0",
     "mysql": "^2.18.1",
-    "pg": "^8.11.3"
+    "pg": "^8.11.5"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.8.0",
