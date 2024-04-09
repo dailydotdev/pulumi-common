@@ -1,8 +1,9 @@
 import * as pulumi from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
 import { urnPrefix } from '../constants';
+import { AdhocEnv } from '../utils';
 
-export type RedisArgs = gcp.redis.InstanceArgs & { isAdhocEnv: boolean };
+export type RedisArgs = AdhocEnv & gcp.redis.InstanceArgs;
 
 const REDIS_LOCAL_HOST = 'redis';
 const REDIS_LOCAL_PORT = 6379;
