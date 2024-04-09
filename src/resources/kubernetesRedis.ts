@@ -24,6 +24,7 @@ type NodeAffinity = {
 export type K8sRedisArgs = AdhocEnv & {
   replicas: pulumi.Input<number>;
   memorySizeGb: pulumi.Input<number>;
+  cpuSize?: pulumi.Input<number | string>;
   namespace: pulumi.Input<string>;
   architecture?: pulumi.Input<'standalone' | 'replication'>;
   image?: Image;
@@ -75,7 +76,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
       ? undefined
       : {
           requests: {
-            cpu: '1000m',
+            cpu: args.cpuSize || '1000m',
             memory: `${args.memorySizeGb}Gi`,
           },
           limits: {
