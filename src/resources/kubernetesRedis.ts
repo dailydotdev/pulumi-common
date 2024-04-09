@@ -68,8 +68,8 @@ export class KubernetesRedis extends pulumi.ComponentResource {
       ...args.persistence,
       size: pulumi
         .all([args.memorySizeGb])
-        // Set persistence size to 2x memory size
-        .apply(([memorySizeGb]) => `${Math.max(memorySizeGb * 2)}Gi`),
+        // Set persistence size to 2x memory size, with a minimum of 10Gi (Google Cloud's minimum persistent disk size)
+        .apply(([memorySizeGb]) => `${Math.max(10, memorySizeGb * 2)}Gi`),
     };
 
     const resources = args.isAdhocEnv
