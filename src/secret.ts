@@ -13,7 +13,7 @@ export function createEncryptedEnvVar(
 ): Secret {
   const secret = new gcp.secretmanager.Secret(`${prefix}-secret-${key}`, {
     secretId: `${prefix}-secret-${key}`,
-    replication: { automatic: true },
+    replication: { auto: {} },
   });
 
   const version = new gcp.secretmanager.SecretVersion(`${prefix}-sv-${key}`, {
