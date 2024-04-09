@@ -65,6 +65,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
 
     // const tolerations = args.tolerations || [];
     const persistence = {
+      storageClass: 'standard-rwo',
       ...args.persistence,
       size: pulumi
         .all([args.memorySizeGb])
