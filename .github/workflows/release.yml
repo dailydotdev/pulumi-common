@@ -30,6 +30,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Cache node_modules
         id: cache-node_modules
@@ -60,10 +61,10 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           git push --follow-tags
-          gh release create $VERSION --generate-notes
+          gh release create "v${VERSION}" --generate-notes
 
       - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          npm publish
+          npm publish --access public
