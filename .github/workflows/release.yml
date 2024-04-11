@@ -44,7 +44,7 @@ jobs:
       - name: Install dependencies
         if: steps.cache-node_modules.outputs.cache-hit != 'true'
         run: |
-          yarn install --immutable
+          npm ci
 
       - name: Setup git
         run: |
