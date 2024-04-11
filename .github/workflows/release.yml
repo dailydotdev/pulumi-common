@@ -60,7 +60,7 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           git push --follow-tags
-          gh release create $VERSION --generate-notes
+          gh release create "v${VERSION}" --generate-notes
 
       - name: Publish to npm
         env:
