@@ -32,16 +32,19 @@ export type K8sRedisArgs = AdhocEnv & {
     enabled?: pulumi.Input<boolean>;
     [key: string]: unknown;
   }>;
-  tolerations?: pulumi.Input<{
-    master?: Tolerations;
-    replicas?: Tolerations;
-  }>;
-  nodeSelector?: pulumi.Input<{
-    master?: NodeAffinity;
-    replicas?: NodeAffinity;
-  }>;
+  tolerations?: {
+    master?: pulumi.Input<Tolerations[]>;
+    replicas?: pulumi.Input<Tolerations[]>;
+  };
+  nodeSelector?: {
+    master?: pulumi.Input<NodeAffinity>;
+    replicas?: pulumi.Input<NodeAffinity>;
+  };
   authKey?: pulumi.Input<string>;
-  metrics?: pulumi.Input<boolean>;
+  metrics?: pulumi.Input<{
+    enabled?: pulumi.Input<boolean>;
+    [key: string]: unknown;
+  }>;
 };
 
 const commonConfiguration = `
@@ -117,7 +120,10 @@ export class KubernetesRedis extends pulumi.ComponentResource {
         architecture: args.architecture || 'replication',
         commonConfiguration,
         auth,
-        metrics: args.metrics ?? true,
+        metrics: pulumi.all([args.metrics]).apply(([metrics]) => ({
+          ...metrics,
+          enabled: metrics?.enabled ?? true,
+        })),
         master: pulumi
           .all([args.nodeSelector, args.tolerations])
           .apply(([nodeSelector, tolerations]) => ({
