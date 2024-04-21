@@ -21,7 +21,7 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
     args: K8sRedisClusterArgs,
     opts?: pulumi.CustomResourceOptions,
   ) {
-    super(`${urnPrefix}:KubernetesRedis`, name, args, opts);
+    super(`${urnPrefix}:KubernetesRedisCluster`, name, args, opts);
 
     new k8s.helm.v3.Release(name, {
       ...charts['redis-cluster'],
