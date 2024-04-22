@@ -14,5 +14,4 @@ export * from './suite/index';
 export * from './resources/redis';
 export * from './resources/stream';
 export * from './resources/sql';
-export * from './resources/kubernetesRedis';
 export * from './kubernetes';
