@@ -40,3 +40,6 @@ export class Redis extends pulumi.ComponentResource {
     return this.instance?.authString || pulumi.output(REDIS_LOCAL_AUTH);
   }
 }
+
+export * from './kubernetesRedis';
+export * from './kubernetesRedisCluster';
