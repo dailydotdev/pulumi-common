@@ -55,8 +55,10 @@ export class KubernetesRedis extends pulumi.ComponentResource {
 
         // Values specific to master-slave setup
         architecture: args.architecture || 'replication',
-        enabled: !!args.authKey,
-        password: args.authKey,
+        auth: {
+          enabled: !!args.authKey,
+          password: args.authKey,
+        },
         master: pulumi
           .all([args.affinity, args.tolerations])
           .apply(([affinity, tolerations]) => ({
