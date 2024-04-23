@@ -21,18 +21,23 @@ export type NodeSelectorTerms = {
     }
   | {
       operator: Input<'Exists' | 'DoesNotExist'>;
+      values?: never;
     }
 );
 
 export type NodeAffinity = {
   requiredDuringSchedulingIgnoredDuringExecution?: Input<{
-    nodeSelectorTerms: Input<NodeSelectorTerms[]>;
+    nodeSelectorTerms: Input<
+      {
+        matchExpressions: Input<NodeSelectorTerms[]>;
+      }[]
+    >;
   }>;
   preferredDuringSchedulingIgnoredDuringExecution?: Input<
     {
       weight: Input<number>;
       preference: Input<{
-        matchExpressions: Input<NodeSelectorTerms>;
+        matchExpressions: Input<NodeSelectorTerms[]>;
       }>;
     }[]
   >;
