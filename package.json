@@ -5,6 +5,7 @@
   "scripts": {
     "lint": "eslint . --ext .js,.ts --max-warnings 0",
     "build": "tsc",
+    "dev": "tsc --watch",
     "prebuild": "rm -rf lib",
     "prepublishOnly": "npm run build"
   },
