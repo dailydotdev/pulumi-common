@@ -1,5 +1,7 @@
+import { Output, all } from '@pulumi/pulumi';
 import { version } from '../../package.json';
-import { Image } from './types';
+import { Image, Resources } from './types';
+import { AdhocEnv } from '../utils';
 
 export const NodeLabelKeys = {
   Type: 'node.daily.dev/type',
@@ -59,4 +61,24 @@ export const commonLabels = {
 export const image = ({ repository, tag, digest }: Image) => {
   const separator = digest ? '@' : ':';
   return `${repository}${separator}${digest || tag}`;
+};
+
+export const configureResources = (
+  args: AdhocEnv & {
+    resources?: Resources;
+  },
+): Output<Resources> | undefined => {
+  return args.isAdhocEnv
+    ? undefined
+    : all([args.resources]).apply(([resources]) => {
+        return {
+          requests: {
+            cpu: resources?.requests?.cpu || '1000m',
+            memory: resources?.requests?.memory || '1Gi',
+          },
+          limits: {
+            memory: resources?.limits?.memory || '2Gi',
+          },
+        };
+      });
 };
