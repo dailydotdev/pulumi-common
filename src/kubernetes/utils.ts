@@ -1,3 +1,4 @@
+import { version } from '../../package.json';
 import { Image } from './types';
 
 export const NodeLabelKeys = {
@@ -41,6 +42,15 @@ export const extractNodeLabels = (
     [label.key]: label.value,
   };
 };
+
+/**
+ * Common labels used in the daily.dev infrastructure.
+ * These labels are used to identify resources created by pulumi, and of which version of the pulumi-common library was used to create them.
+ */
+export const commonLabels = {
+  'app.kubernetes.io/managed-by': 'pulumi',
+  'pulumi-common.daily.dev/version': version,
+} as const;
 
 /**
  * Returns the image string to be used in a Kubernetes deployment.
