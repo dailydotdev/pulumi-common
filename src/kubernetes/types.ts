@@ -1,9 +1,16 @@
 import { Input } from '@pulumi/pulumi';
 
-export type Image = {
-  repository: Input<string>;
-  tag: Input<string>;
-};
+export type Image =
+  | {
+      repository: Input<string>;
+      tag: Input<string>;
+      digest?: never;
+    }
+  | {
+      repository: Input<string>;
+      tag?: never;
+      digest: Input<string>;
+    };
 
 export type Tolerations = {
   key: Input<string>;

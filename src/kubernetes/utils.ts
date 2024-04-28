@@ -1,3 +1,5 @@
+import { Image } from './types';
+
 export const NodeLabelKeys = {
   Type: 'node.daily.dev/type',
   OptimizedRedis: 'node.daily.dev/optimized-redis',
@@ -38,4 +40,13 @@ export const extractNodeLabels = (
   return {
     [label.key]: label.value,
   };
+};
+
+/**
+ * Returns the image string to be used in a Kubernetes deployment.
+ * If a digest is provided, it will be used instead of the tag.
+ */
+export const image = ({ repository, tag, digest }: Image) => {
+  const separator = digest ? '@' : ':';
+  return `${repository}${separator}${digest || tag}`;
 };
