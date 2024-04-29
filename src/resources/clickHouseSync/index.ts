@@ -67,19 +67,23 @@ export class ClickHouseSync extends ComponentResource {
       createHash('sha256').update(configString).digest('hex'),
     );
 
-    this.config = new k8s.core.v1.Secret(`${name}-clickhouse-sync-config`, {
-      metadata: {
-        namespace: args.namespace,
-        name: `${name}-clickhouse-sync-config`,
-        labels: {
-          ...commonLabels,
-          'app.kubernetes.io/name': `${name}-clickhouse-sync-config`,
+    this.config = new k8s.core.v1.Secret(
+      `${name}-clickhouse-sync-config`,
+      {
+        metadata: {
+          namespace: args.namespace,
+          name: `${name}-clickhouse-sync-config`,
+          labels: {
+            ...commonLabels,
+            'app.kubernetes.io/name': `${name}-clickhouse-sync-config`,
+          },
+        },
+        data: {
+          'config.yml': config,
         },
       },
-      data: {
-        'config.yml': config,
-      },
-    });
+      resourceOptions,
+    );
 
     this.deployment = new k8s.apps.v1.Deployment(
       `${name}-clickhouse-sync`,
