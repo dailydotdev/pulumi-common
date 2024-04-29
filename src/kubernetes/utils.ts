@@ -68,17 +68,19 @@ export const configureResources = (
     resources?: Resources;
   },
 ): Output<Resources> | undefined => {
-  return args.isAdhocEnv
-    ? undefined
-    : all([args.resources]).apply(([resources]) => {
-        return {
-          requests: {
-            cpu: resources?.requests?.cpu || '1000m',
-            memory: resources?.requests?.memory || '1Gi',
-          },
-          limits: {
-            memory: resources?.limits?.memory || '2Gi',
-          },
-        };
-      });
+  if (args.isAdhocEnv || args.resources === undefined) {
+    return undefined;
+  }
+
+  return all([args.resources]).apply(([resources]) => {
+    return {
+      requests: {
+        cpu: resources.requests.cpu,
+        memory: resources.requests.memory,
+      },
+      limits: {
+        memory: resources.limits.memory,
+      },
+    };
+  });
 };

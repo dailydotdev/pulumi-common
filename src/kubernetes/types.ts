@@ -14,11 +14,11 @@ export type Image =
 
 export type Resources = {
   requests: {
-    cpu?: Input<string>;
-    memory?: Input<string>;
+    cpu: Input<string>;
+    memory: Input<string>;
   };
   limits: {
-    memory?: Input<string>;
+    memory: Input<string>;
   };
 };
 
