@@ -1,3 +1,8 @@
+import { Output, all } from '@pulumi/pulumi';
+import { version } from '../../package.json';
+import { Image, Resources } from './types';
+import { AdhocEnv } from '../utils';
+
 export const NodeLabelKeys = {
   Type: 'node.daily.dev/type',
   OptimizedRedis: 'node.daily.dev/optimized-redis',
@@ -38,4 +43,44 @@ export const extractNodeLabels = (
   return {
     [label.key]: label.value,
   };
+};
+
+/**
+ * Common labels used in the daily.dev infrastructure.
+ * These labels are used to identify resources created by pulumi, and of which version of the pulumi-common library was used to create them.
+ */
+export const commonLabels = {
+  'app.kubernetes.io/managed-by': 'pulumi',
+  'pulumi-common.daily.dev/version': version,
+} as const;
+
+/**
+ * Returns the image string to be used in a Kubernetes deployment.
+ * If a digest is provided, it will be used instead of the tag.
+ */
+export const image = ({ repository, tag, digest }: Image) => {
+  const separator = digest ? '@' : ':';
+  return `${repository}${separator}${digest || tag}`;
+};
+
+export const configureResources = (
+  args: AdhocEnv & {
+    resources?: Resources;
+  },
+): Output<Resources> | undefined => {
+  if (args.isAdhocEnv || args.resources === undefined) {
+    return undefined;
+  }
+
+  return all([args.resources]).apply(([resources]) => {
+    return {
+      requests: {
+        cpu: resources.requests.cpu,
+        memory: resources.requests.memory,
+      },
+      limits: {
+        memory: resources.limits.memory,
+      },
+    };
+  });
 };

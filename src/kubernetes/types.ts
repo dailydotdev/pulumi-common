@@ -1,8 +1,25 @@
 import { Input } from '@pulumi/pulumi';
 
-export type Image = {
-  repository: Input<string>;
-  tag: Input<string>;
+export type Image =
+  | {
+      repository: Input<string>;
+      tag: Input<string>;
+      digest?: never;
+    }
+  | {
+      repository: Input<string>;
+      tag?: never;
+      digest: Input<string>;
+    };
+
+export type Resources = {
+  requests: {
+    cpu: Input<string>;
+    memory: Input<string>;
+  };
+  limits: {
+    memory: Input<string>;
+  };
 };
 
 export type Tolerations = {
