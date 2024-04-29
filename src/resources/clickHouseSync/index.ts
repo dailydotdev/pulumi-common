@@ -67,7 +67,7 @@ export class ClickHouseSync extends ComponentResource {
       createHash('sha256').update(configString).digest('hex'),
     );
 
-    this.config = new k8s.core.v1.Secret('clickhouse-sync-config', {
+    this.config = new k8s.core.v1.Secret(`${name}-clickhouse-sync-config`, {
       metadata: {
         namespace: args.namespace,
         name: `${name}-clickhouse-sync-config`,
