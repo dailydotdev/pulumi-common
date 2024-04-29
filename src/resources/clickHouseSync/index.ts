@@ -168,3 +168,5 @@ export class ClickHouseSync extends ComponentResource {
     );
   }
 }
+
+export * from './utils';
