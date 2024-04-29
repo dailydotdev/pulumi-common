@@ -75,9 +75,6 @@ export class ClickHouseSync extends ComponentResource {
           ...commonLabels,
           'app.kubernetes.io/name': `${name}-clickhouse-sync-config`,
         },
-        annotations: {
-          'chekcsum/secret': configChecksum,
-        },
       },
       data: {
         'config.yml': config,
