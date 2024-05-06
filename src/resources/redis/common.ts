@@ -16,8 +16,9 @@ export const defaultImage = {
   tag: '7.2.0-v10',
 };
 
-export type CommonK8sRedisArgs = AdhocEnv & {
+export type CommonK8sRedisArgs = Partial<AdhocEnv> & {
   memorySizeGb: Input<number>;
+  storageSizeGb?: Input<number>;
   cpuSize?: Input<number | string>;
   namespace: Input<string>;
   replicas: Input<number>;
@@ -45,14 +46,23 @@ export type CommonK8sRedisArgs = AdhocEnv & {
 };
 
 export const configurePersistence = (
-  args: Pick<CommonK8sRedisArgs, 'memorySizeGb' | 'persistence'>,
+  args: Pick<
+    CommonK8sRedisArgs,
+    'memorySizeGb' | 'storageSizeGb' | 'persistence'
+  >,
 ) => {
-  return all([args.memorySizeGb, args.persistence]).apply(
-    ([memorySizeGb, persistence]) => {
+  return all([args.memorySizeGb, args.storageSizeGb, args.persistence]).apply(
+    ([memorySizeGb, storageSizeGb, persistence]) => {
+      const defaultStorageSize = Math.max(10, memorySizeGb * 2);
+      const storageSize = storageSizeGb || defaultStorageSize;
+      if (memorySizeGb > storageSize) {
+        throw new Error('Storage size must be greater than memory size');
+      }
+
       return {
         storageClass: 'standard-rwo',
         ...persistence,
-        size: `${Math.max(10, memorySizeGb * 2)}Gi`,
+        size: `${storageSize}Gi`,
       };
     },
   );
