@@ -26,6 +26,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
     const redisInstance = {
       persistence: configurePersistence({
         memorySizeGb: args.memorySizeGb,
+        storageSizeGb: args.storageSizeGb,
         persistence: args.persistence,
       }),
       resources: configureResources({
