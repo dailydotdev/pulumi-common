@@ -30,6 +30,7 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
         namespace: args.namespace,
         createNamespace: false,
         atomic: true,
+        timeout: args.timeout,
         values: {
           fullnameOverride: name,
           commonConfiguration: commonConfiguration,
