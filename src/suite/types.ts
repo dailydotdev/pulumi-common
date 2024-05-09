@@ -100,6 +100,7 @@ export type ApplicationSuiteArgs = {
   resourcePrefix?: string;
   vpcNative?: boolean;
   migration?: MigrationArgs;
+  migrations?: { [key: string]: MigrationArgs };
   debezium?: DebeziumArgs;
   crons?: CronArgs[];
   shouldBindIamUser: boolean;

@@ -336,6 +336,7 @@ export function deployApplicationSuiteToProvider({
   resourcePrefix = '',
   vpcNative = false,
   migration,
+  migrations,
   debezium,
   crons,
   shouldBindIamUser,
@@ -400,6 +401,22 @@ export function deployApplicationSuiteToProvider({
       { provider, resourcePrefix, dependsOn: suiteDependsOn },
     );
     dependsOn.push(migrationJob);
+  }
+
+  // Run migrations if needed
+  if (migrations) {
+    Object.keys(migrations).map((key) => {
+      const migrationJob = createMigrationJob(
+        `${name}-${key}-migration`,
+        namespace,
+        image,
+        migrations[key].args,
+        containerEnvVars,
+        k8sServiceAccount,
+        { provider, resourcePrefix, dependsOn: suiteDependsOn },
+      );
+      dependsOn.push(migrationJob);
+    });
   }
 
   if (debezium) {
