@@ -140,14 +140,6 @@ export class ClickHouseSync extends ComponentResource {
                     isAdhocEnv: args.isAdhocEnv,
                     resources: args.resources,
                   }),
-                  livenessProbe: {
-                    httpGet: {
-                      path: '/q/health',
-                      port: 'healthcheck',
-                    },
-                    initialDelaySeconds: 60,
-                    periodSeconds: 30,
-                  },
                   volumeMounts: [
                     {
                       name: 'clickhouse-config',
