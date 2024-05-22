@@ -18,7 +18,7 @@ import { ClickHouseSyncConfig, loadConfig } from './utils';
 import { stringify } from 'yaml';
 import { createHash } from 'crypto';
 
-export type ClickHouseSyncArgs = AdhocEnv & {
+export type ClickHouseSyncArgs = Partial<AdhocEnv> & {
   props: {
     path: string;
     keys: ClickHouseSyncConfig;
@@ -52,6 +52,8 @@ export class ClickHouseSync extends ComponentResource {
     resourceOptions?: CustomResourceOptions,
   ) {
     super(`${urnPrefix}:ClickHouseSync`, name, args, resourceOptions);
+
+    const isAdhocEnv = args.isAdhocEnv || false;
 
     const deploymentName = args.deployment?.name || `${name}-clickhouse-sync`;
 
@@ -137,7 +139,7 @@ export class ClickHouseSync extends ComponentResource {
                   ],
                   env: [],
                   resources: configureResources({
-                    isAdhocEnv: args.isAdhocEnv,
+                    isAdhocEnv: isAdhocEnv,
                     resources: args.resources,
                   }),
                   volumeMounts: [

@@ -44,6 +44,7 @@ export type ClickHouseSyncConfig = Partial<{
   ignore_delete: string;
   'disable.ddl': string;
   'disable.drop.truncate': string;
+  [key: string]: string | number;
 }>;
 
 // Load the configuration from a file, replacing any variables in the file with the provided values.
