@@ -1,4 +1,5 @@
 import { Input } from '@pulumi/pulumi';
+import * as k8s from '@pulumi/kubernetes';
 
 export type Image =
   | {
@@ -63,3 +64,15 @@ export type NodeAffinity = {
 export type Affinity = {
   nodeAffinity?: Input<NodeAffinity>;
 };
+
+export type EnvVariable =
+  | {
+      name: Input<string>;
+      value: Input<string>;
+      valueFrom?: never;
+    }
+  | {
+      name: Input<string>;
+      value?: never;
+      valueFrom: k8s.types.input.core.v1.EnvVarSource;
+    };
