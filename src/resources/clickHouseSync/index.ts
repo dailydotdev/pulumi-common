@@ -8,6 +8,7 @@ import {
 import { urnPrefix } from '../../constants';
 import { AdhocEnv } from '../../utils';
 import {
+  EnvVariable,
   Image,
   Resources,
   commonLabels,
@@ -30,6 +31,7 @@ export type ClickHouseSyncArgs = Partial<AdhocEnv> & {
   namespace: Input<string>;
   image?: Image;
   resources?: Resources;
+  env?: Input<EnvVariable[]>;
 };
 
 const defaults: {
@@ -137,7 +139,7 @@ export class ClickHouseSync extends ComponentResource {
                       containerPort: 8080,
                     },
                   ],
-                  env: [],
+                  env: args.env,
                   resources: configureResources({
                     isAdhocEnv: isAdhocEnv,
                     resources: args.resources,
