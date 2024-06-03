@@ -22,7 +22,7 @@
     "@google-cloud/pubsub": "^4.4.0",
     "@pulumi/gcp": "^7.23.0",
     "@pulumi/kubernetes": "^4.11.0",
-    "@pulumi/pulumi": "^3.116.1",
+    "@pulumi/pulumi": "^3.118.0",
     "knex": "^3.1.0",
     "mysql": "^2.18.1",
     "pg": "^8.11.5",
