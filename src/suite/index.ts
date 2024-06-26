@@ -59,7 +59,7 @@ export function customMetricToK8s(
               },
             },
             target: {
-              type: 'Value',
+              type: 'AverageValue',
               averageValue: metric.targetAverageValue.toString(),
             },
           },
