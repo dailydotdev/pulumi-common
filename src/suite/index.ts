@@ -185,6 +185,7 @@ function deployCron(
               metadata: {
                 labels: {
                   app: appName,
+                  'app-type': 'cron',
                   ...labels,
                 },
               },
