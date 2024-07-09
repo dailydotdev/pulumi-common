@@ -45,6 +45,9 @@ export type ApplicationArgs = {
   podAnnotations?: Input<{ [key: string]: Input<string> }>;
   ports?: k8s.types.input.core.v1.ContainerPort[];
   servicePorts?: k8s.types.input.core.v1.ServicePort[];
+  backendConfig?: Input<{
+    customResponseHeaders?: Input<string[]>;
+  }>;
 };
 
 export type ApplicationReturn = KubernetesApplicationReturn & {

@@ -261,6 +261,7 @@ function deployApplication(
     isApi = createService,
     ports = [],
     servicePorts = [],
+    backendConfig,
   }: ApplicationArgs,
 ): ApplicationReturn {
   const appResourcePrefix = `${resourcePrefix}${
@@ -314,6 +315,7 @@ function deployApplication(
       serviceType: vpcNative ? 'ClusterIP' : serviceType,
       enableCdn,
       serviceTimeout,
+      backendConfig,
     });
   }
   return createAutoscaledApplication(appArgs);
