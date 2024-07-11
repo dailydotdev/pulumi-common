@@ -1,5 +1,11 @@
 import * as k8s from '@pulumi/kubernetes';
-import { Input, Output, interpolate, ProviderResource } from '@pulumi/pulumi';
+import {
+  Input,
+  Output,
+  interpolate,
+  ProviderResource,
+  all,
+} from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
 import { autoscaling, core } from '@pulumi/kubernetes/types/input';
 import EnvVar = core.v1.EnvVar;
@@ -204,6 +210,9 @@ export type KubernetesApplicationArgs = {
   strategy?: k8s.types.input.apps.v1.DeploymentStrategy;
   ports?: k8s.types.input.core.v1.ContainerPort[];
   servicePorts?: k8s.types.input.core.v1.ServicePort[];
+  backendConfig?: Input<{
+    customResponseHeaders?: Input<string[]>;
+  }>;
 };
 
 export type KubernetesApplicationReturn = {
@@ -341,6 +350,7 @@ export const createAutoscaledExposedApplication = ({
       maxUnavailable: 1,
     },
   },
+  backendConfig,
   servicePorts = [],
   ...args
 }: KubernetesApplicationArgs & {
@@ -372,6 +382,13 @@ export const createAutoscaledExposedApplication = ({
     if (serviceTimeout) {
       spec.timeoutSec = serviceTimeout;
     }
+    all([backendConfig]).apply(([backendConfig]) => {
+      if (backendConfig?.customResponseHeaders) {
+        spec.customResponseHeaders = {
+          headers: backendConfig.customResponseHeaders,
+        };
+      }
+    });
     const config = new k8s.apiextensions.CustomResource(
       `${resourcePrefix}backend-config`,
       {
