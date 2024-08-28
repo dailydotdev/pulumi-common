@@ -4,12 +4,12 @@ import { Affinity, Image, Tolerations } from '../../kubernetes';
 import { AdhocEnv } from '../../utils';
 
 /**
- * Common configuration for Redis instances.
+ * Default modules to load in the Redis configuration.
  */
-export const commonConfiguration = `
-loadmodule /opt/redis-stack/lib/redisearch.so
-loadmodule /opt/redis-stack/lib/rejson.so
-`;
+export const defaultModules = [
+  '/opt/redis-stack/lib/redisearch.so',
+  '/opt/redis-stack/lib/rejson.so',
+];
 
 export const defaultImage = {
   repository: 'redis/redis-stack-server',
@@ -25,6 +25,9 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv> & {
   image?: Input<Image>;
   authKey?: Input<string>;
   timeout?: Input<number>;
+
+  modules?: Input<string[]>;
+  configuration?: Input<string>;
 
   persistence?: Input<{
     enabled?: Input<boolean>;
@@ -44,6 +47,20 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv> & {
     master?: Input<Affinity>;
     replicas?: Input<Affinity>;
   };
+};
+
+export const configureConfiguration = (
+  args: Pick<CommonK8sRedisArgs, 'modules' | 'configuration'>,
+) => {
+  return all([args.modules, args.configuration]).apply(
+    ([modules = defaultModules, configuration]) => {
+      let configurationString = configuration;
+      modules.forEach((module) => {
+        configurationString += `\nloadmodule ${module}`;
+      });
+      return configurationString;
+    },
+  );
 };
 
 export const configurePersistence = (

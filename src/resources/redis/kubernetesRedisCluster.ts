@@ -3,7 +3,7 @@ import * as k8s from '@pulumi/kubernetes';
 import { urnPrefix } from '../../constants';
 import {
   CommonK8sRedisArgs,
-  commonConfiguration,
+  configureConfiguration,
   configurePersistence,
   configureResources,
   defaultImage,
@@ -33,7 +33,10 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
         timeout: args.timeout,
         values: {
           fullnameOverride: name,
-          commonConfiguration: commonConfiguration,
+          commonConfiguration: configureConfiguration({
+            modules: args.modules,
+            configuration: args.configuration,
+          }),
           image: pulumi.all([args.image]).apply(([image]) => ({
             repository: image?.repository || defaultImage.repository,
             tag: image?.tag || defaultImage.tag,
