@@ -28,6 +28,7 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv> & {
 
   modules?: Input<string[]>;
   configuration?: Input<string>;
+  disableCommands?: Input<string[]>;
 
   persistence?: Input<{
     enabled?: Input<boolean>;
