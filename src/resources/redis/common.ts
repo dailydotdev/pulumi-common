@@ -54,7 +54,7 @@ export const configureConfiguration = (
   args: Pick<CommonK8sRedisArgs, 'modules' | 'configuration'>,
 ) => {
   return all([args.modules, args.configuration]).apply(
-    ([modules = defaultModules, configuration]) => {
+    ([modules = defaultModules, configuration = '']) => {
       let configurationString = configuration;
       modules.forEach((module) => {
         configurationString += `\nloadmodule ${module}`;
