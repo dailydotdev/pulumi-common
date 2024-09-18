@@ -1,6 +1,6 @@
 {
   "name": "@dailydotdev/pulumi-common",
-  "version": "1.36.1",
+  "version": "1.36.2",
   "main": "lib/src/index.js",
   "scripts": {
     "lint": "eslint . --ext .js,.ts --max-warnings 0",
