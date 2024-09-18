@@ -24,7 +24,9 @@ export class KubernetesRedis extends pulumi.ComponentResource {
     super(`${urnPrefix}:KubernetesRedis`, name, args, resourceOptions);
 
     const redisInstance = {
-      disableCommands: args.disableCommands ?? [],
+      disableCommands: pulumi
+        .all([args.disableCommands])
+        .apply(([disable]) => disable ?? false),
       persistence: configurePersistence({
         memorySizeGb: args.memorySizeGb,
         storageSizeGb: args.storageSizeGb,
