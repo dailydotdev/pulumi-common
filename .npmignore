@@ -5,6 +5,6 @@ src
 .eslintignore
 .eslintrc.js
 .nvmrc
-.prettier.rc
+.prettierrc
 CODEOWNERS
 tsconfig.json
