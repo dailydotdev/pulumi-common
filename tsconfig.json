@@ -13,6 +13,7 @@
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
     "resolveJsonModule": true,
+    "skipLibCheck": true
   },
   "files": ["src/index.ts"]
 }
