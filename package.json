@@ -19,18 +19,18 @@
   },
   "homepage": "https://github.com/dailydotdev/pulumi-common#readme",
   "dependencies": {
-    "@google-cloud/pubsub": "^4.7.2",
+    "@google-cloud/pubsub": "^4.8.0",
     "@pulumi/gcp": "^8.6.0",
     "@pulumi/kubernetes": "^4.18.1",
     "@pulumi/pulumi": "^3.136.1",
     "knex": "^3.1.0",
     "mysql": "^2.18.1",
     "pg": "^8.13.0",
-    "yaml": "^2.5.1"
+    "yaml": "^2.6.0"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.6.0",
-    "@typescript-eslint/parser": "^8.6.0",
+    "@typescript-eslint/eslint-plugin": "^8.9.0",
+    "@typescript-eslint/parser": "^8.9.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",
