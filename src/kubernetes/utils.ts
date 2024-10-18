@@ -21,7 +21,7 @@ export type NodeLabel = {
  *
  * For more information on node labels, see https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
  */
-export const NodeLabels: { [key: string]: NodeLabel } = {
+export const NodeLabels = {
   HighMem: { key: NodeLabelKeys.Type, value: 'highmem' },
   HighCPU: { key: NodeLabelKeys.Type, value: 'highcpu' },
   OptimizedRedisMaster: {
