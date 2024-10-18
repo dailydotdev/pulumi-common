@@ -6,6 +6,7 @@ import { AdhocEnv } from '../utils';
 export const NodeLabelKeys = {
   Type: 'node.daily.dev/type',
   OptimizedRedis: 'node.daily.dev/optimized-redis',
+  DiskType: 'node.daily.dev/disk-type',
 } as const;
 
 export type NodeLabel = {
@@ -31,6 +32,14 @@ export const NodeLabels = {
   OptimizedRedisReplica: {
     key: NodeLabelKeys.OptimizedRedis,
     value: 'replica',
+  },
+  PersistentDisk: {
+    key: NodeLabelKeys.DiskType,
+    value: 'persistent-disk',
+  },
+  HyperDisk: {
+    key: NodeLabelKeys.DiskType,
+    value: 'hyperdisk',
   },
 } as const;
 
