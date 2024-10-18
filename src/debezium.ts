@@ -7,6 +7,7 @@ import * as pulumi from '@pulumi/pulumi';
 import { input as inputs } from '@pulumi/kubernetes/types';
 import { stripCpuFromLimits } from './utils';
 import { PodResources } from './k8s';
+import { NodeLabels } from './kubernetes';
 
 type OptionalArgs = {
   diskType?: Input<string>;
@@ -263,6 +264,25 @@ export function deployDebeziumKubernetesResources(
               : undefined,
             volumes,
             initContainers,
+            affinity: !isAdhocEnv
+              ? {
+                  nodeAffinity: {
+                    requiredDuringSchedulingIgnoredDuringExecution: {
+                      nodeSelectorTerms: [
+                        {
+                          matchExpressions: [
+                            {
+                              key: NodeLabels.PersistentDisk.key,
+                              operator: 'In',
+                              values: [NodeLabels.PersistentDisk.value],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                }
+              : undefined,
             containers: [
               {
                 name: 'debezium',
