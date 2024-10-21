@@ -458,6 +458,7 @@ export function deployApplicationSuiteToProvider({
           isAdhocEnv,
           env: debezium.env,
           disableHealthCheck: debezium.disableHealthCheck,
+          affinity: debezium.affinity,
         },
       );
     }

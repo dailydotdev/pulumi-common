@@ -18,6 +18,7 @@ type OptionalArgs = {
   provider?: ProviderResource;
   isAdhocEnv?: boolean;
   disableHealthCheck?: boolean;
+  affinity?: pulumi.Input<k8s.types.input.core.v1.Affinity>;
 };
 
 const DEFAULT_DISK_SIZE = 10;
@@ -95,6 +96,7 @@ export function deployDebeziumKubernetesResources(
     provider,
     isAdhocEnv,
     disableHealthCheck,
+    affinity,
   }: Pick<
     OptionalArgs,
     | 'limits'
@@ -104,6 +106,7 @@ export function deployDebeziumKubernetesResources(
     | 'provider'
     | 'isAdhocEnv'
     | 'disableHealthCheck'
+    | 'affinity'
   > = {},
 ): void {
   const propsHash = debeziumPropsString.apply((props) =>
@@ -263,6 +266,7 @@ export function deployDebeziumKubernetesResources(
               : undefined,
             volumes,
             initContainers,
+            affinity: !isAdhocEnv ? affinity : undefined,
             containers: [
               {
                 name: 'debezium',
