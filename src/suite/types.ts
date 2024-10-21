@@ -83,6 +83,7 @@ export type DebeziumArgs = {
   limits?: PodResources;
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
   disableHealthCheck?: boolean;
+  affinity?: Input<k8s.types.input.core.v1.Affinity>;
 };
 
 export type AdditionalSecret = {
