@@ -1,4 +1,4 @@
-import { PriorityClass } from '@pulumi/kubernetes/scheduling/v1';
+import { CustomResource } from '@pulumi/kubernetes/apiextensions';
 import type { PriorityClassArgs } from '@pulumi/kubernetes/scheduling/v1alpha1';
 
 export const PreemptionPolicies = {
@@ -43,7 +43,14 @@ export const createPriorityClass = ({
   description,
   preemptionPolicy = PreemptionPolicies.PreemptLowerPriority,
 }: PriorityClassArgs & { name: string }) => {
-  return new PriorityClass(name, {
+  // TODO: Use the PriorityClass resource when it is possible to force the name
+  // https://github.com/pulumi/pulumi/discussions/17592
+  return new CustomResource(name, {
+    apiVersion: 'scheduling.k8s.io/v1',
+    kind: 'PriorityClass',
+    metadata: {
+      name,
+    },
     value,
     description,
     preemptionPolicy,
