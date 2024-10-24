@@ -1,5 +1,6 @@
 import { CustomResource } from '@pulumi/kubernetes/apiextensions';
 import type { PriorityClassArgs } from '@pulumi/kubernetes/scheduling/v1alpha1';
+import type { CustomResourceOptions } from '@pulumi/pulumi';
 
 export const PreemptionPolicies = {
   PreemptLowerPriority: 'PreemptLowerPriority',
@@ -34,25 +35,33 @@ export const PriorityClasses = {
     name: 'daily-redis',
     value: 900_000_000,
     preemptionPolicy: PreemptionPolicies.PreemptLowerPriority,
+    description: 'Used for stateful Redis pods.',
   },
 } as const;
 
-export const createPriorityClass = ({
-  name,
-  value,
-  description,
-  preemptionPolicy = PreemptionPolicies.PreemptLowerPriority,
-}: PriorityClassArgs & { name: string }) => {
-  // TODO: Use the PriorityClass resource when it is possible to force the name
-  // https://github.com/pulumi/pulumi/discussions/17592
-  return new CustomResource(name, {
-    apiVersion: 'scheduling.k8s.io/v1',
-    kind: 'PriorityClass',
-    metadata: {
-      name,
-    },
+export const createPriorityClass = (
+  {
+    name,
     value,
     description,
-    preemptionPolicy,
-  });
+    preemptionPolicy = PreemptionPolicies.PreemptLowerPriority,
+  }: PriorityClassArgs & { name: string },
+  resourceOptions?: CustomResourceOptions,
+) => {
+  // TODO: Use the PriorityClass resource when it is possible to force the name
+  // https://github.com/pulumi/pulumi/discussions/17592
+  return new CustomResource(
+    name,
+    {
+      apiVersion: 'scheduling.k8s.io/v1',
+      kind: 'PriorityClass',
+      metadata: {
+        name,
+      },
+      value,
+      description,
+      preemptionPolicy,
+    },
+    resourceOptions,
+  );
 };
