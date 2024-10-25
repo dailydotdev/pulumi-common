@@ -48,6 +48,11 @@ export type ApplicationArgs = {
   backendConfig?: Input<{
     customResponseHeaders?: Input<string[]>;
   }>;
+  spot?: {
+    enabled: boolean;
+    weight: number;
+    required?: boolean;
+  };
 };
 
 export type ApplicationReturn = KubernetesApplicationReturn & {

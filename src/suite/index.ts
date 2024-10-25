@@ -262,6 +262,7 @@ function deployApplication(
     ports = [],
     servicePorts = [],
     backendConfig,
+    spot = { enabled: false, weight: 60, required: false },
   }: ApplicationArgs,
 ): ApplicationReturn {
   const appResourcePrefix = `${resourcePrefix}${
@@ -308,6 +309,7 @@ function deployApplication(
     isAdhocEnv,
     ports,
     servicePorts,
+    spot,
   };
   if (createService || servicePorts.length > 0) {
     return createAutoscaledExposedApplication({
