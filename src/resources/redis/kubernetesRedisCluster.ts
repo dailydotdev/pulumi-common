@@ -5,6 +5,7 @@ import {
   CommonK8sRedisArgs,
   configureConfiguration,
   configurePersistence,
+  configurePriorityClass,
   configureResources,
   defaultImage,
 } from './common';
@@ -65,7 +66,7 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
             }),
             affinity: args.affinity,
             tolerations: args.tolerations,
-            priorityClassName: args.priorityClass,
+            priorityClassName: configurePriorityClass(args),
           },
           persistence: configurePersistence({
             memorySizeGb: args.memorySizeGb,

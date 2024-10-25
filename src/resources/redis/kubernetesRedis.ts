@@ -7,6 +7,7 @@ import {
   CommonK8sRedisArgs,
   configureConfiguration,
   configurePersistence,
+  configurePriorityClass,
   configureResources,
   defaultImage,
 } from './common';
@@ -37,7 +38,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
         memorySizeGb: args.memorySizeGb,
         cpuSize: args.cpuSize,
       }),
-      priorityClassName: args.priorityClass,
+      priorityClassName: configurePriorityClass(args),
     };
 
     new k8s.helm.v3.Release(

@@ -4,7 +4,7 @@ import {
   Affinity,
   Image,
   Tolerations,
-  PriorityClasses,
+  type PriorityClassInput,
 } from '../../kubernetes';
 import { AdhocEnv } from '../../utils';
 
@@ -21,7 +21,7 @@ export const defaultImage = {
   tag: '7.2.0-v10',
 };
 
-export type CommonK8sRedisArgs = Partial<AdhocEnv> & {
+export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
   memorySizeGb: Input<number>;
   storageSizeGb?: Input<number>;
   cpuSize?: Input<number | string>;
@@ -30,7 +30,6 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv> & {
   image?: Input<Image>;
   authKey?: Input<string>;
   timeout?: Input<number>;
-  priorityClass?: Input<typeof PriorityClasses>;
   safeToEvict?: Input<boolean>;
 
   modules?: Input<string[]>;
@@ -123,4 +122,19 @@ export const configureResources = (
           };
     },
   );
+};
+
+export const configurePriorityClass = (
+  args: CommonK8sRedisArgs,
+): Output<string | undefined> => {
+  return all([
+    args.isAdhocEnv,
+    args.priorityClass,
+    args.priorityClassName,
+  ]).apply(([isAdhocEnv, priorityClass, priorityClassName]) => {
+    if (isAdhocEnv) {
+      return undefined;
+    }
+    return priorityClass ? priorityClass.name : priorityClassName;
+  });
 };
