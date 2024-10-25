@@ -7,6 +7,7 @@ import {
   CommonK8sRedisArgs,
   configureConfiguration,
   configurePersistence,
+  configurePriorityClass,
   configureResources,
   defaultImage,
 } from './common';
@@ -37,6 +38,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
         memorySizeGb: args.memorySizeGb,
         cpuSize: args.cpuSize,
       }),
+      priorityClassName: configurePriorityClass(args),
     };
 
     new k8s.helm.v3.Release(
@@ -53,6 +55,10 @@ export class KubernetesRedis extends pulumi.ComponentResource {
             modules: args.modules,
             configuration: args.configuration,
           }),
+          commonAnnotations: {
+            'cluster-autoscaler.kubernetes.io/safe-to-evict':
+              args?.safeToEvict ?? false,
+          },
           image: pulumi.all([args.image]).apply(([image]) => ({
             repository: image?.repository || defaultImage.repository,
             tag: image?.tag || defaultImage.tag,

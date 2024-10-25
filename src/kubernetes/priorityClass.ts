@@ -1,6 +1,6 @@
 import { CustomResource } from '@pulumi/kubernetes/apiextensions';
 import type { PriorityClassArgs } from '@pulumi/kubernetes/scheduling/v1alpha1';
-import type { CustomResourceOptions } from '@pulumi/pulumi';
+import type { CustomResourceOptions, Input } from '@pulumi/pulumi';
 
 export const PreemptionPolicies = {
   PreemptLowerPriority: 'PreemptLowerPriority',
@@ -38,6 +38,34 @@ export const PriorityClasses = {
     description: 'Used for stateful Redis pods.',
   },
 } as const;
+
+export type PriorityClass =
+  (typeof PriorityClasses)[keyof typeof PriorityClasses];
+
+export type PriorityClassInput =
+  | {
+      /**
+       * The priority class to use for the Redis pods.
+       * If not provided, the default priority class will be used.
+       * If provided, the priority class must be defined in the `PriorityClasses` object.
+       *
+       * This option is mutually exclusive with `priorityClass`.
+       * If both are provided, `priorityClassName` will be used.
+       */
+      priorityClass: Input<PriorityClass>;
+      priorityClassName: never;
+    }
+  | {
+      priorityClass: never;
+      /**
+       * The name of the priority class to use for the Redis pods.
+       * If not provided, the default priority class will be used.
+       *
+       * This option is mutually exclusive with `priorityClass`.
+       * If both are provided, `priorityClassName` will be used.
+       */
+      priorityClassName: Input<string>;
+    };
 
 export const createPriorityClass = (
   {
