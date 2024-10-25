@@ -8,7 +8,7 @@ export const charts = {
   },
   'redis-cluster': {
     chart: 'redis-cluster',
-    version: '11.0.3',
+    version: '11.0.6',
     repositoryOpts: {
       repo: 'https://charts.bitnami.com/bitnami',
     },
