@@ -37,6 +37,10 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
             modules: args.modules,
             configuration: args.configuration,
           }),
+          commonAnnotations: {
+            'cluster-autoscaler.kubernetes.io/safe-to-evict':
+              args?.safeToEvict ?? false,
+          },
           image: pulumi.all([args.image]).apply(([image]) => ({
             repository: image?.repository || defaultImage.repository,
             tag: image?.tag || defaultImage.tag,

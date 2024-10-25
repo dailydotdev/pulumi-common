@@ -25,6 +25,7 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv> & {
   image?: Input<Image>;
   authKey?: Input<string>;
   timeout?: Input<number>;
+  safeToEvict?: Input<boolean>;
 
   modules?: Input<string[]>;
   configuration?: Input<string>;
