@@ -1,7 +1,7 @@
 export const charts = {
   redis: {
     chart: 'redis',
-    version: '20.0.3',
+    version: '20.2.1',
     repositoryOpts: {
       repo: 'https://charts.bitnami.com/bitnami',
     },
