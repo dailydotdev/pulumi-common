@@ -7,6 +7,7 @@ export const NodeLabelKeys = {
   Type: 'node.daily.dev/type',
   OptimizedRedis: 'node.daily.dev/optimized-redis',
   DiskType: 'node.daily.dev/disk-type',
+  Spot: 'node.daily.dev/spot',
 } as const;
 
 export type NodeLabel = {
@@ -23,6 +24,7 @@ export type NodeLabel = {
  * For more information on node labels, see https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
  */
 export const NodeLabels = {
+  Spot: { key: NodeLabelKeys.Spot, value: 'true' },
   HighMem: { key: NodeLabelKeys.Type, value: 'highmem' },
   HighCPU: { key: NodeLabelKeys.Type, value: 'highcpu' },
   OptimizedRedisMaster: {
