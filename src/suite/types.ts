@@ -77,6 +77,11 @@ export type CronArgs = {
   args?: Input<Input<string>[]>;
   volumes?: Input<Input<k8s.types.input.core.v1.Volume>[]>;
   volumeMounts?: Input<Input<k8s.types.input.core.v1.VolumeMount>[]>;
+  spot?: {
+    enabled: boolean;
+    weight: number;
+    required?: boolean;
+  };
 };
 
 export type DebeziumArgs = {

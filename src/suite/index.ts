@@ -32,6 +32,7 @@ import {
 } from '../debezium';
 import { location } from '../config';
 import { stripCpuFromLimits } from '../utils';
+import { NodeLabels } from '../kubernetes';
 
 /**
  * Takes a custom definition of an autoscaling metric and turn it into a k8s definition
@@ -155,12 +156,69 @@ function deployCron(
     limits,
     requests,
     dependsOn,
+    spot = { enabled: false, weight: 50, required: false },
   }: CronArgs,
 ): k8s.batch.v1.CronJob {
   const appResourcePrefix = `${resourcePrefix}${
     nameSuffix ? `${nameSuffix}-` : ''
   }`;
   const appName = `${name}${nameSuffix ? `-${nameSuffix}` : ''}`;
+
+  const tolerations: k8s.types.input.core.v1.Toleration[] = [];
+  const affinity: k8s.types.input.core.v1.Affinity = {};
+
+  if (spot?.enabled) {
+    const nonSpotWeight = 100 - spot.weight;
+    tolerations.push({
+      key: 'spot',
+      operator: 'Equal',
+      value: 'true',
+      effect: 'NoSchedule',
+    });
+    affinity.nodeAffinity = spot.required
+      ? {
+          requiredDuringSchedulingIgnoredDuringExecution: {
+            nodeSelectorTerms: [
+              {
+                matchExpressions: [
+                  {
+                    key: NodeLabels.Spot.key,
+                    operator: 'In',
+                    values: [NodeLabels.Spot.value],
+                  },
+                ],
+              },
+            ],
+          },
+        }
+      : {
+          preferredDuringSchedulingIgnoredDuringExecution: [
+            {
+              weight: spot.weight,
+              preference: {
+                matchExpressions: [
+                  {
+                    key: NodeLabels.Spot.key,
+                    operator: 'Exists',
+                  },
+                ],
+              },
+            },
+            {
+              weight: nonSpotWeight,
+              preference: {
+                matchExpressions: [
+                  {
+                    key: NodeLabels.Spot.key,
+                    operator: 'DoesNotExist',
+                  },
+                ],
+              },
+            },
+          ],
+        };
+  }
+
   return new k8s.batch.v1.CronJob(
     `${appResourcePrefix}cron`,
     {
@@ -207,6 +265,8 @@ function deployCron(
                     },
                   },
                 ],
+                tolerations,
+                affinity,
               },
             },
           },
