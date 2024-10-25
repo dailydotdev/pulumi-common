@@ -1,6 +1,11 @@
 import { all, Input, Output } from '@pulumi/pulumi';
 
-import { Affinity, Image, Tolerations } from '../../kubernetes';
+import {
+  Affinity,
+  Image,
+  Tolerations,
+  PriorityClasses,
+} from '../../kubernetes';
 import { AdhocEnv } from '../../utils';
 
 /**
@@ -25,6 +30,7 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv> & {
   image?: Input<Image>;
   authKey?: Input<string>;
   timeout?: Input<number>;
+  priorityClass?: Input<typeof PriorityClasses>;
   safeToEvict?: Input<boolean>;
 
   modules?: Input<string[]>;

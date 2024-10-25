@@ -65,6 +65,7 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
             }),
             affinity: args.affinity,
             tolerations: args.tolerations,
+            priorityClassName: args.priorityClass,
           },
           persistence: configurePersistence({
             memorySizeGb: args.memorySizeGb,

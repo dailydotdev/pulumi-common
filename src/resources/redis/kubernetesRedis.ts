@@ -37,6 +37,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
         memorySizeGb: args.memorySizeGb,
         cpuSize: args.cpuSize,
       }),
+      priorityClassName: args.priorityClass,
     };
 
     new k8s.helm.v3.Release(
