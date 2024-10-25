@@ -11,6 +11,7 @@ import { autoscaling, core } from '@pulumi/kubernetes/types/input';
 import EnvVar = core.v1.EnvVar;
 import { Resource } from '@pulumi/pulumi/resource';
 import { camelToUnderscore } from './utils';
+import { NodeLabels } from './kubernetes';
 
 export type PodResources = { cpu?: string; memory?: string };
 
@@ -213,6 +214,11 @@ export type KubernetesApplicationArgs = {
   backendConfig?: Input<{
     customResponseHeaders?: Input<string[]>;
   }>;
+  spot?: {
+    enabled: boolean;
+    weight: number;
+    required?: boolean;
+  };
 };
 
 export type KubernetesApplicationReturn = {
@@ -248,6 +254,7 @@ export const createAutoscaledApplication = ({
   provider,
   isAdhocEnv,
   strategy,
+  spot,
 }: KubernetesApplicationArgs): KubernetesApplicationReturn => {
   const labels: Input<{
     [key: string]: Input<string>;
@@ -262,6 +269,61 @@ export const createAutoscaledApplication = ({
     ...labels,
     version,
   };
+
+  const tolerations: k8s.types.input.core.v1.Toleration[] = [];
+  const affinity: k8s.types.input.core.v1.Affinity = {};
+
+  if (spot?.enabled && !isAdhocEnv) {
+    const nonSpotWeight = 100 - spot.weight;
+    tolerations.push({
+      key: 'spot',
+      operator: 'Equal',
+      value: 'true',
+      effect: 'NoSchedule',
+    });
+    affinity.nodeAffinity = spot.required
+      ? {
+          requiredDuringSchedulingIgnoredDuringExecution: {
+            nodeSelectorTerms: [
+              {
+                matchExpressions: [
+                  {
+                    key: NodeLabels.Spot.key,
+                    operator: 'In',
+                    values: [NodeLabels.Spot.value],
+                  },
+                ],
+              },
+            ],
+          },
+        }
+      : {
+          preferredDuringSchedulingIgnoredDuringExecution: [
+            {
+              weight: spot.weight,
+              preference: {
+                matchExpressions: [
+                  {
+                    key: NodeLabels.Spot.key,
+                    operator: 'Exists',
+                  },
+                ],
+              },
+            },
+            {
+              weight: nonSpotWeight,
+              preference: {
+                matchExpressions: [
+                  {
+                    key: NodeLabels.Spot.key,
+                    operator: 'DoesNotExist',
+                  },
+                ],
+              },
+            },
+          ],
+        };
+  }
 
   const deployment = new k8s.apps.v1.Deployment(
     `${resourcePrefix}deployment`,
@@ -279,6 +341,8 @@ export const createAutoscaledApplication = ({
           spec: {
             containers,
             serviceAccountName: serviceAccount?.metadata.name,
+            tolerations,
+            affinity,
             ...podSpec,
           },
         },

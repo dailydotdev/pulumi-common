@@ -30,7 +30,7 @@ export type Tolerations = {
   effect: Input<'NoExecute' | 'NoSchedule' | 'PreferNoSchedule'>;
 };
 
-export type NodeSelectorTerms = {
+export type LabelSelectorRequirement = {
   key: Input<string>;
 } & (
   | {
@@ -47,7 +47,7 @@ export type NodeAffinity = {
   requiredDuringSchedulingIgnoredDuringExecution?: Input<{
     nodeSelectorTerms: Input<
       {
-        matchExpressions: Input<NodeSelectorTerms[]>;
+        matchExpressions: Input<LabelSelectorRequirement[]>;
       }[]
     >;
   }>;
@@ -55,7 +55,7 @@ export type NodeAffinity = {
     {
       weight: Input<number>;
       preference: Input<{
-        matchExpressions: Input<NodeSelectorTerms[]>;
+        matchExpressions: Input<LabelSelectorRequirement[]>;
       }>;
     }[]
   >;
