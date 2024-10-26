@@ -266,7 +266,7 @@ function deployCron(
                   },
                 ],
                 tolerations,
-                affinity,
+                affinity: spot?.enabled ? affinity : undefined,
               },
             },
           },

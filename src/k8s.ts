@@ -342,7 +342,7 @@ export const createAutoscaledApplication = ({
             containers,
             serviceAccountName: serviceAccount?.metadata.name,
             tolerations,
-            affinity,
+            affinity: spot?.enabled ? affinity : undefined,
             ...podSpec,
           },
         },
