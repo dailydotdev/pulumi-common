@@ -49,10 +49,16 @@ export const NodeLabels = {
  * Extracts the node labels from a single NodeLabel object, and returns them as a key-value pair.
  */
 export const extractNodeLabels = (
-  label: NodeLabel,
+  labels: NodeLabel | NodeLabel[],
 ): { [key: string]: string } => {
+  if (Array.isArray(labels)) {
+    return labels.reduce(
+      (acc, curr) => ({ ...acc, ...extractNodeLabels(curr) }),
+      {},
+    );
+  }
   return {
-    [label.key]: label.value,
+    [labels.key]: labels.value,
   };
 };
 
