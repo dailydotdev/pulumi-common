@@ -32,6 +32,7 @@ export type ClickHouseSyncArgs = Partial<AdhocEnv> & {
   image?: Image;
   resources?: Resources;
   env?: Input<EnvVariable[]>;
+  toleratesSpot?: boolean;
 };
 
 const defaults: {
@@ -70,6 +71,18 @@ export class ClickHouseSync extends ComponentResource {
     const configChecksum = config.apply((configString) =>
       createHash('sha256').update(configString).digest('hex'),
     );
+
+    const tolerations: k8s.types.input.core.v1.Toleration[] | undefined =
+      args.toleratesSpot
+        ? [
+            {
+              key: 'spot',
+              operator: 'Equal',
+              value: 'true',
+              effect: 'NoSchedule',
+            },
+          ]
+        : undefined;
 
     this.config = new k8s.core.v1.Secret(
       `${name}-clickhouse-sync-config`,
@@ -160,6 +173,7 @@ export class ClickHouseSync extends ComponentResource {
                   },
                 },
               ],
+              tolerations: tolerations,
             },
           },
         },
