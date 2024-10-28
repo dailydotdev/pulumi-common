@@ -61,6 +61,7 @@ export type ApplicationReturn = KubernetesApplicationReturn & {
 
 export type MigrationArgs = {
   args: string[];
+  toleratesSpot?: boolean;
 };
 
 export type CronArgs = {

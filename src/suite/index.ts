@@ -464,6 +464,7 @@ export function deployApplicationSuiteToProvider({
       containerEnvVars,
       k8sServiceAccount,
       { provider, resourcePrefix, dependsOn: suiteDependsOn },
+      migration?.toleratesSpot ?? true,
     );
     dependsOn.push(migrationJob);
   }
@@ -479,6 +480,7 @@ export function deployApplicationSuiteToProvider({
         containerEnvVars,
         k8sServiceAccount,
         { provider, resourcePrefix, dependsOn: suiteDependsOn },
+        migration?.toleratesSpot ?? true,
       );
       dependsOn.push(migrationJob);
     });

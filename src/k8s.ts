@@ -62,9 +62,22 @@ export function createMigrationJob(
     resourcePrefix?: string;
     dependsOn?: Input<Resource>[];
   } = {},
+  toleratesSpot: boolean = true,
 ): k8s.batch.v1.Job {
   const hash = image.split(':')[1];
   const name = `${baseName}-${hash.substring(hash.length - 8)}`;
+  const tolerations: k8s.types.input.core.v1.Toleration[] | undefined =
+    toleratesSpot
+      ? [
+          {
+            key: 'spot',
+            operator: 'Equal',
+            value: 'true',
+            effect: 'NoSchedule',
+          },
+        ]
+      : undefined;
+
   return new k8s.batch.v1.Job(
     resourcePrefix + name,
     {
@@ -86,6 +99,7 @@ export function createMigrationJob(
             ],
             serviceAccountName: serviceAccount?.metadata.name,
             restartPolicy: 'Never',
+            tolerations: tolerations,
           },
         },
       },
