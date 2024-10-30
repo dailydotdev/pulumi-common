@@ -12,6 +12,7 @@ import EnvVar = core.v1.EnvVar;
 import { Resource } from '@pulumi/pulumi/resource';
 import { camelToUnderscore } from './utils';
 import { NodeLabels } from './kubernetes';
+import { defaultSpotWeight } from './constants';
 
 export type PodResources = { cpu?: string; memory?: string };
 
@@ -230,7 +231,7 @@ export type KubernetesApplicationArgs = {
   }>;
   spot?: {
     enabled: boolean;
-    weight: number;
+    weight?: number;
     required?: boolean;
   };
 };
@@ -288,7 +289,8 @@ export const createAutoscaledApplication = ({
   const affinity: k8s.types.input.core.v1.Affinity = {};
 
   if (spot?.enabled && !isAdhocEnv) {
-    const nonSpotWeight = 100 - spot.weight;
+    const spotWeight = spot?.weight ?? defaultSpotWeight;
+    const nonSpotWeight = 100 - spotWeight;
     tolerations.push({
       key: 'spot',
       operator: 'Equal',
@@ -314,7 +316,7 @@ export const createAutoscaledApplication = ({
       : {
           preferredDuringSchedulingIgnoredDuringExecution: [
             {
-              weight: spot.weight,
+              weight: spotWeight,
               preference: {
                 matchExpressions: [
                   {
