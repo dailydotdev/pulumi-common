@@ -50,7 +50,7 @@ export type ApplicationArgs = {
   }>;
   spot?: {
     enabled: boolean;
-    weight: number;
+    weight?: number;
     required?: boolean;
   };
 };
@@ -80,7 +80,7 @@ export type CronArgs = {
   volumeMounts?: Input<Input<k8s.types.input.core.v1.VolumeMount>[]>;
   spot?: {
     enabled: boolean;
-    weight: number;
+    weight?: number;
     required?: boolean;
   };
 };

@@ -33,6 +33,7 @@ import {
 import { location } from '../config';
 import { stripCpuFromLimits } from '../utils';
 import { NodeLabels } from '../kubernetes';
+import { defaultSpotWeight } from '../constants';
 
 /**
  * Takes a custom definition of an autoscaling metric and turn it into a k8s definition
@@ -156,7 +157,7 @@ function deployCron(
     limits,
     requests,
     dependsOn,
-    spot = { enabled: false, weight: 50, required: false },
+    spot = { enabled: false, weight: defaultSpotWeight, required: false },
   }: CronArgs,
 ): k8s.batch.v1.CronJob {
   const appResourcePrefix = `${resourcePrefix}${
@@ -168,7 +169,8 @@ function deployCron(
   const affinity: k8s.types.input.core.v1.Affinity = {};
 
   if (spot?.enabled) {
-    const nonSpotWeight = 100 - spot.weight;
+    const spotWeight = spot?.weight ?? defaultSpotWeight;
+    const nonSpotWeight = 100 - spotWeight;
     tolerations.push({
       key: 'spot',
       operator: 'Equal',
@@ -194,7 +196,7 @@ function deployCron(
       : {
           preferredDuringSchedulingIgnoredDuringExecution: [
             {
-              weight: spot.weight,
+              weight: spotWeight,
               preference: {
                 matchExpressions: [
                   {
@@ -322,7 +324,7 @@ function deployApplication(
     ports = [],
     servicePorts = [],
     backendConfig,
-    spot = { enabled: false, weight: 60, required: false },
+    spot = { enabled: false, weight: defaultSpotWeight, required: false },
   }: ApplicationArgs,
 ): ApplicationReturn {
   const appResourcePrefix = `${resourcePrefix}${
