@@ -170,7 +170,7 @@ function deployCron(
 
   if (spot?.enabled) {
     const spotWeight = spot?.weight ?? defaultSpotWeight;
-    const nonSpotWeight = 100 - spotWeight;
+    const nonSpotWeight = Math.max(0, 100 - spotWeight);
     tolerations.push({
       key: 'spot',
       operator: 'Equal',
