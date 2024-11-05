@@ -7,14 +7,17 @@ import {
   all,
 } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
-import { autoscaling, core } from '@pulumi/kubernetes/types/input';
-import EnvVar = core.v1.EnvVar;
+import { autoscaling } from '@pulumi/kubernetes/types/input';
 import { Resource } from '@pulumi/pulumi/resource';
 import { camelToUnderscore } from './utils';
 import { NodeLabels } from './kubernetes';
 import { defaultSpotWeight } from './constants';
 
 export type PodResources = { cpu?: string; memory?: string };
+export type ContainerOptions = Pick<
+  k8s.types.input.core.v1.Container,
+  'envFrom'
+>;
 
 export function k8sServiceAccountToIdentity(
   serviceAccount: k8s.core.v1.ServiceAccount,
@@ -52,7 +55,7 @@ export function createMigrationJob(
   namespace: string,
   image: string,
   args: string[],
-  env: Input<Input<EnvVar>[]>,
+  containerOpts: ContainerOptions,
   serviceAccount: k8s.core.v1.ServiceAccount | undefined,
   {
     provider,
@@ -92,10 +95,10 @@ export function createMigrationJob(
           spec: {
             containers: [
               {
+                ...containerOpts,
                 name: 'app',
                 image,
                 args,
-                env,
               },
             ],
             serviceAccountName: serviceAccount?.metadata.name,
@@ -546,22 +549,4 @@ export function createKubernetesSecretFromRecord({
     },
     { provider },
   );
-}
-
-export function convertRecordToContainerEnvVars({
-  secretName,
-  data,
-}: {
-  secretName: string;
-  data: Record<string, Input<string>>;
-}): k8s.types.input.core.v1.EnvVar[] {
-  return Object.keys(data).map((key) => ({
-    name: camelToUnderscore(key),
-    valueFrom: {
-      secretKeyRef: {
-        name: secretName,
-        key: camelToUnderscore(key),
-      },
-    },
-  }));
 }

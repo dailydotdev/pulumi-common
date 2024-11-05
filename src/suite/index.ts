@@ -4,7 +4,7 @@ import * as k8s from '@pulumi/kubernetes';
 import { Resource } from '@pulumi/pulumi/resource';
 import * as gcp from '@pulumi/gcp';
 import {
-  convertRecordToContainerEnvVars,
+  ContainerOptions,
   createAutoscaledApplication,
   createAutoscaledExposedApplication,
   createK8sServiceAccountFromGCPServiceAccount,
@@ -140,7 +140,7 @@ function deployCron(
     namespace,
     image,
     provider,
-    envVars: globalEnvVars,
+    containerOpts,
     serviceAccount,
   }: ApplicationContext,
   {
@@ -255,12 +255,13 @@ function deployCron(
                 serviceAccountName: serviceAccount?.metadata.name,
                 containers: [
                   {
+                    ...containerOpts,
                     name: 'app',
                     image,
                     command,
                     args,
                     volumeMounts,
-                    env: [...globalEnvVars, ...env],
+                    env,
                     resources: {
                       requests: requests ?? limits,
                       limits: stripCpuFromLimits(limits),
@@ -293,7 +294,7 @@ function deployApplication(
     serviceAccount,
     image,
     imageTag,
-    envVars: globalEnvVars,
+    containerOpts,
     provider,
     vpcNative,
     isAdhocEnv,
@@ -347,6 +348,7 @@ function deployApplication(
     podAnnotations,
     containers: [
       {
+        ...containerOpts,
         name: 'app',
         image,
         command,
@@ -354,7 +356,7 @@ function deployApplication(
         ports,
         readinessProbe,
         livenessProbe,
-        env: [...globalEnvVars, ...env],
+        env,
         resources: !isAdhocEnv
           ? { requests: requests ?? limits, limits: stripCpuFromLimits(limits) }
           : undefined,
@@ -420,14 +422,11 @@ export function deployApplicationSuiteToProvider({
     shouldBindIamUser,
   );
 
-  // Convert the secrets to k8s container env vars
-  const containerEnvVars = convertRecordToContainerEnvVars({
-    secretName: name,
-    data: secrets || {},
-  });
+  const containerOpts: Omit<ContainerOptions, 'args'> = {};
 
   const dependsOn: Input<Resource>[] = suiteDependsOn ?? [];
   if (secrets) {
+    containerOpts.envFrom = [{ secretRef: { name } }];
     // Create the secret object
     const secretK8s = createKubernetesSecretFromRecord({
       data: secrets,
@@ -463,26 +462,23 @@ export function deployApplicationSuiteToProvider({
       namespace,
       image,
       migration.args,
-      containerEnvVars,
+      containerOpts,
       k8sServiceAccount,
       { provider, resourcePrefix, dependsOn: suiteDependsOn },
       migration?.toleratesSpot ?? true,
     );
     dependsOn.push(migrationJob);
-  }
-
-  // Run migrations if needed
-  if (migrations) {
+  } else if (migrations) {
     Object.keys(migrations).map((key) => {
       const migrationJob = createMigrationJob(
         `${name}-${key}-migration`,
         namespace,
         image,
         migrations[key].args,
-        containerEnvVars,
+        containerOpts,
         k8sServiceAccount,
         { provider, resourcePrefix, dependsOn: suiteDependsOn },
-        migration?.toleratesSpot ?? true,
+        migrations[key]?.toleratesSpot ?? true,
       );
       dependsOn.push(migrationJob);
     });
@@ -535,7 +531,7 @@ export function deployApplicationSuiteToProvider({
     name,
     namespace,
     serviceAccount: k8sServiceAccount,
-    envVars: containerEnvVars,
+    containerOpts,
     imageTag,
     image,
     provider,

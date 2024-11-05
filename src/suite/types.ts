@@ -1,7 +1,11 @@
 import { Input, ProviderResource } from '@pulumi/pulumi';
 import { Resource } from '@pulumi/pulumi/resource';
 import * as k8s from '@pulumi/kubernetes';
-import { KubernetesApplicationReturn, PodResources } from '../k8s';
+import {
+  ContainerOptions,
+  KubernetesApplicationReturn,
+  PodResources,
+} from '../k8s';
 import * as gcp from '@pulumi/gcp';
 
 export type MetricMemoryCPU = {
@@ -130,7 +134,7 @@ export type ApplicationContext = {
   serviceAccount?: k8s.core.v1.ServiceAccount;
   image: string;
   imageTag: string;
-  envVars: k8s.types.input.core.v1.EnvVar[];
+  containerOpts: ContainerOptions;
   provider?: ProviderResource;
   vpcNative: boolean;
   isAdhocEnv?: boolean;
