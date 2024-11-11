@@ -13,6 +13,7 @@ import {
   getFullSubscriptionLabel,
   getMemoryAndCpuMetrics,
   getPubSubUndeliveredMessagesMetric,
+  getSpotSettings,
   gracefulTerminationHook,
   k8sServiceAccountToIdentity,
   KubernetesApplicationArgs,
@@ -32,7 +33,6 @@ import {
 } from '../debezium';
 import { location } from '../config';
 import { stripCpuFromLimits } from '../utils';
-import { NodeLabels } from '../kubernetes';
 import { defaultSpotWeight } from '../constants';
 
 /**
@@ -130,6 +130,12 @@ function getDebeziumProps(
   return all(propsVars).apply(func);
 }
 
+function getDefaultSpot(createService: boolean): ApplicationArgs['spot'] {
+  return createService
+    ? { enabled: false, weight: defaultSpotWeight, required: false }
+    : { enabled: true, weight: defaultSpotWeight, required: false };
+}
+
 /**
  * Deploys a cron job to k8s.
  */
@@ -142,6 +148,7 @@ function deployCron(
     provider,
     containerOpts,
     serviceAccount,
+    isAdhocEnv,
   }: ApplicationContext,
   {
     nameSuffix,
@@ -157,7 +164,7 @@ function deployCron(
     limits,
     requests,
     dependsOn,
-    spot = { enabled: false, weight: defaultSpotWeight, required: false },
+    spot,
   }: CronArgs,
 ): k8s.batch.v1.CronJob {
   const appResourcePrefix = `${resourcePrefix}${
@@ -165,61 +172,7 @@ function deployCron(
   }`;
   const appName = `${name}${nameSuffix ? `-${nameSuffix}` : ''}`;
 
-  const tolerations: k8s.types.input.core.v1.Toleration[] = [];
-  const affinity: k8s.types.input.core.v1.Affinity = {};
-
-  if (spot?.enabled) {
-    const spotWeight = spot?.weight ?? defaultSpotWeight;
-    const nonSpotWeight = Math.max(0, 100 - spotWeight);
-    tolerations.push({
-      key: 'spot',
-      operator: 'Equal',
-      value: 'true',
-      effect: 'NoSchedule',
-    });
-    affinity.nodeAffinity = spot.required
-      ? {
-          requiredDuringSchedulingIgnoredDuringExecution: {
-            nodeSelectorTerms: [
-              {
-                matchExpressions: [
-                  {
-                    key: NodeLabels.Spot.key,
-                    operator: 'In',
-                    values: [NodeLabels.Spot.value],
-                  },
-                ],
-              },
-            ],
-          },
-        }
-      : {
-          preferredDuringSchedulingIgnoredDuringExecution: [
-            {
-              weight: spotWeight,
-              preference: {
-                matchExpressions: [
-                  {
-                    key: NodeLabels.Spot.key,
-                    operator: 'Exists',
-                  },
-                ],
-              },
-            },
-            {
-              weight: nonSpotWeight,
-              preference: {
-                matchExpressions: [
-                  {
-                    key: NodeLabels.Spot.key,
-                    operator: 'DoesNotExist',
-                  },
-                ],
-              },
-            },
-          ],
-        };
-  }
+  const { tolerations, affinity } = getSpotSettings(spot, isAdhocEnv);
 
   return new k8s.batch.v1.CronJob(
     `${appResourcePrefix}cron`,
@@ -325,9 +278,11 @@ function deployApplication(
     ports = [],
     servicePorts = [],
     backendConfig,
-    spot = { enabled: false, weight: defaultSpotWeight, required: false },
+    spot: requestedSpot,
   }: ApplicationArgs,
 ): ApplicationReturn {
+  const shouldCreateService = createService || servicePorts.length > 0;
+  const spot = requestedSpot ?? getDefaultSpot(shouldCreateService);
   const appResourcePrefix = `${resourcePrefix}${
     nameSuffix ? `${nameSuffix}-` : ''
   }`;
@@ -375,7 +330,7 @@ function deployApplication(
     servicePorts,
     spot,
   };
-  if (createService || servicePorts.length > 0) {
+  if (shouldCreateService) {
     return createAutoscaledExposedApplication({
       ...appArgs,
       serviceType: vpcNative ? 'ClusterIP' : serviceType,

@@ -18,6 +18,7 @@ import {
 import { ClickHouseSyncConfig, loadConfig } from './utils';
 import { stringify } from 'yaml';
 import { createHash } from 'crypto';
+import { getSpotSettings } from '../../k8s';
 
 export type ClickHouseSyncArgs = Partial<AdhocEnv> & {
   props: {
@@ -72,17 +73,10 @@ export class ClickHouseSync extends ComponentResource {
       createHash('sha256').update(configString).digest('hex'),
     );
 
-    const tolerations: k8s.types.input.core.v1.Toleration[] | undefined =
-      args.toleratesSpot
-        ? [
-            {
-              key: 'spot',
-              operator: 'Equal',
-              value: 'true',
-              effect: 'NoSchedule',
-            },
-          ]
-        : undefined;
+    const { tolerations } = getSpotSettings(
+      { enabled: args?.toleratesSpot ?? true },
+      false,
+    );
 
     this.config = new k8s.core.v1.Secret(
       `${name}-clickhouse-sync-config`,

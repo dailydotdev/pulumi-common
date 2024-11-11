@@ -70,17 +70,7 @@ export function createMigrationJob(
 ): k8s.batch.v1.Job {
   const hash = image.split(':')[1];
   const name = `${baseName}-${hash.substring(hash.length - 8)}`;
-  const tolerations: k8s.types.input.core.v1.Toleration[] | undefined =
-    toleratesSpot
-      ? [
-          {
-            key: 'spot',
-            operator: 'Equal',
-            value: 'true',
-            effect: 'NoSchedule',
-          },
-        ]
-      : undefined;
+  const { tolerations } = getSpotSettings({ enabled: toleratesSpot }, false);
 
   return new k8s.batch.v1.Job(
     resourcePrefix + name,
@@ -254,40 +244,19 @@ export const gracefulTerminationHook = (
   },
 });
 
-export const createAutoscaledApplication = ({
-  name,
-  namespace,
-  version,
-  serviceAccount,
-  containers,
-  minReplicas = 2,
-  maxReplicas,
-  metrics,
-  resourcePrefix = '',
-  deploymentDependsOn = [],
-  podSpec,
-  podAnnotations,
-  labels: extraLabels,
-  shouldCreatePDB = false,
-  provider,
-  isAdhocEnv,
-  strategy,
-  spot,
-}: KubernetesApplicationArgs): KubernetesApplicationReturn => {
-  const labels: Input<{
-    [key: string]: Input<string>;
-  }> = {
-    app: name,
-    ...extraLabels,
-  };
+export type Spot = {
+  enabled: boolean;
+  weight?: number;
+  required?: boolean;
+};
 
-  const versionLabels: Input<{
-    [key: string]: Input<string>;
-  }> = {
-    ...labels,
-    version,
-  };
-
+export const getSpotSettings = (
+  spot: Spot = { enabled: false, weight: defaultSpotWeight, required: false },
+  isAdhocEnv?: boolean,
+): {
+  tolerations: k8s.types.input.core.v1.Toleration[];
+  affinity: k8s.types.input.core.v1.Affinity;
+} => {
   const tolerations: k8s.types.input.core.v1.Toleration[] = [];
   const affinity: k8s.types.input.core.v1.Affinity = {};
 
@@ -343,6 +312,44 @@ export const createAutoscaledApplication = ({
           ],
         };
   }
+  return { tolerations, affinity };
+};
+
+export const createAutoscaledApplication = ({
+  name,
+  namespace,
+  version,
+  serviceAccount,
+  containers,
+  minReplicas = 2,
+  maxReplicas,
+  metrics,
+  resourcePrefix = '',
+  deploymentDependsOn = [],
+  podSpec,
+  podAnnotations,
+  labels: extraLabels,
+  shouldCreatePDB = false,
+  provider,
+  isAdhocEnv,
+  strategy,
+  spot,
+}: KubernetesApplicationArgs): KubernetesApplicationReturn => {
+  const labels: Input<{
+    [key: string]: Input<string>;
+  }> = {
+    app: name,
+    ...extraLabels,
+  };
+
+  const versionLabels: Input<{
+    [key: string]: Input<string>;
+  }> = {
+    ...labels,
+    version,
+  };
+
+  const { tolerations, affinity } = getSpotSettings(spot, isAdhocEnv);
 
   const deployment = new k8s.apps.v1.Deployment(
     `${resourcePrefix}deployment`,
