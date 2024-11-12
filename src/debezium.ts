@@ -6,7 +6,7 @@ import { Input, Output, ProviderResource, interpolate } from '@pulumi/pulumi';
 import * as pulumi from '@pulumi/pulumi';
 import { input as inputs } from '@pulumi/kubernetes/types';
 import { stripCpuFromLimits } from './utils';
-import { PodResources } from './k8s';
+import { getSpotSettings, PodResources } from './k8s';
 
 type OptionalArgs = {
   diskType?: Input<string>;
@@ -243,6 +243,8 @@ export function deployDebeziumKubernetesResources(
     };
   }
 
+  const { tolerations } = getSpotSettings({ enabled: true }, isAdhocEnv);
+
   new k8s.apps.v1.Deployment(
     `${resourcePrefix}debezium-deployment`,
     {
@@ -267,6 +269,7 @@ export function deployDebeziumKubernetesResources(
             volumes,
             initContainers,
             affinity: !isAdhocEnv ? affinity : undefined,
+            tolerations,
             containers: [
               {
                 name: 'debezium',
