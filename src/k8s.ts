@@ -262,7 +262,7 @@ export const getSpotSettings = (
 
   if (spot?.enabled && !isAdhocEnv) {
     const spotWeight = spot?.weight ?? defaultSpotWeight;
-    const nonSpotWeight = Math.max(0, 100 - spotWeight);
+    const nonSpotWeight = Math.max(1, 100 - spotWeight);
     tolerations.push({
       key: 'spot',
       operator: 'Equal',
