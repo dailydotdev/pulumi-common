@@ -221,6 +221,7 @@ export type KubernetesApplicationArgs = {
   servicePorts?: k8s.types.input.core.v1.ServicePort[];
   backendConfig?: Input<{
     customResponseHeaders?: Input<string[]>;
+    customRequestHeaders?: Input<string[]>;
   }>;
   spot?: {
     enabled: boolean;
@@ -457,7 +458,7 @@ export const createAutoscaledExposedApplication = ({
   });
   const { labels } = returnObj;
   const annotations: Record<string, Output<string>> = {};
-  if (enableCdn || serviceTimeout) {
+  if (enableCdn || serviceTimeout || backendConfig) {
     const spec: Record<string, unknown> = {};
     if (enableCdn) {
       spec.cdn = {
@@ -476,6 +477,11 @@ export const createAutoscaledExposedApplication = ({
       if (backendConfig?.customResponseHeaders) {
         spec.customResponseHeaders = {
           headers: backendConfig.customResponseHeaders,
+        };
+      }
+      if (backendConfig?.customRequestHeaders) {
+        spec.customRequestHeaders = {
+          headers: backendConfig.customRequestHeaders,
         };
       }
     });

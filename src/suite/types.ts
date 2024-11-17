@@ -3,6 +3,7 @@ import { Resource } from '@pulumi/pulumi/resource';
 import * as k8s from '@pulumi/kubernetes';
 import {
   ContainerOptions,
+  KubernetesApplicationArgs,
   KubernetesApplicationReturn,
   PodResources,
   Spot,
@@ -50,9 +51,7 @@ export type ApplicationArgs = {
   podAnnotations?: Input<{ [key: string]: Input<string> }>;
   ports?: k8s.types.input.core.v1.ContainerPort[];
   servicePorts?: k8s.types.input.core.v1.ServicePort[];
-  backendConfig?: Input<{
-    customResponseHeaders?: Input<string[]>;
-  }>;
+  backendConfig?: KubernetesApplicationArgs['backendConfig'];
   spot?: Spot;
 };
 
