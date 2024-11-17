@@ -419,24 +419,24 @@ export function deployApplicationSuiteToProvider({
       migration.args,
       containerOpts,
       k8sServiceAccount,
-      { provider, resourcePrefix, dependsOn: suiteDependsOn },
+      { provider, resourcePrefix, dependsOn },
       migration?.toleratesSpot ?? true,
     );
     dependsOn.push(migrationJob);
   } else if (migrations) {
-    Object.keys(migrations).map((key) => {
-      const migrationJob = createMigrationJob(
+    const jobs = Object.keys(migrations).map((key) => {
+      return createMigrationJob(
         `${name}-${key}-migration`,
         namespace,
         image,
         migrations[key].args,
         containerOpts,
         k8sServiceAccount,
-        { provider, resourcePrefix, dependsOn: suiteDependsOn },
+        { provider, resourcePrefix, dependsOn },
         migrations[key]?.toleratesSpot ?? true,
       );
-      dependsOn.push(migrationJob);
     });
+    dependsOn.push(...jobs);
   }
 
   if (debezium) {
