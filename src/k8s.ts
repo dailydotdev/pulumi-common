@@ -9,7 +9,7 @@ import {
 import * as gcp from '@pulumi/gcp';
 import { autoscaling } from '@pulumi/kubernetes/types/input';
 import { Resource } from '@pulumi/pulumi/resource';
-import { camelToUnderscore } from './utils';
+import { camelToUnderscore, gcpProjectNumber } from './utils';
 import { NodeLabels } from './kubernetes';
 import { defaultSpotWeight } from './constants';
 
@@ -27,6 +27,14 @@ export function k8sServiceAccountToIdentity(
       `serviceAccount:${gcp.config.project}.svc.id.goog[${metadata.namespace}/${metadata.name}]`,
   );
 }
+
+export const k8sServiceAccountToWorkloadPrincipal = (
+  serviceAccount: k8s.core.v1.ServiceAccount,
+): Output<string> =>
+  serviceAccount.metadata.apply(
+    (metadata) =>
+      `principal://iam.googleapis.com/projects/${gcpProjectNumber()}/locations/global/workloadIdentityPools/${gcp.config.project}.svc.id.goog/subject/ns/${metadata.namespace}/sa/${metadata.name}`,
+  );
 
 export function createK8sServiceAccountFromGCPServiceAccount(
   resourceName: string,
@@ -171,6 +179,9 @@ export const getMemoryAndCpuMetrics = (
   },
 ];
 
+/**
+ * @deprecated Use createAndBindK8sServiceAccount instead
+ */
 export const bindK8sServiceAccountToGCP = (
   resourcePrefix: string,
   name: string,

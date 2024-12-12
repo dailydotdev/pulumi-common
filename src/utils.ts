@@ -1,4 +1,4 @@
-import { all, Input, Output } from '@pulumi/pulumi';
+import { all, Config, Input, Output } from '@pulumi/pulumi';
 import { PodResources } from './k8s';
 
 export type AdhocEnv = { isAdhocEnv: boolean };
@@ -22,3 +22,8 @@ export function stripCpuFromLimits(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return all([requests]).apply(([{ cpu, ...rest }]) => rest);
 }
+
+export const gcpProjectNumber = () => {
+  const __config = new Config();
+  return __config.require('projectNumber');
+};
