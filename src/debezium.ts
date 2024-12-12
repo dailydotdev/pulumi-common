@@ -12,6 +12,8 @@ import {
   PodResources,
 } from './k8s';
 
+import { createGcsBucket } from './kubernetes/storage/bucket';
+
 type OptionalArgs = {
   limits?: Input<PodResources>;
   env?: pulumi.Input<inputs.core.v1.EnvVar>[];
@@ -28,17 +30,35 @@ type OptionalArgs = {
  * This is the service account.
  */
 export function deployDebeziumSharedDependencies(
-  name: string,
   {
+    name,
+    namespace,
     resourcePrefix = '',
     isAdhocEnv,
-  }: Pick<OptionalArgs, 'resourcePrefix' | 'isAdhocEnv'> = {},
+  }: { name: string; namespace: string } & Pick<
+    OptionalArgs,
+    'resourcePrefix' | 'isAdhocEnv'
+  >,
+  provider?: k8s.Provider,
 ): {
-  debeziumSa: gcp.serviceaccount.Account | undefined;
-  debeziumKey: gcp.serviceaccount.Key | undefined;
+  serviceAccount: k8s.core.v1.ServiceAccount;
+  debeziumSa?: gcp.serviceaccount.Account;
+  debeziumKey?: gcp.serviceaccount.Key;
+  bucket?: gcp.storage.Bucket;
 } {
+  const serviceAccount = new k8s.core.v1.ServiceAccount(
+    `${resourcePrefix}${name}-debezium-k8s-sa`,
+    {
+      metadata: {
+        namespace,
+        name: `${name}-debezium`,
+      },
+    },
+    { provider },
+  );
+
   if (isAdhocEnv) {
-    return { debeziumKey: undefined, debeziumSa: undefined };
+    return { serviceAccount };
   }
 
   const { serviceAccount: debeziumSa } = createServiceAccountAndGrantRoles(
@@ -59,7 +79,13 @@ export function deployDebeziumSharedDependencies(
     },
   );
 
-  return { debeziumSa, debeziumKey };
+  const { bucket } = createGcsBucket({
+    name,
+    serviceAccount,
+    resourcePrefix,
+  });
+
+  return { serviceAccount, debeziumSa, debeziumKey, bucket };
 }
 
 export const deployDebeziumSharedDependenciesV2 = (

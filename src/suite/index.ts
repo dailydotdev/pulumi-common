@@ -30,7 +30,6 @@ import {
 import {
   deployDebeziumKubernetesResources,
   deployDebeziumSharedDependencies,
-  deployDebeziumSharedDependenciesV2,
 } from '../debezium';
 import { stripCpuFromLimits } from '../utils';
 import { defaultSpotWeight } from '../constants';
@@ -448,18 +447,15 @@ export function deployApplicationSuiteToProvider({
     }
     const props = getDebeziumProps(debezium.propsPath, propsVars, isAdhocEnv);
     // IMPORTANT: do not set resource prefix here, otherwise it might create new resources
-    const { debeziumKey } = deployDebeziumSharedDependencies(name, {
-      isAdhocEnv,
-    });
-    const k8sServiceAccount = deployDebeziumSharedDependenciesV2(
-      {
-        name,
-        namespace,
-        resourcePrefix,
-        isAdhocEnv,
-      },
-      provider,
-    );
+    const { debeziumKey, serviceAccount: k8sServiceAccount } =
+      deployDebeziumSharedDependencies(
+        {
+          name,
+          namespace,
+          isAdhocEnv,
+        },
+        provider,
+      );
     // Useful if we want to migrate Debezium without affecting its dependencies
     if (!debezium.dependenciesOnly) {
       const debeziumDefault = isAdhocEnv ? '2.0' : '1.6';
