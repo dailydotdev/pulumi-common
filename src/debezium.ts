@@ -295,7 +295,7 @@ export function deployDebeziumKubernetesResources(
     });
     volumeMounts.push({ name: 'storage', mountPath: '/pvc/data' });
     initContainers.push({
-      name: 'data-ownership',
+      name: 'copy-offsets',
       image: 'alpine:3',
       command: [
         'sh',
