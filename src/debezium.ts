@@ -300,7 +300,7 @@ export function deployDebeziumKubernetesResources(
       command: [
         'sh',
         '-c',
-        '[ -f /pvc/data/offsets.dat ] && mv /pvc/data/offsets.dat /debezium/data/offsets.dat',
+        '[ -f /pvc/data/offsets.dat ] && mv /pvc/data/offsets.dat /debezium/data/offsets.dat || true',
       ],
       volumeMounts: [
         { name: 'storage', mountPath: '/pvc/data' },
