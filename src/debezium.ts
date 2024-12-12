@@ -2,7 +2,7 @@ import * as gcp from '@pulumi/gcp';
 import * as k8s from '@pulumi/kubernetes';
 import { createHash } from 'crypto';
 import { createServiceAccountAndGrantRoles } from './serviceAccount';
-import { Input, Output, ProviderResource, interpolate } from '@pulumi/pulumi';
+import { Input, Output, ProviderResource } from '@pulumi/pulumi';
 import * as pulumi from '@pulumi/pulumi';
 import { input as inputs } from '@pulumi/kubernetes/types';
 import { stripCpuFromLimits } from './utils';
@@ -12,9 +12,9 @@ import {
   PodResources,
 } from './k8s';
 
+import { createGcsBucket } from './kubernetes/storage/bucket';
+
 type OptionalArgs = {
-  diskType?: Input<string>;
-  diskSize?: Input<number>;
   limits?: Input<PodResources>;
   env?: pulumi.Input<inputs.core.v1.EnvVar>[];
   image?: string;
@@ -25,31 +25,40 @@ type OptionalArgs = {
   affinity?: pulumi.Input<k8s.types.input.core.v1.Affinity>;
 };
 
-const DEFAULT_DISK_SIZE = 10;
-
 /**
  * Deploys only the shared dependencies for Debezium.
- * This includes disk and service account.
+ * This is the service account.
  */
 export function deployDebeziumSharedDependencies(
-  name: string,
-  diskZone: Input<string>,
   {
-    diskType = 'pd-ssd',
-    diskSize = DEFAULT_DISK_SIZE,
+    name,
+    namespace,
     resourcePrefix = '',
     isAdhocEnv,
-  }: Pick<
+  }: { name: string; namespace: string } & Pick<
     OptionalArgs,
-    'resourcePrefix' | 'diskSize' | 'diskType' | 'isAdhocEnv'
-  > = {},
+    'resourcePrefix' | 'isAdhocEnv'
+  >,
+  provider?: k8s.Provider,
 ): {
-  debeziumSa: gcp.serviceaccount.Account | undefined;
-  debeziumKey: gcp.serviceaccount.Key | undefined;
-  disk: gcp.compute.Disk | undefined;
+  serviceAccount: k8s.core.v1.ServiceAccount;
+  debeziumSa?: gcp.serviceaccount.Account;
+  debeziumKey?: gcp.serviceaccount.Key;
+  bucket?: gcp.storage.Bucket;
 } {
+  const serviceAccount = new k8s.core.v1.ServiceAccount(
+    `${resourcePrefix}${name}-debezium-k8s-sa`,
+    {
+      metadata: {
+        namespace,
+        name: `${name}-debezium`,
+      },
+    },
+    { provider },
+  );
+
   if (isAdhocEnv) {
-    return { debeziumKey: undefined, debeziumSa: undefined, disk: undefined };
+    return { serviceAccount };
   }
 
   const { serviceAccount: debeziumSa } = createServiceAccountAndGrantRoles(
@@ -70,14 +79,13 @@ export function deployDebeziumSharedDependencies(
     },
   );
 
-  const disk = new gcp.compute.Disk(`${resourcePrefix}debezium-disk`, {
-    name: `${name}-debezium-pv`,
-    size: diskSize,
-    zone: diskZone,
-    type: diskType,
+  const { bucket } = createGcsBucket({
+    name: `${name}-debezium`,
+    serviceAccount,
+    resourcePrefix,
   });
 
-  return { debeziumSa, debeziumKey, disk };
+  return { serviceAccount, debeziumSa, debeziumKey, bucket };
 }
 
 export const deployDebeziumSharedDependenciesV2 = (
@@ -151,7 +159,6 @@ export function deployDebeziumKubernetesResources(
   namespace: string | Input<string>,
   debeziumPropsString: Output<string>,
   debeziumKey: gcp.serviceaccount.Key | undefined,
-  disk: gcp.compute.Disk | undefined,
   {
     limits: requests = {
       cpu: '1',
@@ -211,12 +218,21 @@ export function deployDebeziumKubernetesResources(
         secretName: debeziumProps.metadata.name,
       },
     },
+    {
+      name: 'data',
+      csi: {
+        driver: 'gcsfuse.csi.storage.gke.io',
+        volumeAttributes: {
+          bucketName: `${name}-debezium-storage`,
+          mountOptions: 'implicit-dirs,uid=185,gid=0',
+        },
+      },
+    },
   ];
   const volumeMounts: k8s.types.input.core.v1.VolumeMount[] = [
     { name: 'props', mountPath: '/debezium/conf' },
+    { name: 'data', mountPath: '/debezium/data' },
   ];
-
-  const initContainers: k8s.types.input.core.v1.Container[] = [];
 
   // If service account is provided
   if (debeziumKey) {
@@ -244,85 +260,6 @@ export function deployDebeziumKubernetesResources(
       mountPath: '/var/secrets/google',
     });
   }
-
-  // If external disk is provided
-  if (disk) {
-    new k8s.core.v1.PersistentVolume(
-      `${resourcePrefix}debezium-pv`,
-      {
-        metadata: {
-          name: `${name}-debezium-pv`,
-          namespace,
-        },
-        spec: {
-          accessModes: ['ReadWriteOnce'],
-          capacity: { storage: interpolate`${disk.size}Gi` },
-          claimRef: {
-            name: `${name}-debezium-pvc`,
-            namespace,
-          },
-          gcePersistentDisk: {
-            pdName: disk.name,
-            fsType: 'ext4',
-          },
-        },
-      },
-      { provider, ignoreChanges: ['spec.claimRef'] },
-    );
-
-    new k8s.core.v1.PersistentVolumeClaim(
-      `${resourcePrefix}debezium-pvc`,
-      {
-        metadata: {
-          name: `${name}-debezium-pvc`,
-          namespace,
-        },
-        spec: {
-          accessModes: ['ReadWriteOnce'],
-          resources: { requests: { storage: interpolate`${disk.size}Gi` } },
-          volumeName: `${name}-debezium-pv`,
-        },
-      },
-      { provider },
-    );
-
-    volumes.push({
-      name: 'storage',
-      persistentVolumeClaim: {
-        // Must not depend on the PVC variable because it causes deadlock
-        claimName: `${name}-debezium-pvc`,
-      },
-    });
-    volumeMounts.push({ name: 'storage', mountPath: '/pvc/data' });
-    initContainers.push({
-      name: 'copy-offsets',
-      image: 'alpine:3',
-      command: [
-        'sh',
-        '-c',
-        '[ -f /pvc/data/offsets.dat ] && mv /pvc/data/offsets.dat /debezium/data/offsets.dat || true',
-      ],
-      volumeMounts: [
-        { name: 'storage', mountPath: '/pvc/data' },
-        { name: 'gcs-fuse-csi-ephemeral', mountPath: '/debezium/data' },
-      ],
-    });
-  }
-
-  volumes.push({
-    name: 'gcs-fuse-csi-ephemeral',
-    csi: {
-      driver: 'gcsfuse.csi.storage.gke.io',
-      volumeAttributes: {
-        bucketName: `${name}-debezium-storage`,
-        mountOptions: 'implicit-dirs,uid=185,gid=0',
-      },
-    },
-  });
-  volumeMounts.push({
-    name: 'gcs-fuse-csi-ephemeral',
-    mountPath: '/debezium/data',
-  });
 
   let livenessProbe: k8s.types.input.core.v1.Probe | undefined;
   if (!disableHealthCheck) {
@@ -359,11 +296,7 @@ export function deployDebeziumKubernetesResources(
             },
           },
           spec: {
-            nodeSelector: disk
-              ? { 'topology.kubernetes.io/zone': disk.zone }
-              : undefined,
             volumes,
-            initContainers,
             affinity: !isAdhocEnv ? affinity : undefined,
             tolerations,
             serviceAccountName: k8sServiceAccount?.metadata.apply(
