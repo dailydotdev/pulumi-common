@@ -171,6 +171,9 @@ export const getMemoryAndCpuMetrics = (
   },
 ];
 
+/**
+ * @deprecated Use createAndBindK8sServiceAccount instead
+ */
 export const bindK8sServiceAccountToGCP = (
   resourcePrefix: string,
   name: string,
