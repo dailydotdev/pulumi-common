@@ -30,7 +30,9 @@ import {
 import {
   deployDebeziumKubernetesResources,
   deployDebeziumSharedDependencies,
+  deployDebeziumSharedDependenciesV2,
 } from '../debezium';
+import { location } from '../config';
 import { stripCpuFromLimits } from '../utils';
 import { defaultSpotWeight } from '../constants';
 
@@ -446,30 +448,47 @@ export function deployApplicationSuiteToProvider({
       propsVars.topic = debezium.topicName;
     }
     const props = getDebeziumProps(debezium.propsPath, propsVars, isAdhocEnv);
-    // IMPORTANT: do not set resource prefix here, otherwise it might create new resources
-    const { debeziumKey, serviceAccount: k8sServiceAccount } =
-      deployDebeziumSharedDependencies(
-        {
-          name,
-          namespace,
-          isAdhocEnv,
-        },
-        provider,
-      );
+    const diskSize = 100;
+    // IMPORTANT: do not set resource prefix here, otherwise it might create new disk and other resources
+    const { debeziumKey, disk } = deployDebeziumSharedDependencies(
+      name,
+      `${location}-f`,
+      {
+        diskType: 'pd-ssd',
+        diskSize,
+        isAdhocEnv,
+      },
+    );
+    const k8sServiceAccount = deployDebeziumSharedDependenciesV2(
+      {
+        name,
+        namespace,
+        resourcePrefix,
+        isAdhocEnv,
+      },
+      provider,
+    );
     // Useful if we want to migrate Debezium without affecting its dependencies
     if (!debezium.dependenciesOnly) {
       const debeziumDefault = isAdhocEnv ? '2.0' : '1.6';
-      deployDebeziumKubernetesResources(name, namespace, props, debeziumKey, {
-        image: `debezium/server:${debezium.version ?? debeziumDefault}`,
-        provider,
-        resourcePrefix,
-        limits: debezium.limits,
-        isAdhocEnv,
-        env: debezium.env,
-        disableHealthCheck: debezium.disableHealthCheck,
-        affinity: debezium.affinity,
-        k8sServiceAccount,
-      });
+      deployDebeziumKubernetesResources(
+        name,
+        namespace,
+        props,
+        debeziumKey,
+        disk,
+        {
+          image: `debezium/server:${debezium.version ?? debeziumDefault}`,
+          provider,
+          resourcePrefix,
+          limits: debezium.limits,
+          isAdhocEnv,
+          env: debezium.env,
+          disableHealthCheck: debezium.disableHealthCheck,
+          affinity: debezium.affinity,
+          k8sServiceAccount,
+        },
+      );
     }
   }
 
