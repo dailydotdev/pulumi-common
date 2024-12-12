@@ -30,6 +30,7 @@ import {
 import {
   deployDebeziumKubernetesResources,
   deployDebeziumSharedDependencies,
+  deployDebeziumSharedDependenciesV2,
 } from '../debezium';
 import { location } from '../config';
 import { stripCpuFromLimits } from '../utils';
@@ -458,6 +459,15 @@ export function deployApplicationSuiteToProvider({
         isAdhocEnv,
       },
     );
+    const k8sServiceAccount = deployDebeziumSharedDependenciesV2(
+      {
+        name,
+        namespace,
+        resourcePrefix,
+        isAdhocEnv,
+      },
+      provider,
+    );
     // Useful if we want to migrate Debezium without affecting its dependencies
     if (!debezium.dependenciesOnly) {
       const debeziumDefault = isAdhocEnv ? '2.0' : '1.6';
@@ -476,6 +486,7 @@ export function deployApplicationSuiteToProvider({
           env: debezium.env,
           disableHealthCheck: debezium.disableHealthCheck,
           affinity: debezium.affinity,
+          k8sServiceAccount,
         },
       );
     }
