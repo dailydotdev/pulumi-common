@@ -73,7 +73,7 @@ export function customMetricToK8s(
   }
 }
 
-function createAndBindK8sServiceAccount(
+export function createAndBindK8sServiceAccount(
   resourcePrefix: string | undefined,
   name: string,
   namespace: string,
