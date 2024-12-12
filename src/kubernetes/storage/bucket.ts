@@ -24,8 +24,8 @@ export const createGcsBucket = ({
     return {};
   }
 
-  const bucket = new Bucket(`${resourcePrefix}${name}-debezium-storage`, {
-    name: `${name}-debezium-storage`,
+  const bucket = new Bucket(`${resourcePrefix}${name}-storage`, {
+    name: `${name}-storage`,
     location: 'us',
     publicAccessPrevention: 'enforced',
     uniformBucketLevelAccess: true,
@@ -50,7 +50,7 @@ export const createGcsBucket = ({
     });
 
     bucketIAMPolicy = new BucketIAMPolicy(
-      `${resourcePrefix}${name}-debezium-storage-policy`,
+      `${resourcePrefix}${name}-storage-policy`,
       {
         bucket: bucket.name,
         policyData: objectUsers.then((objectUser) => objectUser.policyData),

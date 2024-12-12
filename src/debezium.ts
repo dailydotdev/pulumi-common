@@ -80,7 +80,7 @@ export function deployDebeziumSharedDependencies(
   );
 
   const { bucket } = createGcsBucket({
-    name,
+    name: `${name}-debezium`,
     serviceAccount,
     resourcePrefix,
   });
