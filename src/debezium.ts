@@ -218,20 +218,9 @@ export function deployDebeziumKubernetesResources(
         secretName: debeziumProps.metadata.name,
       },
     },
-    {
-      name: 'data',
-      csi: {
-        driver: 'gcsfuse.csi.storage.gke.io',
-        volumeAttributes: {
-          bucketName: `${name}-debezium-storage`,
-          mountOptions: 'implicit-dirs,uid=185,gid=0',
-        },
-      },
-    },
   ];
   const volumeMounts: k8s.types.input.core.v1.VolumeMount[] = [
     { name: 'props', mountPath: '/debezium/conf' },
-    { name: 'data', mountPath: '/debezium/data' },
   ];
 
   // If service account is provided
@@ -268,6 +257,20 @@ export function deployDebeziumKubernetesResources(
       initialDelaySeconds: 60,
       periodSeconds: 30,
     };
+  }
+
+  if (!isAdhocEnv) {
+    volumes.push({
+      name: 'data',
+      csi: {
+        driver: 'gcsfuse.csi.storage.gke.io',
+        volumeAttributes: {
+          bucketName: `${name}-debezium-storage`,
+          mountOptions: 'implicit-dirs,uid=185,gid=0',
+        },
+      },
+    });
+    volumeMounts.push({ name: 'data', mountPath: '/debezium/data' });
   }
 
   const { tolerations } = getSpotSettings({ enabled: true }, isAdhocEnv);
