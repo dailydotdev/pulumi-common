@@ -460,7 +460,7 @@ export function deployApplicationSuiteToProvider({
     if (!debezium.dependenciesOnly) {
       const debeziumDefault = isAdhocEnv ? '2.0' : '1.6';
       deployDebeziumKubernetesResources(name, namespace, props, debeziumKey, {
-        image: `debezium/server:${debezium.version ?? debeziumDefault}`,
+        image: `quay.io/debezium/server:${debezium.version ?? debeziumDefault}`,
         provider,
         resourcePrefix,
         limits: debezium.limits,
