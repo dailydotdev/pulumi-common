@@ -173,6 +173,7 @@ export function deployDebeziumKubernetesResources(
     disableHealthCheck,
     affinity,
     k8sServiceAccount,
+    version,
   }: Pick<
     OptionalArgs,
     | 'limits'
@@ -183,7 +184,7 @@ export function deployDebeziumKubernetesResources(
     | 'isAdhocEnv'
     | 'disableHealthCheck'
     | 'affinity'
-  > & { k8sServiceAccount?: k8s.core.v1.ServiceAccount } = {},
+  > & { k8sServiceAccount?: k8s.core.v1.ServiceAccount; version?: string } = {},
 ): void {
   const propsHash = debeziumPropsString.apply((props) =>
     createHash('md5').update(props).digest('hex'),
@@ -221,7 +222,12 @@ export function deployDebeziumKubernetesResources(
     },
   ];
   const volumeMounts: k8s.types.input.core.v1.VolumeMount[] = [
-    { name: 'props', mountPath: '/debezium/conf' },
+    {
+      name: 'props',
+      mountPath: version?.startsWith('3')
+        ? '/debezium/config'
+        : '/debezium/conf',
+    },
   ];
 
   const initContainers: k8s.types.input.core.v1.Container[] = [];

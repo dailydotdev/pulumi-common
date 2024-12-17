@@ -469,6 +469,7 @@ export function deployApplicationSuiteToProvider({
         disableHealthCheck: debezium.disableHealthCheck,
         affinity: debezium.affinity,
         k8sServiceAccount,
+        version: debezium.version ?? debeziumDefault,
       });
     }
   }
