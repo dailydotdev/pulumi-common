@@ -1,9 +1,10 @@
 import * as gcp from '@pulumi/gcp';
 import * as k8s from '@pulumi/kubernetes';
+import * as pulumi from '@pulumi/pulumi';
 import { createHash } from 'crypto';
 import { createServiceAccountAndGrantRoles } from './serviceAccount';
 import { Input, Output, ProviderResource } from '@pulumi/pulumi';
-import * as pulumi from '@pulumi/pulumi';
+import { PersistentVolumeClaim } from '@pulumi/kubernetes/core/v1';
 import { input as inputs } from '@pulumi/kubernetes/types';
 import { stripCpuFromLimits } from './utils';
 import {
@@ -223,6 +224,8 @@ export function deployDebeziumKubernetesResources(
     { name: 'props', mountPath: '/debezium/conf' },
   ];
 
+  const initContainers: k8s.types.input.core.v1.Container[] = [];
+
   // If service account is provided
   if (debeziumKey) {
     const debeziumSecretSa = new k8s.core.v1.Secret(
@@ -260,14 +263,57 @@ export function deployDebeziumKubernetesResources(
   }
 
   if (!isAdhocEnv) {
+    const pvc = new PersistentVolumeClaim(
+      `${resourcePrefix}debezium-pvc`,
+      {
+        metadata: {
+          name: `${name}-debezium-data`,
+          namespace,
+          labels: { ...labels },
+        },
+        spec: {
+          accessModes: ['ReadWriteOnce'],
+          resources: {
+            requests: {
+              storage: '4Gi',
+            },
+          },
+          storageClassName: 'hyperdisk-balanced-retain',
+        },
+      },
+      { provider, dependsOn: [] },
+    );
+
     volumes.push({
-      name: 'data',
+      name: 'gcs-data',
       csi: {
         driver: 'gcsfuse.csi.storage.gke.io',
         volumeAttributes: {
           bucketName: `${name}-debezium-storage`,
           mountOptions: 'implicit-dirs,uid=185,gid=0',
         },
+      },
+    });
+    volumeMounts.push({ name: 'gcs-data', mountPath: '/gcs/data' });
+
+    initContainers.push({
+      name: 'copy-offsets',
+      image: 'alpine:3',
+      command: [
+        'sh',
+        '-c',
+        '[ -f /gcs/data/offsets.dat ] && mv /gcs/data/offsets.dat /debezium/data/offsets.dat || true',
+      ],
+      volumeMounts: [
+        { name: 'gcs-data', mountPath: '/gcs/data' },
+        { name: 'data', mountPath: '/debezium/data' },
+      ],
+    });
+
+    volumes.push({
+      name: 'data',
+      persistentVolumeClaim: {
+        claimName: pvc.metadata.name,
       },
     });
     volumeMounts.push({ name: 'data', mountPath: '/debezium/data' });
@@ -300,11 +346,17 @@ export function deployDebeziumKubernetesResources(
           },
           spec: {
             volumes,
+            initContainers,
             affinity: !isAdhocEnv ? affinity : undefined,
             tolerations,
             serviceAccountName: k8sServiceAccount?.metadata.apply(
               (metadata) => metadata.name,
             ),
+            securityContext: {
+              runAsUser: 185,
+              runAsGroup: 185,
+              fsGroup: 185,
+            },
             containers: [
               {
                 name: 'debezium',
