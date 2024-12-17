@@ -447,15 +447,11 @@ export function deployApplicationSuiteToProvider({
     }
     const props = getDebeziumProps(debezium.propsPath, propsVars, isAdhocEnv);
     // IMPORTANT: do not set resource prefix here, otherwise it might create new resources
-    const { debeziumKey, serviceAccount: k8sServiceAccount } =
-      deployDebeziumSharedDependencies(
-        {
-          name,
-          namespace,
-          isAdhocEnv,
-        },
-        provider,
-      );
+    const { debeziumKey } = deployDebeziumSharedDependencies({
+      name,
+      namespace,
+      isAdhocEnv,
+    });
     // Useful if we want to migrate Debezium without affecting its dependencies
     if (!debezium.dependenciesOnly) {
       const debeziumDefault = isAdhocEnv ? '2.0' : '1.6';
@@ -468,7 +464,6 @@ export function deployApplicationSuiteToProvider({
         env: debezium.env,
         disableHealthCheck: debezium.disableHealthCheck,
         affinity: debezium.affinity,
-        k8sServiceAccount,
         version: debezium.version ?? debeziumDefault,
       });
     }

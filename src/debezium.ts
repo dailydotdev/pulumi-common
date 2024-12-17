@@ -7,13 +7,7 @@ import { Input, Output, ProviderResource } from '@pulumi/pulumi';
 import { PersistentVolumeClaim } from '@pulumi/kubernetes/core/v1';
 import { input as inputs } from '@pulumi/kubernetes/types';
 import { stripCpuFromLimits } from './utils';
-import {
-  getSpotSettings,
-  k8sServiceAccountToWorkloadPrincipal,
-  PodResources,
-} from './k8s';
-
-import { createGcsBucket } from './kubernetes/storage/bucket';
+import { getSpotSettings, PodResources } from './k8s';
 
 type OptionalArgs = {
   limits?: Input<PodResources>;
@@ -30,36 +24,19 @@ type OptionalArgs = {
  * Deploys only the shared dependencies for Debezium.
  * This is the service account.
  */
-export function deployDebeziumSharedDependencies(
-  {
-    name,
-    namespace,
-    resourcePrefix = '',
-    isAdhocEnv,
-  }: { name: string; namespace: string } & Pick<
-    OptionalArgs,
-    'resourcePrefix' | 'isAdhocEnv'
-  >,
-  provider?: k8s.Provider,
-): {
-  serviceAccount: k8s.core.v1.ServiceAccount;
+export function deployDebeziumSharedDependencies({
+  name,
+  resourcePrefix = '',
+  isAdhocEnv,
+}: { name: string; namespace: string } & Pick<
+  OptionalArgs,
+  'resourcePrefix' | 'isAdhocEnv'
+>): {
   debeziumSa?: gcp.serviceaccount.Account;
   debeziumKey?: gcp.serviceaccount.Key;
-  bucket?: gcp.storage.Bucket;
 } {
-  const serviceAccount = new k8s.core.v1.ServiceAccount(
-    `${resourcePrefix}${name}-debezium-k8s-sa`,
-    {
-      metadata: {
-        namespace,
-        name: `${name}-debezium`,
-      },
-    },
-    { provider },
-  );
-
   if (isAdhocEnv) {
-    return { serviceAccount };
+    return {};
   }
 
   const { serviceAccount: debeziumSa } = createServiceAccountAndGrantRoles(
@@ -80,77 +57,8 @@ export function deployDebeziumSharedDependencies(
     },
   );
 
-  const { bucket } = createGcsBucket({
-    name: `${name}-debezium`,
-    serviceAccount,
-    resourcePrefix,
-  });
-
-  return { serviceAccount, debeziumSa, debeziumKey, bucket };
+  return { debeziumSa, debeziumKey };
 }
-
-export const deployDebeziumSharedDependenciesV2 = (
-  {
-    name,
-    namespace,
-    isAdhocEnv = false,
-    resourcePrefix,
-  }: {
-    name: string;
-    namespace: string;
-    isAdhocEnv?: boolean;
-    resourcePrefix: string;
-  },
-  provider?: k8s.Provider,
-): k8s.core.v1.ServiceAccount | undefined => {
-  const serviceAccount = new k8s.core.v1.ServiceAccount(
-    `${resourcePrefix}${name}-debezium-k8s-sa`,
-    {
-      metadata: {
-        namespace,
-        name: `${name}-debezium`,
-      },
-    },
-    { provider },
-  );
-
-  if (!isAdhocEnv) {
-    const bucket = new gcp.storage.Bucket(
-      `${resourcePrefix}${name}-debezium-storage`,
-      {
-        name: `${name}-debezium-storage`,
-        location: 'us',
-        publicAccessPrevention: 'enforced',
-        project: 'devkit-prod',
-        forceDestroy: true,
-        uniformBucketLevelAccess: true,
-      },
-    );
-
-    const objectUsers = gcp.organizations.getIAMPolicy({
-      bindings: [
-        {
-          role: 'roles/storage.objectUser',
-          members: [
-            k8sServiceAccountToWorkloadPrincipal(
-              serviceAccount,
-            ) as unknown as string,
-          ],
-        },
-      ],
-    });
-
-    new gcp.storage.BucketIAMPolicy(
-      `${resourcePrefix}${name}-debezium-storage-policy`,
-      {
-        bucket: bucket.name,
-        policyData: objectUsers.then((objectUser) => objectUser.policyData),
-      },
-    );
-  }
-
-  return serviceAccount;
-};
 
 /**
  * Deploys only the Kubernetes resources for Debezium
@@ -172,7 +80,6 @@ export function deployDebeziumKubernetesResources(
     isAdhocEnv,
     disableHealthCheck,
     affinity,
-    k8sServiceAccount,
     version,
   }: Pick<
     OptionalArgs,
@@ -184,7 +91,7 @@ export function deployDebeziumKubernetesResources(
     | 'isAdhocEnv'
     | 'disableHealthCheck'
     | 'affinity'
-  > & { k8sServiceAccount?: k8s.core.v1.ServiceAccount; version?: string } = {},
+  > & { version?: string } = {},
 ): void {
   const propsHash = debeziumPropsString.apply((props) =>
     createHash('md5').update(props).digest('hex'),
@@ -307,33 +214,6 @@ export function deployDebeziumKubernetesResources(
       },
       { provider, dependsOn: [] },
     );
-
-    volumes.push({
-      name: 'gcs-data',
-      csi: {
-        driver: 'gcsfuse.csi.storage.gke.io',
-        volumeAttributes: {
-          bucketName: `${name}-debezium-storage`,
-          mountOptions: 'implicit-dirs,uid=185,gid=0',
-        },
-      },
-    });
-    volumeMounts.push({ name: 'gcs-data', mountPath: '/gcs/data' });
-
-    initContainers.push({
-      name: 'copy-offsets',
-      image: 'alpine:3',
-      command: [
-        'sh',
-        '-c',
-        '[ -f /gcs/data/offsets.dat ] && mv /gcs/data/offsets.dat /debezium/data/offsets.dat || true',
-      ],
-      volumeMounts: [
-        { name: 'gcs-data', mountPath: '/gcs/data' },
-        { name: 'data', mountPath: '/debezium/data' },
-      ],
-    });
-
     volumes.push({
       name: 'data',
       persistentVolumeClaim: {
@@ -361,21 +241,12 @@ export function deployDebeziumKubernetesResources(
         template: {
           metadata: {
             labels: { ...labels, props: propsHash },
-            annotations: {
-              'gke-gcsfuse/volumes': 'true',
-              'gke-gcsfuse/memory-limit': '128Mi',
-              'gke-gcsfuse/cpu-request': '50m',
-              'gke-gcsfuse/memory-request': '32Mi',
-            },
           },
           spec: {
             volumes,
             initContainers,
             affinity: !isAdhocEnv ? affinity : undefined,
             tolerations,
-            serviceAccountName: k8sServiceAccount?.metadata.apply(
-              (metadata) => metadata.name,
-            ),
             securityContext: {
               runAsUser: 185,
               runAsGroup: 185,
