@@ -220,17 +220,35 @@ export function deployDebeziumKubernetesResources(
         secretName: debeziumProps.metadata.name,
       },
     },
+    {
+      name: 'config',
+      emptyDir: {},
+    },
   ];
   const volumeMounts: k8s.types.input.core.v1.VolumeMount[] = [
     {
-      name: 'props',
+      name: 'config',
       mountPath: version?.startsWith('3')
         ? '/debezium/config'
         : '/debezium/conf',
     },
   ];
 
-  const initContainers: k8s.types.input.core.v1.Container[] = [];
+  const initContainers: k8s.types.input.core.v1.Container[] = [
+    {
+      name: 'copy-config',
+      image,
+      command: [
+        'sh',
+        '-c',
+        `cp /props/application.properties /config/application.properties; cp -r /debezium/${version?.startsWith('3') ? 'config' : 'conf'}/* /config/`,
+      ],
+      volumeMounts: [
+        { name: 'props', mountPath: '/props' },
+        { name: 'config', mountPath: '/config' },
+      ],
+    },
+  ];
 
   // If service account is provided
   if (debeziumKey) {
@@ -367,12 +385,19 @@ export function deployDebeziumKubernetesResources(
               {
                 name: 'debezium',
                 image,
-                ports: [{ name: 'http', containerPort: 8080, protocol: 'TCP' }],
+                ports: [
+                  { name: 'http', containerPort: 8080 },
+                  { name: 'metrics', containerPort: 9404 },
+                ],
                 volumeMounts,
                 env: [
                   {
                     name: 'GOOGLE_APPLICATION_CREDENTIALS',
                     value: '/var/secrets/google/key.json',
+                  },
+                  {
+                    name: 'JMX_EXPORTER_PORT',
+                    value: '9404',
                   },
                   ...env,
                 ],
