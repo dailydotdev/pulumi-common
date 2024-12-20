@@ -20,7 +20,7 @@
   "homepage": "https://github.com/dailydotdev/pulumi-common#readme",
   "dependencies": {
     "@google-cloud/pubsub": "^4.9.0",
-    "@pulumi/gcp": "^8.10.2",
+    "@pulumi/gcp": "^8.12.0",
     "@pulumi/kubernetes": "^4.19.0",
     "@pulumi/pulumi": "^3.143.0",
     "knex": "^3.1.0",
@@ -29,8 +29,8 @@
     "yaml": "^2.6.1"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^8.18.0",
-    "@typescript-eslint/parser": "^8.18.0",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.2.1",

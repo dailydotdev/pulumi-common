@@ -122,6 +122,10 @@ function getDebeziumProps(
         propsStr +=
           '\ndebezium.source.topic.prefix=t\ndebezium.source.tombstones.on.delete=false';
       }
+      if (!propsStr.includes('quarkus.log.console.json')) {
+        propsStr += '\nquarkus.log.console.json=false';
+      }
+
       return `${propsStr}\ndebezium.sink.pubsub.address=pubsub:8085\ndebezium.sink.pubsub.project.id=local`;
     }
     return propsStr;
