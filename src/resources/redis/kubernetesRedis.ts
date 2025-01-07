@@ -85,13 +85,19 @@ export class KubernetesRedis extends pulumi.ComponentResource {
               tolerations: tolerations?.master,
             })),
           replica: pulumi
-            .all([args.affinity, args.tolerations])
-            .apply(([affinity, tolerations]) => ({
-              ...redisInstance,
-              replicaCount: args.replicas || 3,
-              affinity: affinity?.replicas,
-              tolerations: tolerations?.replicas,
-            })),
+            .all([args.affinity, args.tolerations, args.architecture])
+            .apply(([affinity, tolerations, architecture]) => {
+              if (architecture === 'standalone') {
+                return undefined;
+              }
+
+              return {
+                ...redisInstance,
+                replicaCount: args.replicas || 3,
+                affinity: affinity?.replicas,
+                tolerations: tolerations?.replicas,
+              };
+            }),
         },
       },
       resourceOptions,

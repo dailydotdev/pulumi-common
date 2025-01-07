@@ -3,6 +3,9 @@ import { PodResources } from './k8s';
 
 export type AdhocEnv = { isAdhocEnv: boolean };
 
+export const isNullOrUndefined = (value: unknown) =>
+  typeof value === 'undefined' || value === null;
+
 export function camelToUnderscore(key: string): string {
   const result = key.replace(/([A-Z])/g, ' $1');
   return result.split(' ').join('_').toUpperCase();
