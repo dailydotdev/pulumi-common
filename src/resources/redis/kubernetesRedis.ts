@@ -11,7 +11,6 @@ import {
   configureResources,
   defaultImage,
 } from './common';
-import { isNullOrUndefined } from '../../utils';
 
 export type K8sRedisArgs = CommonK8sRedisArgs & {
   architecture?: pulumi.Input<'standalone' | 'replication'>;
@@ -86,15 +85,19 @@ export class KubernetesRedis extends pulumi.ComponentResource {
               tolerations: tolerations?.master,
             })),
           replica: pulumi
-            .all([args.affinity, args.tolerations])
-            .apply(([affinity, tolerations]) => ({
-              ...redisInstance,
-              replicaCount: isNullOrUndefined(args.replicas)
-                ? 3
-                : args.replicas,
-              affinity: affinity?.replicas,
-              tolerations: tolerations?.replicas,
-            })),
+            .all([args.affinity, args.tolerations, args.architecture])
+            .apply(([affinity, tolerations, architecture]) => {
+              if (architecture === 'standalone') {
+                return undefined;
+              }
+
+              return {
+                ...redisInstance,
+                replicaCount: args.replicas || 3,
+                affinity: affinity?.replicas,
+                tolerations: tolerations?.replicas,
+              };
+            }),
         },
       },
       resourceOptions,
