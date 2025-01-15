@@ -252,7 +252,6 @@ function deployApplication(
     imageTag,
     containerOpts,
     provider,
-    vpcNative,
     isAdhocEnv,
   }: ApplicationContext,
   {
@@ -336,7 +335,7 @@ function deployApplication(
   if (shouldCreateService) {
     return createAutoscaledExposedApplication({
       ...appArgs,
-      serviceType: vpcNative ? 'ClusterIP' : serviceType,
+      serviceType,
       enableCdn,
       serviceTimeout,
       backendConfig,
@@ -361,7 +360,6 @@ export function deployApplicationSuiteToProvider({
   apps,
   provider,
   resourcePrefix = '',
-  vpcNative = false,
   migration,
   migrations,
   debezium,
@@ -482,7 +480,6 @@ export function deployApplicationSuiteToProvider({
     imageTag,
     image,
     provider,
-    vpcNative,
     isAdhocEnv,
   };
   // Deploy the applications
@@ -514,7 +511,7 @@ export function deployApplicationSuiteToProvider({
 export function deployApplicationSuite(
   suite: Omit<
     ApplicationSuiteArgs,
-    'provider' | 'resourcePrefix' | 'vpcNative' | 'shouldBindIamUser'
+    'provider' | 'resourcePrefix' | 'shouldBindIamUser'
   >,
   vpcNativeProvider?: GkeCluster,
 ): ApplicationReturn[][] {
@@ -531,7 +528,6 @@ export function deployApplicationSuite(
       shouldBindIamUser: true,
       provider: (vpcNativeProvider || getVpcNativeCluster()).provider,
       resourcePrefix: 'vpc-native-',
-      vpcNative: true,
     });
     return [vpcNativeApps];
   }

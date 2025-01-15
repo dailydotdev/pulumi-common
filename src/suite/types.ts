@@ -109,7 +109,6 @@ export type ApplicationSuiteArgs = {
   apps: ApplicationArgs[];
   provider?: ProviderResource;
   resourcePrefix?: string;
-  vpcNative?: boolean;
   migration?: MigrationArgs;
   migrations?: { [key: string]: MigrationArgs };
   debezium?: DebeziumArgs;
@@ -128,6 +127,5 @@ export type ApplicationContext = {
   imageTag: string;
   containerOpts: ContainerOptions;
   provider?: ProviderResource;
-  vpcNative: boolean;
   isAdhocEnv?: boolean;
 };

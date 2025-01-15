@@ -445,7 +445,7 @@ export const createAutoscaledExposedApplication = ({
   serviceTimeout,
   shouldCreatePDB = true,
   provider,
-  serviceType = 'NodePort',
+  serviceType = 'ClusterIP',
   strategy = {
     type: 'RollingUpdate',
     rollingUpdate: {
