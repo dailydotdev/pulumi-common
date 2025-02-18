@@ -168,6 +168,7 @@ function deployCron(
     requests,
     dependsOn,
     spot,
+    suspend = false,
   }: CronArgs,
 ): k8s.batch.v1.CronJob {
   const appResourcePrefix = `${resourcePrefix}${
@@ -191,6 +192,7 @@ function deployCron(
       },
       spec: {
         schedule,
+        suspend,
         concurrencyPolicy,
         successfulJobsHistoryLimit: 3,
         failedJobsHistoryLimit: 3,
