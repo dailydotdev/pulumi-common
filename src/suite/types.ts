@@ -66,7 +66,7 @@ export type MigrationArgs = {
 
 export type CronArgs = {
   nameSuffix?: string;
-  schedule: string;
+  schedule?: string;
   concurrencyPolicy?: string;
   activeDeadlineSeconds?: number;
   limits: Input<PodResources>;

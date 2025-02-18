@@ -178,6 +178,9 @@ function deployCron(
 
   const { tolerations, affinity } = getSpotSettings(spot, isAdhocEnv);
 
+  // If the cron job is suspended, we don't want to run it automatically, but we still need to define a schedule
+  const cronSchedule = schedule && !suspend ? schedule : '0 0 1 1 *';
+
   return new k8s.batch.v1.CronJob(
     `${appResourcePrefix}cron`,
     {
@@ -191,7 +194,7 @@ function deployCron(
         },
       },
       spec: {
-        schedule,
+        schedule: cronSchedule,
         suspend,
         concurrencyPolicy,
         successfulJobsHistoryLimit: 3,
