@@ -10,6 +10,7 @@ export type StreamArgs = gcp.pubsub.TopicArgs & { isAdhocEnv: boolean };
 export class Stream {
   private readonly topicName: pulumi.Input<string>;
   public readonly resource: pulumi.Resource;
+  public readonly id: pulumi.Output<string>;
 
   constructor(
     name: string,
@@ -19,8 +20,11 @@ export class Stream {
     this.topicName = args.name as pulumi.Input<string>;
     if (args.isAdhocEnv) {
       this.resource = new PubsubEmulatorTopic(name, args, opts);
+      this.id = pulumi.output(name);
     } else {
-      this.resource = new gcp.pubsub.Topic(name, args, opts);
+      const topic = new gcp.pubsub.Topic(name, args, opts);
+      this.resource = topic;
+      this.id = topic.id;
     }
   }
 
