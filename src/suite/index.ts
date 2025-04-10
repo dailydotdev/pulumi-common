@@ -427,7 +427,7 @@ export function deployApplicationSuiteToProvider({
         { provider },
       );
     });
-    dependsOn.concat(secretK8s);
+    dependsOn.push(...secretK8s);
   }
 
   // Run migration if needed
