@@ -33,6 +33,7 @@ import {
 } from '../debezium';
 import { stripCpuFromLimits } from '../utils';
 import { defaultSpotWeight } from '../constants';
+import { createHash } from 'crypto';
 
 /**
  * Takes a custom definition of an autoscaling metric and turn it into a k8s definition
@@ -384,6 +385,7 @@ export function deployApplicationSuiteToProvider({
   );
 
   const containerOpts: Omit<ContainerOptions, 'args'> = {};
+  const secretHashes: ApplicationArgs['podAnnotations'] = {};
 
   const dependsOn: Input<Resource>[] = suiteDependsOn ?? [];
   if (secrets) {
@@ -396,23 +398,35 @@ export function deployApplicationSuiteToProvider({
       namespace,
       provider,
     });
+
+    if (isAdhocEnv) {
+      secretHashes[`secret-${name}`] = createHash('sha256')
+        .update(JSON.stringify(secrets))
+        .digest('hex');
+    }
+
     dependsOn.push(secretK8s);
   }
   if (additionalSecrets) {
-    const secretK8s = additionalSecrets.map(
-      ({ name, data }) =>
-        new k8s.core.v1.Secret(
-          `${resourcePrefix}${name}`,
-          {
-            metadata: {
-              name,
-              namespace,
-            },
-            data,
+    const secretK8s = additionalSecrets.map(({ name, data }) => {
+      if (isAdhocEnv) {
+        secretHashes[`secret-${name}`] = createHash('sha256')
+          .update(JSON.stringify(data))
+          .digest('hex');
+      }
+
+      return new k8s.core.v1.Secret(
+        `${resourcePrefix}${name}`,
+        {
+          metadata: {
+            name,
+            namespace,
           },
-          { provider },
-        ),
-    );
+          data,
+        },
+        { provider },
+      );
+    });
     dependsOn.concat(secretK8s);
   }
 
@@ -494,6 +508,10 @@ export function deployApplicationSuiteToProvider({
     }
     return deployApplication(context, {
       ...app,
+      podAnnotations: {
+        ...app.podAnnotations,
+        ...secretHashes,
+      },
       dependsOn: [...dependsOn, ...(app.dependsOn || [])],
     });
   });
