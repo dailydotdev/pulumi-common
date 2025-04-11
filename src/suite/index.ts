@@ -434,41 +434,41 @@ export function deployApplicationSuiteToProvider({
     dependsOn.push(...additionalSecretK8s);
   }
 
-  if (isAdhocEnv) {
-    if (!isNullOrUndefined(dotEnvFileName) && existsSync(dotEnvFileName)) {
-      const envFile = readFileSync(dotEnvFileName, 'utf-8');
-      const envVars = envFile.split('\n').reduce(
-        (acc, line) => {
-          const trimmedLine = line.trim();
-          // Skip empty lines and comment lines
-          if (!trimmedLine || trimmedLine.startsWith('#')) {
-            return acc;
-          }
-          const [key, value] = trimmedLine
-            .split('=')
-            .map((part) => part.trim());
-          if (key && value) {
-            acc[key] = Buffer.from(value).toString('base64');
-          }
+  if (
+    isAdhocEnv &&
+    !isNullOrUndefined(dotEnvFileName) &&
+    existsSync(dotEnvFileName)
+  ) {
+    const envFile = readFileSync(dotEnvFileName, 'utf-8');
+    const envVars = envFile.split('\n').reduce(
+      (acc, line) => {
+        const trimmedLine = line.trim();
+        // Skip empty lines and comment lines
+        if (!trimmedLine || trimmedLine.startsWith('#')) {
           return acc;
-        },
-        {} as Record<string, string>,
-      );
+        }
+        const [key, value] = trimmedLine.split('=').map((part) => part.trim());
+        if (key && value) {
+          acc[key] = Buffer.from(value).toString('base64');
+        }
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
 
-      secretHashAnnotations['secret-dotenv'] = createHash('sha256')
-        .update(JSON.stringify(envVars))
-        .digest('hex');
+    secretHashAnnotations['secret-dotenv'] = createHash('sha256')
+      .update(JSON.stringify(envVars))
+      .digest('hex');
 
-      const dotEnvSecret = new k8s.core.v1.Secret(`${resourcePrefix}dotenv`, {
-        metadata: {
-          name: `${name}-dotenv`,
-          namespace,
-        },
-        data: envVars,
-      });
-      containerOpts.envFrom.push({ secretRef: { name: `${name}-dotenv` } });
-      dependsOn.push(dotEnvSecret);
-    }
+    const dotEnvSecret = new k8s.core.v1.Secret(`${resourcePrefix}dotenv`, {
+      metadata: {
+        name: `${name}-dotenv`,
+        namespace,
+      },
+      data: envVars,
+    });
+    containerOpts.envFrom.push({ secretRef: { name: `${name}-dotenv` } });
+    dependsOn.push(dotEnvSecret);
   }
 
   // Run migration if needed
