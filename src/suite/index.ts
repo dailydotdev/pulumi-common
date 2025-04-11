@@ -1,5 +1,5 @@
 import { readFile } from 'fs/promises';
-import { Input, Output, all, ProviderResource, secret } from '@pulumi/pulumi';
+import { Input, Output, all, ProviderResource } from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
 import { Resource } from '@pulumi/pulumi/resource';
 import * as gcp from '@pulumi/gcp';
