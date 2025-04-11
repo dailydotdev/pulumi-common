@@ -1,5 +1,5 @@
 name: release
-run-name: "release '${{ github.event.inputs.version }}' version by @${{ github.actor }}"
+run-name: "release `${{ github.event.inputs.version }}` version by `@${{ github.actor }}`"
 
 on:
   workflow_dispatch:
