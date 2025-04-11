@@ -56,6 +56,12 @@ jobs:
         run: |
           npm version ${{ github.event.inputs.version }} --sign-git-tag
 
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm publish --access public
+
       - name: Push changes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -63,9 +69,3 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           git push --follow-tags
           gh release create "v${VERSION}" --generate-notes
-
-      - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          npm publish --access public
