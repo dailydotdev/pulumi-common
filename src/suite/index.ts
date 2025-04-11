@@ -444,7 +444,9 @@ export function deployApplicationSuiteToProvider({
           if (!trimmedLine || trimmedLine.startsWith('#')) {
             return acc;
           }
-          const [key, value] = trimmedLine.split('=').map((part) => part.trim());
+          const [key, value] = trimmedLine
+            .split('=')
+            .map((part) => part.trim());
           if (key && value) {
             acc[key] = Buffer.from(value).toString('base64');
           }
