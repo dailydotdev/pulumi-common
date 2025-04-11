@@ -385,7 +385,7 @@ export function deployApplicationSuiteToProvider({
   );
 
   const containerOpts: Omit<ContainerOptions, 'args'> = {};
-  const secretHashes: ApplicationArgs['podAnnotations'] = {};
+  const secretHashAnnotations: ApplicationArgs['podAnnotations'] = {};
 
   const dependsOn: Input<Resource>[] = suiteDependsOn ?? [];
   if (secrets) {
@@ -400,7 +400,7 @@ export function deployApplicationSuiteToProvider({
     });
 
     if (isAdhocEnv) {
-      secretHashes[`secret-${name}`] = createHash('sha256')
+      secretHashAnnotations[`secret-${name}`] = createHash('sha256')
         .update(JSON.stringify(secrets))
         .digest('hex');
     }
@@ -408,9 +408,9 @@ export function deployApplicationSuiteToProvider({
     dependsOn.push(secretK8s);
   }
   if (additionalSecrets) {
-    const secretK8s = additionalSecrets.map(({ name, data }) => {
+    const additionalSecretK8s = additionalSecrets.map(({ name, data }) => {
       if (isAdhocEnv) {
-        secretHashes[`secret-${name}`] = createHash('sha256')
+        secretHashAnnotations[`secret-${name}`] = createHash('sha256')
           .update(JSON.stringify(data))
           .digest('hex');
       }
@@ -427,7 +427,7 @@ export function deployApplicationSuiteToProvider({
         { provider },
       );
     });
-    dependsOn.push(...secretK8s);
+    dependsOn.push(...additionalSecretK8s);
   }
 
   // Run migration if needed
@@ -510,7 +510,7 @@ export function deployApplicationSuiteToProvider({
       ...app,
       podAnnotations: {
         ...app.podAnnotations,
-        ...secretHashes,
+        ...secretHashAnnotations,
       },
       dependsOn: [...dependsOn, ...(app.dependsOn || [])],
     });
