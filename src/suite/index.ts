@@ -449,7 +449,7 @@ export function deployApplicationSuiteToProvider({
       );
 
       secretHashAnnotations['secret-dotenv'] = createHash('sha256')
-        .update(envFile)
+        .update(JSON.stringify(envVars))
         .digest('hex');
 
       const dotEnvSecret = new k8s.core.v1.Secret(`${resourcePrefix}dotenv`, {
