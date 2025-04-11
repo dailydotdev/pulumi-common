@@ -31,9 +31,10 @@ import {
   deployDebeziumKubernetesResources,
   deployDebeziumSharedDependencies,
 } from '../debezium';
-import { stripCpuFromLimits } from '../utils';
+import { isNullOrUndefined, stripCpuFromLimits } from '../utils';
 import { defaultSpotWeight } from '../constants';
 import { createHash } from 'crypto';
+import { existsSync, readFileSync } from 'fs';
 
 /**
  * Takes a custom definition of an autoscaling metric and turn it into a k8s definition
@@ -373,6 +374,7 @@ export function deployApplicationSuiteToProvider({
   shouldBindIamUser,
   isAdhocEnv,
   dependsOn: suiteDependsOn,
+  dotEnvFileName = '.env',
 }: ApplicationSuiteArgs): ApplicationReturn[] {
   // Create an equivalent k8s service account to an existing gcp service account
   const k8sServiceAccount = createAndBindK8sServiceAccount(
@@ -385,11 +387,13 @@ export function deployApplicationSuiteToProvider({
   );
 
   const containerOpts: Omit<ContainerOptions, 'args'> = {};
+  containerOpts.envFrom = [];
+
   const secretHashAnnotations: ApplicationArgs['podAnnotations'] = {};
 
   const dependsOn: Input<Resource>[] = suiteDependsOn ?? [];
   if (secrets) {
-    containerOpts.envFrom = [{ secretRef: { name } }];
+    containerOpts.envFrom.push({ secretRef: { name } });
     // Create the secret object
     const secretK8s = createKubernetesSecretFromRecord({
       data: secrets,
@@ -428,6 +432,43 @@ export function deployApplicationSuiteToProvider({
       );
     });
     dependsOn.push(...additionalSecretK8s);
+  }
+
+  if (
+    isAdhocEnv &&
+    !isNullOrUndefined(dotEnvFileName) &&
+    existsSync(dotEnvFileName)
+  ) {
+    const envFile = readFileSync(dotEnvFileName, 'utf-8');
+    const envVars = envFile.split('\n').reduce(
+      (acc, line) => {
+        const trimmedLine = line.trim();
+        // Skip empty lines and comment lines
+        if (!trimmedLine || trimmedLine.startsWith('#')) {
+          return acc;
+        }
+        const [key, value] = trimmedLine.split('=').map((part) => part.trim());
+        if (key && value) {
+          acc[key] = Buffer.from(value).toString('base64');
+        }
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+    secretHashAnnotations['secret-dotenv'] = createHash('sha256')
+      .update(JSON.stringify(envVars))
+      .digest('hex');
+
+    const dotEnvSecret = new k8s.core.v1.Secret(`${resourcePrefix}dotenv`, {
+      metadata: {
+        name: `${name}-dotenv`,
+        namespace,
+      },
+      data: envVars,
+    });
+    containerOpts.envFrom.push({ secretRef: { name: `${name}-dotenv` } });
+    dependsOn.push(dotEnvSecret);
   }
 
   // Run migration if needed

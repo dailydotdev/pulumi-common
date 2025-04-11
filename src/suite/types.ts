@@ -117,6 +117,7 @@ export type ApplicationSuiteArgs = {
   shouldBindIamUser: boolean;
   isAdhocEnv?: boolean;
   dependsOn?: Input<Resource>[];
+  dotEnvFileName?: string | null;
 };
 
 export type ApplicationContext = {
