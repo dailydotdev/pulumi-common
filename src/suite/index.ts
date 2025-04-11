@@ -439,7 +439,7 @@ export function deployApplicationSuiteToProvider({
       const envFile = readFileSync(dotEnvFileName, 'utf-8');
       const envVars = envFile.split('\n').reduce(
         (acc, line) => {
-          const [key, value] = line.split('=');
+          const [key, value] = line.split('=').map(part => part.trim());
           if (key && value) {
             acc[key] = Buffer.from(value).toString('base64');
           }
