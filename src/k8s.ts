@@ -233,6 +233,7 @@ export type KubernetesApplicationArgs = {
   backendConfig?: Input<{
     customResponseHeaders?: Input<string[]>;
     customRequestHeaders?: Input<string[]>;
+    iap?: Input<Record<string, unknown>>;
   }>;
   spot?: {
     enabled: boolean;
@@ -494,6 +495,9 @@ export const createAutoscaledExposedApplication = ({
         spec.customRequestHeaders = {
           headers: backendConfig.customRequestHeaders,
         };
+      }
+      if (backendConfig?.iap) {
+        spec.iap = backendConfig.iap;
       }
     });
     const config = new k8s.apiextensions.CustomResource(
