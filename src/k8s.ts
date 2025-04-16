@@ -471,9 +471,9 @@ export const createAutoscaledExposedApplication = ({
   const { labels } = returnObj;
   const annotations: Record<string, Output<string>> = {};
   if (enableCdn || serviceTimeout || backendConfig) {
-    const spec: Record<string, unknown> = {};
+    const rawSpec: Record<string, unknown> = {};
     if (enableCdn) {
-      spec.cdn = {
+      rawSpec.cdn = {
         enabled: true,
         cachePolicy: {
           includeHost: true,
@@ -483,22 +483,23 @@ export const createAutoscaledExposedApplication = ({
       };
     }
     if (serviceTimeout) {
-      spec.timeoutSec = serviceTimeout;
+      rawSpec.timeoutSec = serviceTimeout;
     }
-    all([backendConfig]).apply(([backendConfig]) => {
+    const spec = all([backendConfig]).apply(([backendConfig]) => {
       if (backendConfig?.customResponseHeaders) {
-        spec.customResponseHeaders = {
+        rawSpec.customResponseHeaders = {
           headers: backendConfig.customResponseHeaders,
         };
       }
       if (backendConfig?.customRequestHeaders) {
-        spec.customRequestHeaders = {
+        rawSpec.customRequestHeaders = {
           headers: backendConfig.customRequestHeaders,
         };
       }
       if (backendConfig?.iap) {
-        spec.iap = backendConfig.iap;
+        rawSpec.iap = backendConfig.iap;
       }
+      return rawSpec;
     });
     const config = new k8s.apiextensions.CustomResource(
       `${resourcePrefix}backend-config`,
