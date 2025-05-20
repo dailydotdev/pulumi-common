@@ -171,6 +171,7 @@ function deployCron(
     dependsOn,
     spot,
     suspend = false,
+    podAnnotations,
   }: CronArgs,
 ): k8s.batch.v1.CronJob {
   const appResourcePrefix = `${resourcePrefix}${
@@ -211,6 +212,7 @@ function deployCron(
                   'app-type': 'cron',
                   ...labels,
                 },
+                annotations: podAnnotations,
               },
               spec: {
                 restartPolicy: 'OnFailure',

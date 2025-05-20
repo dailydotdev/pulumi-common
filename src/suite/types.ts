@@ -80,6 +80,7 @@ export type CronArgs = {
   volumeMounts?: Input<Input<k8s.types.input.core.v1.VolumeMount>[]>;
   spot?: Spot;
   suspend?: boolean;
+  podAnnotations?: Input<{ [key: string]: Input<string> }>;
 };
 
 export type DebeziumArgs = {
