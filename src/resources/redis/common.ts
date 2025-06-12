@@ -23,17 +23,18 @@ export const defaultImage = {
 
 export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
   memorySizeGb: Input<number>;
+  maxMemoryPercentage?: Input<number>;
   storageSizeGb?: Input<number>;
   cpuSize?: Input<number | string>;
   namespace: Input<string>;
-  replicas: Input<number>;
+  replicas?: Input<number>;
   image?: Input<Image>;
   authKey?: Input<string>;
   timeout?: Input<number>;
   safeToEvict?: Input<boolean>;
 
   modules?: Input<string[]>;
-  configuration?: Input<string>;
+  configuration?: Input<Record<string, string>>;
   disableCommands?: Input<string[]>;
 
   persistence?: Input<{
@@ -57,14 +58,37 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
 };
 
 export const configureConfiguration = (
-  args: Pick<CommonK8sRedisArgs, 'modules' | 'configuration'>,
+  args: Pick<
+    CommonK8sRedisArgs,
+    'modules' | 'configuration' | 'memorySizeGb' | 'maxMemoryPercentage'
+  >,
 ) => {
-  return all([args.modules, args.configuration]).apply(
-    ([modules = defaultModules, configuration = '']) => {
-      let configurationString = configuration;
+  return all([
+    args.modules,
+    args.configuration,
+    args.memorySizeGb,
+    args.maxMemoryPercentage,
+  ]).apply(
+    ([
+      modules = defaultModules,
+      configuration = {},
+      memorySizeGb,
+      maxMemoryPercentage = 80,
+    ]) => {
+      let configurationString = Object.entries(configuration)
+        .map(([key, value]) => `${key} ${value}`)
+        .join('\n');
+
       modules.forEach((module) => {
         configurationString += `\nloadmodule ${module}`;
       });
+      if (maxMemoryPercentage && memorySizeGb) {
+        const maxMemory = Math.floor(
+          memorySizeGb * 1024 * (maxMemoryPercentage / 100),
+        );
+
+        configurationString += `\nmaxmemory ${maxMemory}mb`;
+      }
       return configurationString;
     },
   );
@@ -125,7 +149,10 @@ export const configureResources = (
 };
 
 export const configurePriorityClass = (
-  args: CommonK8sRedisArgs,
+  args: Pick<
+    CommonK8sRedisArgs,
+    'isAdhocEnv' | 'priorityClass' | 'priorityClassName'
+  >,
 ): Output<string | undefined> => {
   return all([
     args.isAdhocEnv,

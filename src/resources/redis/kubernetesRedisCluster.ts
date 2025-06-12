@@ -37,6 +37,7 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
           commonConfiguration: configureConfiguration({
             modules: args.modules,
             configuration: args.configuration,
+            memorySizeGb: args.memorySizeGb,
           }),
           commonAnnotations: {
             'cluster-autoscaler.kubernetes.io/safe-to-evict':
