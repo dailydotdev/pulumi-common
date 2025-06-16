@@ -13,7 +13,10 @@ import { getSpotSettings, type Spot } from '../../k8s';
 import { charts, type Resources } from '../../kubernetes';
 import { KubernetesSentinelMonitor } from './kubernetesSentinelMonitor';
 
-export type K8sRedisSentinelArgs = CommonK8sRedisArgs & {
+export type K8sRedisSentinelArgs = Omit<
+  CommonK8sRedisArgs,
+  'configurationOld'
+> & {
   spot?: Spot;
   monitor?: {
     enabled?: boolean;
