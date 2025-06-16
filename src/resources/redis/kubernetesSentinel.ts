@@ -33,6 +33,8 @@ export type K8sRedisSentinelArgs = Omit<
 };
 
 export class KubernetesSentinel extends ComponentResource {
+  public chart: helm.v4.Chart;
+
   constructor(
     name: string,
     args: K8sRedisSentinelArgs,
@@ -60,73 +62,80 @@ export class KubernetesSentinel extends ComponentResource {
       priorityClassName: configurePriorityClass(args),
     };
 
-    new helm.v4.Chart(name, {
-      ...charts['redis-sentinel'],
-      namespace: args.namespace,
-      values: {
-        global: {
-          security: {
-            allowInsecureImages: true,
+    this.chart = new helm.v4.Chart(
+      name,
+      {
+        ...charts['redis-sentinel'],
+        namespace: args.namespace,
+        values: {
+          global: {
+            security: {
+              allowInsecureImages: true,
+            },
           },
-        },
-        fullnameOverride: name,
-        commonConfiguration: configureConfiguration({
-          modules: args.modules,
-          configuration: args.configuration,
-          maxMemoryPercentage: args.maxMemoryPercentage,
-          memorySizeGb: args.memorySizeGb,
-        }),
-        commonAnnotations: {
-          'cluster-autoscaler.kubernetes.io/safe-to-evict':
-            args?.safeToEvict?.valueOf() ?? 'false',
-        },
-        commonLabels: commonLabels,
+          fullnameOverride: name,
+          commonConfiguration: configureConfiguration({
+            modules: args.modules,
+            configuration: args.configuration,
+            maxMemoryPercentage: args.maxMemoryPercentage,
+            memorySizeGb: args.memorySizeGb,
+          }),
+          commonAnnotations: {
+            'cluster-autoscaler.kubernetes.io/safe-to-evict':
+              args?.safeToEvict?.valueOf() ?? 'false',
+          },
+          commonLabels: commonLabels,
 
-        metrics: all([args.metrics]).apply(([metrics]) => ({
-          ...metrics,
-          enabled: metrics?.enabled ?? true,
-        })),
-        sentinel: {
-          enabled: true,
-          automateClusterRecovery: true,
-          downAfterMilliseconds: 2000,
+          metrics: all([args.metrics]).apply(([metrics]) => ({
+            ...metrics,
+            enabled: metrics?.enabled ?? true,
+          })),
+          sentinel: {
+            enabled: true,
+            automateClusterRecovery: true,
+            downAfterMilliseconds: 2000,
+            image: {
+              repository: 'bitnami/redis-sentinel',
+              tag: '7.2.4-debian-12-r13',
+            },
+          },
           image: {
-            repository: 'bitnami/redis-sentinel',
-            tag: '7.2.4-debian-12-r13',
+            repository: 'daily-ops/bitnami-redis',
+            registry: 'gcr.io',
+            tag: 'latest',
           },
-        },
-        image: {
-          repository: 'daily-ops/bitnami-redis',
-          registry: 'gcr.io',
-          tag: 'latest',
-        },
-        auth: {
-          enabled: !!args.authKey,
-          password: args.authKey,
-        },
-        replica: all([args.spot, args.isAdhocEnv]).apply(
-          ([spot, isAdhocEnv]) => {
-            const { tolerations, affinity } = getSpotSettings(spot, isAdhocEnv);
-            return {
-              ...redisInstance,
-              replicaCount: args?.replicas,
-              tolerations: tolerations,
-              affinity: affinity,
-              topologySpreadConstraints: [
-                {
-                  maxSkew: 1,
-                  topologyKey: 'kubernetes.io/hostname',
-                  whenUnsatisfiable: 'ScheduleAnyway',
-                  labelSelector: {
-                    matchLabels: commonLabels,
+          auth: {
+            enabled: !!args.authKey,
+            password: args.authKey,
+          },
+          replica: all([args.spot, args.isAdhocEnv]).apply(
+            ([spot, isAdhocEnv]) => {
+              const { tolerations, affinity } = getSpotSettings(
+                spot,
+                isAdhocEnv,
+              );
+              return {
+                ...redisInstance,
+                replicaCount: args?.replicas,
+                tolerations: tolerations,
+                affinity: affinity,
+                topologySpreadConstraints: [
+                  {
+                    maxSkew: 1,
+                    topologyKey: 'kubernetes.io/hostname',
+                    whenUnsatisfiable: 'ScheduleAnyway',
+                    labelSelector: {
+                      matchLabels: commonLabels,
+                    },
                   },
-                },
-              ],
-            };
-          },
-        ),
+                ],
+              };
+            },
+          ),
+        },
       },
-    });
+      resourceOptions,
+    );
 
     if (args.monitor?.enabled) {
       if (!args.authKey) {
@@ -134,18 +143,25 @@ export class KubernetesSentinel extends ComponentResource {
           'authKey is required when monitor is enabled for KubernetesSentinel',
         );
       }
-
-      new KubernetesSentinelMonitor(`${name}-monitor`, {
-        isAdhocEnv: args.isAdhocEnv,
-        namespace: args.namespace,
-        image: args.monitor.image,
-        resources: args.monitor.resources,
-        sentinel: {
-          name: name,
+      new KubernetesSentinelMonitor(
+        `${name}-monitor`,
+        {
+          isAdhocEnv: args.isAdhocEnv,
           namespace: args.namespace,
-          authKey: args.authKey,
+          image: args.monitor.image,
+          resources: args.monitor.resources,
+          sentinel: {
+            name: name,
+            namespace: args.namespace,
+            authKey: args.authKey,
+          },
         },
-      });
+        {
+          ...resourceOptions,
+          parent: this,
+          dependsOn: this.chart,
+        },
+      );
     }
   }
 }

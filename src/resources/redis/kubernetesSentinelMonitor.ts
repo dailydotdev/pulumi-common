@@ -32,6 +32,13 @@ const defaults: {
 };
 
 export class KubernetesSentinelMonitor extends ComponentResource {
+  public role: rbac.v1.Role;
+  public roleBinding: rbac.v1.RoleBinding;
+  public serviceAccount: core.v1.ServiceAccount;
+  public secret: core.v1.Secret;
+  public monitor: apps.v1.Deployment;
+  public service: core.v1.Service;
+
   constructor(
     name: string,
     args: K8sRedisSentinelMonitorArgs,
@@ -47,14 +54,18 @@ export class KubernetesSentinelMonitor extends ComponentResource {
       'app.kubernetes.io/managed-by': 'pulumi',
     };
 
-    const serviceAccount = new core.v1.ServiceAccount(name, {
-      metadata: {
-        name: name,
-        namespace: args.namespace,
+    this.serviceAccount = new core.v1.ServiceAccount(
+      name,
+      {
+        metadata: {
+          name: name,
+          namespace: args.namespace,
+        },
       },
-    });
+      resourceOptions,
+    );
 
-    const role = new rbac.v1.Role(
+    this.role = new rbac.v1.Role(
       name,
       {
         metadata: {
@@ -70,11 +81,12 @@ export class KubernetesSentinelMonitor extends ComponentResource {
         ],
       },
       {
-        dependsOn: [serviceAccount],
+        ...resourceOptions,
+        dependsOn: [this.serviceAccount],
       },
     );
 
-    const roleBinding = new rbac.v1.RoleBinding(
+    this.roleBinding = new rbac.v1.RoleBinding(
       name,
       {
         metadata: {
@@ -84,34 +96,39 @@ export class KubernetesSentinelMonitor extends ComponentResource {
         subjects: [
           {
             kind: 'ServiceAccount',
-            name: serviceAccount.metadata.name,
+            name: this.serviceAccount.metadata.name,
             namespace: args.namespace,
           },
         ],
         roleRef: {
           kind: 'Role',
-          name: role.metadata.name,
+          name: this.role.metadata.name,
           apiGroup: 'rbac.authorization.k8s.io',
         },
       },
       {
-        dependsOn: [role],
+        ...resourceOptions,
+        dependsOn: [this.role],
       },
     );
 
-    const secret = new core.v1.Secret(name, {
-      metadata: {
-        name: `${name}`,
-        namespace: args.namespace,
+    this.secret = new core.v1.Secret(
+      name,
+      {
+        metadata: {
+          name: `${name}`,
+          namespace: args.namespace,
+        },
+        stringData: {
+          REDIS_SENTINEL_SERVICE_NAME: `${args.sentinel.name}-headless`,
+          REDIS_SENTINEL_PASSWORD: args.sentinel.authKey,
+          NAMESPACE: args.sentinel.namespace,
+        },
       },
-      stringData: {
-        REDIS_SENTINEL_SERVICE_NAME: `${args.sentinel.name}-headless`,
-        REDIS_SENTINEL_PASSWORD: args.sentinel.authKey,
-        NAMESPACE: args.sentinel.namespace,
-      },
-    });
+      resourceOptions,
+    );
 
-    const deployment = new apps.v1.Deployment(
+    this.monitor = new apps.v1.Deployment(
       name,
       {
         metadata: {
@@ -129,7 +146,7 @@ export class KubernetesSentinelMonitor extends ComponentResource {
             },
 
             spec: {
-              serviceAccountName: serviceAccount.metadata.name,
+              serviceAccountName: this.serviceAccount.metadata.name,
               containers: [
                 {
                   name: 'redis-sentinel-monitor',
@@ -158,7 +175,7 @@ export class KubernetesSentinelMonitor extends ComponentResource {
                   envFrom: [
                     {
                       secretRef: {
-                        name: secret.metadata.name,
+                        name: this.secret.metadata.name,
                       },
                     },
                   ],
@@ -184,7 +201,10 @@ export class KubernetesSentinelMonitor extends ComponentResource {
           },
         },
       },
-      { dependsOn: [serviceAccount, secret, roleBinding] },
+      {
+        ...resourceOptions,
+        dependsOn: [this.serviceAccount, this.secret, this.roleBinding],
+      },
     );
 
     new core.v1.Service(
@@ -212,7 +232,8 @@ export class KubernetesSentinelMonitor extends ComponentResource {
         },
       },
       {
-        dependsOn: [deployment],
+        ...resourceOptions,
+        dependsOn: [this.monitor],
       },
     );
   }
