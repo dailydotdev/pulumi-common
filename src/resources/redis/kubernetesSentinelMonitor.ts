@@ -207,7 +207,7 @@ export class KubernetesSentinelMonitor extends ComponentResource {
       },
     );
 
-    new core.v1.Service(
+    this.service = new core.v1.Service(
       `${name}-redis-master`,
       {
         metadata: {
