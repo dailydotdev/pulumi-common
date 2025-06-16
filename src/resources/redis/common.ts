@@ -119,7 +119,7 @@ export const configurePersistence = (
       }
 
       return {
-        storageClass: 'standard-rwo',
+        storageClass: 'hyperdisk-balanced',
         ...persistence,
         size: `${storageSize}Gi`,
       };
