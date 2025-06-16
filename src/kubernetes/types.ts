@@ -5,12 +5,14 @@ export type Image =
   | {
       repository: Input<string>;
       tag: Input<string>;
+      registry?: Input<string>;
       digest?: never;
     }
   | {
       repository: Input<string>;
       tag?: never;
       digest: Input<string>;
+      registry?: Input<string>;
     };
 
 export type Resources = {

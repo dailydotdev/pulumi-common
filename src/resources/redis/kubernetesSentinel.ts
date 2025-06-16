@@ -10,8 +10,11 @@ import {
   configureResources,
 } from './common';
 import { getSpotSettings, type Spot } from '../../k8s';
-import { charts, type Resources } from '../../kubernetes';
-import { KubernetesSentinelMonitor } from './kubernetesSentinelMonitor';
+import { charts } from '../../kubernetes';
+import {
+  KubernetesSentinelMonitor,
+  type K8sRedisSentinelMonitorArgs,
+} from './kubernetesSentinelMonitor';
 
 export type K8sRedisSentinelArgs = Omit<
   CommonK8sRedisArgs,
@@ -20,8 +23,8 @@ export type K8sRedisSentinelArgs = Omit<
   spot?: Spot;
   monitor?: {
     enabled?: boolean;
-    image?: string;
-    resources?: Resources;
+    image?: K8sRedisSentinelMonitorArgs['image'];
+    resources?: K8sRedisSentinelMonitorArgs['resources'];
   };
 };
 
@@ -127,7 +130,7 @@ export class KubernetesSentinel extends ComponentResource {
       new KubernetesSentinelMonitor(`${name}-monitor`, {
         isAdhocEnv: args.isAdhocEnv,
         namespace: args.namespace,
-        image: args.monitor.image || 'daily-ops/redis-sentinel-monitor',
+        image: args.monitor.image,
         resources: args.monitor.resources,
         sentinel: {
           name: name,
