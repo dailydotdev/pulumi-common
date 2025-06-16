@@ -34,7 +34,9 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
   safeToEvict?: Input<boolean>;
 
   modules?: Input<string[]>;
-  configuration?: Input<Record<string, string>>;
+  configuration?: Input<Record<string, string> | string>;
+  // @deprecated use `configuration` instead
+  configurationOld?: Input<string>;
   disableCommands?: Input<string[]>;
 
   persistence?: Input<{
@@ -60,29 +62,37 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
 export const configureConfiguration = (
   args: Pick<
     CommonK8sRedisArgs,
-    'modules' | 'configuration' | 'memorySizeGb' | 'maxMemoryPercentage'
+    | 'modules'
+    | 'configuration'
+    | 'configurationOld'
+    | 'memorySizeGb'
+    | 'maxMemoryPercentage'
   >,
 ) => {
   return all([
     args.modules,
     args.configuration,
+    args.configurationOld,
     args.memorySizeGb,
     args.maxMemoryPercentage,
   ]).apply(
     ([
       modules = defaultModules,
       configuration = {},
+      configurationOld,
       memorySizeGb,
       maxMemoryPercentage = 80,
     ]) => {
-      let configurationString = Object.entries(configuration)
-        .map(([key, value]) => `${key} ${value}`)
-        .join('\n');
+      let configurationString = !!configurationOld
+        ? configurationOld
+        : Object.entries(configuration)
+            .map(([key, value]) => `${key} ${value}`)
+            .join('\n');
 
       modules.forEach((module) => {
         configurationString += `\nloadmodule ${module}`;
       });
-      if (maxMemoryPercentage && memorySizeGb) {
+      if (maxMemoryPercentage && memorySizeGb && !configurationOld) {
         const maxMemory = Math.floor(
           memorySizeGb * 1024 * (maxMemoryPercentage / 100),
         );
