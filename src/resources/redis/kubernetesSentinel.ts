@@ -10,10 +10,16 @@ import {
   configureResources,
 } from './common';
 import { getSpotSettings, type Spot } from '../../k8s';
-import { charts } from '../../kubernetes';
+import { charts, type Resources } from '../../kubernetes';
+import { KubernetesSentinelMonitor } from './kubernetesSentinelMonitor';
 
 export type K8sRedisSentinelArgs = CommonK8sRedisArgs & {
   spot?: Spot;
+  monitor?: {
+    enabled?: boolean;
+    image?: string;
+    resources?: Resources;
+  };
 };
 
 export class KubernetesSentinel extends ComponentResource {
@@ -107,5 +113,25 @@ export class KubernetesSentinel extends ComponentResource {
         ),
       },
     });
+
+    if (args.monitor?.enabled) {
+      if (!args.authKey) {
+        throw new Error(
+          'authKey is required when monitor is enabled for KubernetesSentinel',
+        );
+      }
+
+      new KubernetesSentinelMonitor(`${name}-monitor`, {
+        isAdhocEnv: args.isAdhocEnv,
+        namespace: args.namespace,
+        image: args.monitor.image || 'daily-ops/redis-sentinel-monitor',
+        resources: args.monitor.resources,
+        sentinel: {
+          name: name,
+          namespace: args.namespace,
+          authKey: args.authKey,
+        },
+      });
+    }
   }
 }

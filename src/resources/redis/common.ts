@@ -153,7 +153,7 @@ export const configurePriorityClass = (
     CommonK8sRedisArgs,
     'isAdhocEnv' | 'priorityClass' | 'priorityClassName'
   >,
-): Output<string | undefined> => {
+) => {
   return all([
     args.isAdhocEnv,
     args.priorityClass,
