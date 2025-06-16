@@ -1,4 +1,8 @@
-import { all, ComponentResource } from '@pulumi/pulumi';
+import {
+  all,
+  ComponentResource,
+  type CustomResourceOptions,
+} from '@pulumi/pulumi';
 import { urnPrefix } from '../../constants';
 import { helm } from '@pulumi/kubernetes';
 
@@ -29,8 +33,12 @@ export type K8sRedisSentinelArgs = Omit<
 };
 
 export class KubernetesSentinel extends ComponentResource {
-  constructor(name: string, args: K8sRedisSentinelArgs) {
-    super(`${urnPrefix}:KubernetesSentinel`, name, {}, undefined);
+  constructor(
+    name: string,
+    args: K8sRedisSentinelArgs,
+    resourceOptions?: CustomResourceOptions,
+  ) {
+    super(`${urnPrefix}:KubernetesSentinel`, name, {}, resourceOptions);
 
     const commonLabels = {
       'app.kubernetes.io/instance': name,

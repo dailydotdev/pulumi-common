@@ -1,4 +1,8 @@
-import { ComponentResource, type Input } from '@pulumi/pulumi';
+import {
+  ComponentResource,
+  type CustomResourceOptions,
+  type Input,
+} from '@pulumi/pulumi';
 import { urnPrefix } from '../../constants';
 import { apps, core, rbac } from '@pulumi/kubernetes';
 
@@ -28,8 +32,12 @@ const defaults: {
 };
 
 export class KubernetesSentinelMonitor extends ComponentResource {
-  constructor(name: string, args: K8sRedisSentinelMonitorArgs) {
-    super(`${urnPrefix}:KubernetesSentinelMonitor`, name, {}, undefined);
+  constructor(
+    name: string,
+    args: K8sRedisSentinelMonitorArgs,
+    resourceOptions?: CustomResourceOptions,
+  ) {
+    super(`${urnPrefix}:KubernetesSentinelMonitor`, name, {}, resourceOptions);
 
     const podLabels = {
       'app.kubernetes.io/name': 'redis-sentinel-monitor',
