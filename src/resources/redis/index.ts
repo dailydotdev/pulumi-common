@@ -43,3 +43,4 @@ export class Redis extends pulumi.ComponentResource {
 
 export * from './kubernetesRedis';
 export * from './kubernetesRedisCluster';
+export * from './kubernetesSentinel';
