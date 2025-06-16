@@ -3,11 +3,11 @@ import { urnPrefix } from '../../constants';
 import { apps, core, rbac } from '@pulumi/kubernetes';
 
 import { isNullOrUndefined, type AdhocEnv } from '../../utils';
-import type { Resources } from '../..';
+import { image, type Image, type Resources } from '../..';
 
 export type K8sRedisSentinelMonitorArgs = Partial<AdhocEnv> & {
   namespace: Input<string>;
-  image: Input<string>;
+  image?: Partial<Image>;
   resources?: Resources;
 
   sentinel: {
@@ -15,6 +15,16 @@ export type K8sRedisSentinelMonitorArgs = Partial<AdhocEnv> & {
     namespace: Input<string>;
     authKey: Input<string>;
   };
+};
+
+const defaults: {
+  image: Image;
+} = {
+  image: {
+    repository: 'daily-ops/redis-sentinel-monitor',
+    registry: 'gcr.io',
+    tag: 'latest',
+  },
 };
 
 export class KubernetesSentinelMonitor extends ComponentResource {
@@ -115,7 +125,10 @@ export class KubernetesSentinelMonitor extends ComponentResource {
               containers: [
                 {
                   name: 'redis-sentinel-monitor',
-                  image: args.image,
+                  image: image({
+                    ...defaults.image,
+                    ...args.image,
+                  } as Image),
                   resources: isNullOrUndefined(args.resources)
                     ? undefined
                     : {
