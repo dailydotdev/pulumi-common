@@ -62,7 +62,7 @@ export class KubernetesSentinelMonitor extends ComponentResource {
           namespace: args.namespace,
         },
       },
-      resourceOptions,
+      { ...resourceOptions, parent: this },
     );
 
     this.role = new rbac.v1.Role(
@@ -82,6 +82,7 @@ export class KubernetesSentinelMonitor extends ComponentResource {
       },
       {
         ...resourceOptions,
+        parent: this,
         dependsOn: [this.serviceAccount],
       },
     );
@@ -108,6 +109,7 @@ export class KubernetesSentinelMonitor extends ComponentResource {
       },
       {
         ...resourceOptions,
+        parent: this,
         dependsOn: [this.role],
       },
     );
@@ -125,7 +127,7 @@ export class KubernetesSentinelMonitor extends ComponentResource {
           NAMESPACE: args.sentinel.namespace,
         },
       },
-      resourceOptions,
+      { ...resourceOptions, parent: this },
     );
 
     this.monitor = new apps.v1.Deployment(
@@ -203,6 +205,7 @@ export class KubernetesSentinelMonitor extends ComponentResource {
       },
       {
         ...resourceOptions,
+        parent: this,
         dependsOn: [this.serviceAccount, this.secret, this.roleBinding],
       },
     );
@@ -233,6 +236,7 @@ export class KubernetesSentinelMonitor extends ComponentResource {
       },
       {
         ...resourceOptions,
+        parent: this,
         dependsOn: [this.monitor],
       },
     );
