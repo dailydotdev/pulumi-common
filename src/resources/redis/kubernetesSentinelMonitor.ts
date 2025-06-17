@@ -122,6 +122,7 @@ export class KubernetesSentinelMonitor extends ComponentResource {
           namespace: args.namespace,
         },
         stringData: {
+          REDIS_SENTINEL_NAME: `${args.sentinel.name}`,
           REDIS_SENTINEL_SERVICE_NAME: `${args.sentinel.name}-headless`,
           REDIS_SENTINEL_PASSWORD: args.sentinel.authKey,
           NAMESPACE: args.sentinel.namespace,
