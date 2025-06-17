@@ -181,6 +181,13 @@ export class KubernetesSentinelMonitor extends ComponentResource {
                       },
                     },
                   ],
+                  ports: [
+                    {
+                      name: 'metrics',
+                      containerPort: 8080,
+                      protocol: 'TCP',
+                    },
+                  ],
                   readinessProbe: {
                     httpGet: {
                       path: '/healthz',
