@@ -11,26 +11,34 @@ export type K8sNATSArgs = Partial<AdhocEnv & PriorityClassInput> & {
 export class KubernetesNATS extends ComponentResource {
   public chart: helm.v4.Chart;
 
-  constructor(name: string, args: K8sNATSArgs, opts?: CustomResourceOptions) {
-    super(`${urnPrefix}:KubernetesNATS`, name, {}, opts);
+  constructor(
+    name: string,
+    args: K8sNATSArgs,
+    resourceOptions?: CustomResourceOptions,
+  ) {
+    super(`${urnPrefix}:KubernetesNATS`, name, {}, resourceOptions);
 
-    this.chart = new helm.v4.Chart(name, {
-      ...charts['nats'],
-      namespace: args.namespace,
-      values: {
-        fullnameOverride: name,
-        config: {
-          jetstream: {
+    this.chart = new helm.v4.Chart(
+      name,
+      {
+        ...charts['nats'],
+        namespace: args.namespace,
+        values: {
+          fullnameOverride: name,
+          config: {
+            jetstream: {
+              enabled: true,
+            },
+          },
+          promExporter: {
             enabled: true,
           },
-        },
-        promExporter: {
-          enabled: true,
-        },
-        natsBox: {
-          enabled: false,
+          natsBox: {
+            enabled: false,
+          },
         },
       },
-    });
+      resourceOptions,
+    );
   }
 }
