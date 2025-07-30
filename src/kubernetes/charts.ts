@@ -19,4 +19,8 @@ export const charts: Record<string, ReleaseArgs> = {
       repo: 'https://repo.broadcom.com/bitnami-files',
     },
   },
+  nats: {
+    chart: 'https://nats-io.github.io/k8s/helm/charts/',
+    version: '1.3.9',
+  },
 } as const;
