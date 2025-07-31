@@ -20,7 +20,10 @@ export const charts: Record<string, ReleaseArgs> = {
     },
   },
   nats: {
-    chart: 'https://nats-io.github.io/k8s/helm/charts/',
+    chart: 'nats',
+    repositoryOpts: {
+      repo: 'https://nats-io.github.io/k8s/helm/charts/',
+    },
     version: '1.3.9',
   },
 } as const;

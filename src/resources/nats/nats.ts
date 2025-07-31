@@ -1,4 +1,9 @@
-import { ComponentResource, type CustomResourceOptions } from '@pulumi/pulumi';
+import {
+  ComponentResource,
+  output,
+  type CustomResourceOptions,
+  type Input,
+} from '@pulumi/pulumi';
 import { urnPrefix } from '../../constants';
 import { helm } from '@pulumi/kubernetes';
 import { charts, type PriorityClassInput } from '../../kubernetes';
@@ -6,6 +11,7 @@ import type { AdhocEnv } from '../../utils';
 
 export type K8sNATSArgs = Partial<AdhocEnv & PriorityClassInput> & {
   namespace: string;
+  storageSizeGb?: Input<number>;
 };
 
 export class KubernetesNATS extends ComponentResource {
@@ -28,6 +34,13 @@ export class KubernetesNATS extends ComponentResource {
           config: {
             jetstream: {
               enabled: true,
+              fileStore: {
+                pvc: {
+                  size: output(args.storageSizeGb).apply(
+                    (size) => `${Math.max(size ?? 0, 4)}Gi`,
+                  ),
+                },
+              },
             },
           },
           promExporter: {
