@@ -234,6 +234,7 @@ export type KubernetesApplicationArgs = {
     customResponseHeaders?: Input<string[]>;
     customRequestHeaders?: Input<string[]>;
     iap?: Input<Record<string, unknown>>;
+    securityPolicy?: Input<string>;
   }>;
   spot?: {
     enabled: boolean;
@@ -498,6 +499,11 @@ export const createAutoscaledExposedApplication = ({
       }
       if (backendConfig?.iap) {
         rawSpec.iap = backendConfig.iap;
+      }
+      if (backendConfig?.securityPolicy) {
+        rawSpec.securityPolicy = {
+          name: backendConfig.securityPolicy,
+        };
       }
       return rawSpec;
     });
