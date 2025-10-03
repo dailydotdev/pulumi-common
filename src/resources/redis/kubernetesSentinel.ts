@@ -88,6 +88,11 @@ export class KubernetesSentinel extends ComponentResource {
 
           metrics: all([args.metrics]).apply(([metrics]) => ({
             ...metrics,
+            image: {
+              repository: 'daily-ops/bitnami-redis-exporter',
+              registry: 'gcr.io',
+              tag: '1.76.0-debian-12-r0',
+            },
             enabled: metrics?.enabled ?? true,
           })),
           sentinel: {
@@ -95,14 +100,15 @@ export class KubernetesSentinel extends ComponentResource {
             automateClusterRecovery: true,
             downAfterMilliseconds: 2000,
             image: {
-              repository: 'bitnami/redis-sentinel',
-              tag: '7.2.4-debian-12-r13',
+              repository: 'daily-ops/bitnami-redis-sentinel',
+              registry: 'gcr.io',
+              tag: '7.2.5-debian-12-r5',
             },
           },
           image: {
             repository: 'daily-ops/bitnami-redis',
             registry: 'gcr.io',
-            tag: 'latest',
+            tag: '7.2.5-debian-12-r6',
           },
           auth: {
             enabled: !!args.authKey,
