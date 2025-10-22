@@ -18,7 +18,7 @@ export const defaultModules = [
 
 export const defaultImage = {
   repository: 'redis/redis-stack-server',
-  tag: '7.2.0-v10',
+  tag: '7.2.0-v19',
 };
 
 export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
