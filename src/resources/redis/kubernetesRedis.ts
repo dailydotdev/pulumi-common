@@ -69,6 +69,11 @@ export class KubernetesRedis extends pulumi.ComponentResource {
           })),
           metrics: pulumi.all([args.metrics]).apply(([metrics]) => ({
             ...metrics,
+            image: {
+              repository: 'daily-ops/bitnami-redis-exporter',
+              registry: 'gcr.io',
+              tag: '1.76.0-debian-12-r0',
+            },
             enabled: metrics?.enabled ?? true,
             resourcesPreset: 'micro',
           })),
