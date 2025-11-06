@@ -10,7 +10,10 @@ import {
 } from './common';
 import { charts } from '../../kubernetes';
 
-export type K8sRedisClusterArgs = Omit<CommonK8sRedisArgs, 'image'> & {
+export type K8sRedisClusterArgs = Omit<
+  CommonK8sRedisArgs,
+  'image' | 'authKey'
+> & {
   nodes: pulumi.Input<number>;
   password?: pulumi.Input<string>;
 };
@@ -60,8 +63,8 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
             resourcesPreset: 'micro',
           })),
 
-          usePassword: !!args.authKey,
-          password: args.authKey,
+          usePassword: !!args.password,
+          password: args.password,
           cluster: {
             nodes: args.nodes,
             replicas: args.replicas,
