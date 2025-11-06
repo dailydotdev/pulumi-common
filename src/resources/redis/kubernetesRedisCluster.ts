@@ -1,5 +1,5 @@
 import * as pulumi from '@pulumi/pulumi';
-import * as k8s from '@pulumi/kubernetes';
+import { helm } from '@pulumi/kubernetes';
 import { urnPrefix } from '../../constants';
 import {
   CommonK8sRedisArgs,
@@ -16,6 +16,8 @@ export type K8sRedisClusterArgs = Omit<CommonK8sRedisArgs, 'image'> & {
 };
 
 export class KubernetesRedisCluster extends pulumi.ComponentResource {
+  public chart: helm.v4.Chart;
+
   constructor(
     name: string,
     args: K8sRedisClusterArgs,
@@ -23,14 +25,11 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
   ) {
     super(`${urnPrefix}:KubernetesRedisCluster`, name, args, resourceOptions);
 
-    new k8s.helm.v3.Release(
+    this.chart = new helm.v4.Chart(
       name,
       {
         ...charts['redis-cluster'],
         namespace: args.namespace,
-        createNamespace: false,
-        atomic: true,
-        timeout: args.timeout,
         values: {
           fullnameOverride: name,
           commonConfiguration: configureConfiguration({
