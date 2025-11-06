@@ -7,11 +7,10 @@ import {
   configurePersistence,
   configurePriorityClass,
   configureResources,
-  defaultImage,
 } from './common';
 import { charts } from '../../kubernetes';
 
-export type K8sRedisClusterArgs = CommonK8sRedisArgs & {
+export type K8sRedisClusterArgs = Omit<CommonK8sRedisArgs, 'image'> & {
   nodes: pulumi.Input<number>;
   password?: pulumi.Input<string>;
 };
@@ -46,10 +45,11 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
           commonLabels: {
             'app.kubernetes.io/instance': name,
           },
-          image: pulumi.all([args.image]).apply(([image]) => ({
-            repository: image?.repository || defaultImage.repository,
-            tag: image?.tag || defaultImage.tag,
-          })),
+          image: {
+            repository: 'daily-ops/bitnami-redis-cluster',
+            registry: 'gcr.io',
+            tag: '7.2.5-debian-12-r5',
+          },
           metrics: pulumi.all([args.metrics]).apply(([metrics]) => ({
             ...metrics,
             image: {
