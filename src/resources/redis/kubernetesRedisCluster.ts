@@ -10,10 +10,7 @@ import {
 } from './common';
 import { charts } from '../../kubernetes';
 
-export type K8sRedisClusterArgs = Omit<
-  CommonK8sRedisArgs,
-  'image' | 'authKey'
-> & {
+export type K8sRedisClusterArgs = Omit<CommonK8sRedisArgs, 'authKey'> & {
   nodes: pulumi.Input<number>;
   password?: pulumi.Input<string>;
 };
@@ -47,11 +44,11 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
           commonLabels: {
             'app.kubernetes.io/instance': name,
           },
-          image: {
-            repository: 'daily-ops/bitnami-redis-cluster',
-            registry: 'gcr.io',
-            tag: '7.2.5-debian-12-r5',
-          },
+          image: pulumi.all([args.image]).apply(([image]) => ({
+            repository: image?.repository ?? 'daily-ops/bitnami-redis-cluster',
+            registry: image?.registry ?? 'gcr.io',
+            tag: image?.tag ?? '7.2.5-debian-12-r5',
+          })),
           metrics: pulumi.all([args.metrics]).apply(([metrics]) => ({
             ...metrics,
             image: {
