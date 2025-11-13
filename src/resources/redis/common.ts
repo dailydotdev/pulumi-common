@@ -46,6 +46,7 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
 
   metrics?: Input<{
     enabled?: Input<boolean>;
+    image?: Input<Image>;
     [key: string]: unknown;
   }>;
 

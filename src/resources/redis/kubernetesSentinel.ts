@@ -2,6 +2,7 @@ import {
   all,
   ComponentResource,
   type CustomResourceOptions,
+  type Input,
 } from '@pulumi/pulumi';
 import { urnPrefix } from '../../constants';
 import { helm } from '@pulumi/kubernetes';
@@ -14,7 +15,7 @@ import {
   configureResources,
 } from './common';
 import { getSpotSettings, type Spot } from '../../k8s';
-import { charts } from '../../kubernetes';
+import { charts, type Image } from '../../kubernetes';
 import {
   KubernetesSentinelMonitor,
   type K8sRedisSentinelMonitorArgs,
@@ -29,6 +30,9 @@ export type K8sRedisSentinelArgs = Omit<
     enabled?: boolean;
     image?: K8sRedisSentinelMonitorArgs['image'];
     resources?: K8sRedisSentinelMonitorArgs['resources'];
+  };
+  sentinel?: {
+    image?: Input<Image>;
   };
 };
 
@@ -89,9 +93,11 @@ export class KubernetesSentinel extends ComponentResource {
           metrics: all([args.metrics]).apply(([metrics]) => ({
             ...metrics,
             image: {
-              repository: 'daily-ops/bitnami-redis-exporter',
-              registry: 'gcr.io',
-              tag: '1.76.0-debian-12-r0',
+              repository:
+                metrics?.image?.repository ??
+                'daily-ops/bitnami-redis-exporter',
+              registry: metrics?.image?.registry ?? 'gcr.io',
+              tag: metrics?.image?.tag ?? '1.76.0-debian-12-r0',
             },
             enabled: metrics?.enabled ?? true,
           })),
@@ -99,17 +105,18 @@ export class KubernetesSentinel extends ComponentResource {
             enabled: true,
             automateClusterRecovery: true,
             downAfterMilliseconds: 2000,
-            image: {
-              repository: 'daily-ops/bitnami-redis-sentinel',
-              registry: 'gcr.io',
-              tag: '7.2.5-debian-12-r5',
-            },
+            image: all([args.sentinel?.image]).apply(([image]) => ({
+              repository:
+                image?.repository ?? 'daily-ops/bitnami-redis-sentinel',
+              registry: image?.registry ?? 'gcr.io',
+              tag: image?.tag ?? '7.2.5-debian-12-r5',
+            })),
           },
-          image: {
-            repository: 'daily-ops/bitnami-redis',
-            registry: 'gcr.io',
-            tag: '7.2.5-debian-12-r6',
-          },
+          image: all([args.image]).apply(([image]) => ({
+            repository: image?.repository ?? 'daily-ops/bitnami-redis',
+            registry: image?.registry ?? 'gcr.io',
+            tag: image?.tag ?? '7.2.5-debian-12-r6',
+          })),
           auth: {
             enabled: !!args.authKey,
             password: args.authKey,
