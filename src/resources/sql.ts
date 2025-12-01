@@ -21,7 +21,7 @@ export class SqlInstance extends pulumi.ComponentResource {
     args: SqlInstanceArgs,
     opts?: pulumi.CustomResourceOptions,
   ) {
-    super(`${urnPrefix}:SqlInstance`, name, args, opts);
+    super(`${urnPrefix}:SqlInstance`, name, undefined, opts);
 
     if (!args.isAdhocEnv) {
       this.instance = new gcp.sql.DatabaseInstance(name, args, {
@@ -57,7 +57,7 @@ export class SqlDatabase extends pulumi.ComponentResource {
     args: SqlDatabaseArgs,
     opts?: pulumi.CustomResourceOptions,
   ) {
-    super(`${urnPrefix}:SqlDatabase`, name, args, opts);
+    super(`${urnPrefix}:SqlDatabase`, name, undefined, opts);
 
     this.databaseName = args.name as pulumi.Input<string>;
     if (args.isAdhocEnv) {
@@ -92,7 +92,7 @@ export class SqlUser extends pulumi.ComponentResource {
     args: SqlUserArgs,
     opts?: pulumi.CustomResourceOptions,
   ) {
-    super(`${urnPrefix}:SqlUser`, name, args, opts);
+    super(`${urnPrefix}:SqlUser`, name, undefined, opts);
 
     if (!args.isAdhocEnv) {
       this.instance = new gcp.sql.User(name, args, {
