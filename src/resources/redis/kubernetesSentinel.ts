@@ -34,7 +34,7 @@ export type K8sRedisSentinelArgs = Omit<
   };
   sentinel?: {
     image?: Input<Image>;
-    resources?: Input<Resources>;
+    resources?: Input<Partial<Resources>>;
   };
 };
 
