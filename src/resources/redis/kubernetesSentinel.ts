@@ -13,9 +13,10 @@ import {
   configurePersistence,
   configurePriorityClass,
   configureResources,
+  configureSidecarResources,
 } from './common';
 import { getSpotSettings, type Spot } from '../../k8s';
-import { charts, type Image } from '../../kubernetes';
+import { charts, type Image, type Resources } from '../../kubernetes';
 import {
   KubernetesSentinelMonitor,
   type K8sRedisSentinelMonitorArgs,
@@ -33,6 +34,7 @@ export type K8sRedisSentinelArgs = Omit<
   };
   sentinel?: {
     image?: Input<Image>;
+    resources?: Input<Resources>;
   };
 };
 
@@ -100,6 +102,7 @@ export class KubernetesSentinel extends ComponentResource {
               tag: metrics?.image?.tag ?? '1.76.0-debian-12-r0',
             },
             enabled: metrics?.enabled ?? true,
+            resources: configureSidecarResources(metrics?.resources),
           })),
           sentinel: {
             enabled: true,
@@ -111,6 +114,7 @@ export class KubernetesSentinel extends ComponentResource {
               registry: image?.registry ?? 'gcr.io',
               tag: image?.tag ?? '7.2.5-debian-12-r5',
             })),
+            resources: configureSidecarResources(args.sentinel?.resources),
           },
           image: all([args.image]).apply(([image]) => ({
             repository: image?.repository ?? 'daily-ops/bitnami-redis',

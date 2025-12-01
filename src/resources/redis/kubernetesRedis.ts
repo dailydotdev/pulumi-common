@@ -9,6 +9,7 @@ import {
   configurePersistence,
   configurePriorityClass,
   configureResources,
+  configureSidecarResources,
   defaultImage,
 } from './common';
 
@@ -77,7 +78,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
               tag: metrics?.image?.tag ?? '1.76.0-debian-12-r0',
             },
             enabled: metrics?.enabled ?? true,
-            resourcesPreset: 'micro',
+            resources: configureSidecarResources(metrics?.resources),
           })),
 
           // Values specific to master-slave setup

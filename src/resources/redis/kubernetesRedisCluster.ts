@@ -7,6 +7,7 @@ import {
   configurePersistence,
   configurePriorityClass,
   configureResources,
+  configureSidecarResources,
 } from './common';
 import { charts } from '../../kubernetes';
 
@@ -59,7 +60,7 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
               tag: metrics?.image?.tag ?? '1.76.0-debian-12-r0',
             },
             enabled: metrics?.enabled ?? true,
-            resourcesPreset: 'micro',
+            resources: configureSidecarResources(metrics?.resources),
           })),
 
           usePassword: !!args.password,

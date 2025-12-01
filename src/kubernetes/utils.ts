@@ -84,7 +84,7 @@ export const configureResources = (
   args: AdhocEnv & {
     resources?: Resources;
   },
-): Output<Resources> | undefined => {
+): Output<Partial<Resources>> | undefined => {
   if (args.isAdhocEnv || args.resources === undefined) {
     return undefined;
   }
@@ -94,9 +94,11 @@ export const configureResources = (
       requests: {
         cpu: resources.requests.cpu,
         memory: resources.requests.memory,
+        'ephemeral-storage': resources.requests?.['ephemeral-storage'],
       },
       limits: {
         memory: resources.limits.memory,
+        'ephemeral-storage': resources.limits?.['ephemeral-storage'],
       },
     };
   });

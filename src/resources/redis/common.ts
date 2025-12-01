@@ -5,6 +5,7 @@ import {
   Image,
   Tolerations,
   type PriorityClassInput,
+  type Resources,
 } from '../../kubernetes';
 import { AdhocEnv } from '../../utils';
 
@@ -47,6 +48,7 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
   metrics?: Input<{
     enabled?: Input<boolean>;
     image?: Input<Image>;
+    resources?: Input<Resources>;
     [key: string]: unknown;
   }>;
 
@@ -130,25 +132,14 @@ export const configurePersistence = (
 
 export const configureResources = (
   args: Pick<CommonK8sRedisArgs, 'cpuSize' | 'memorySizeGb' | 'isAdhocEnv'>,
-): Output<
-  | {
-      requests: {
-        cpu: string | number;
-        memory: string;
-      };
-      limits: {
-        memory: string;
-      };
-    }
-  | undefined
-> => {
+): Output<Partial<Resources> | undefined> => {
   return all([args.isAdhocEnv, args.cpuSize, args.memorySizeGb]).apply(
     ([isAdhocEnv, cpuSize, memorySizeGb]) => {
       return isAdhocEnv
         ? undefined
         : {
             requests: {
-              cpu: cpuSize || '1000m',
+              cpu: cpuSize?.toString() || '1000m',
               memory: `${memorySizeGb}Gi`,
             },
             limits: {
@@ -158,6 +149,21 @@ export const configureResources = (
     },
   );
 };
+
+export const configureSidecarResources = (
+  resources?: Input<Partial<Resources>>,
+): Output<Partial<Resources>> =>
+  all([resources]).apply(([resources]) => ({
+    requests: {
+      cpu: resources?.requests?.cpu ?? '50m',
+      memory: resources?.requests?.memory ?? '50Mi',
+      'ephemeral-storage': resources?.requests?.['ephemeral-storage'],
+    },
+    limits: {
+      memory: resources?.limits?.memory ?? '100Mi',
+      'ephemeral-storage': resources?.limits?.['ephemeral-storage'],
+    },
+  }));
 
 export const configurePriorityClass = (
   args: Pick<

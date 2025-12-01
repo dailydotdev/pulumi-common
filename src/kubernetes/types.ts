@@ -19,9 +19,11 @@ export type Resources = {
   requests: {
     cpu: Input<string>;
     memory: Input<string>;
+    'ephemeral-storage'?: Input<string>;
   };
   limits: {
     memory: Input<string>;
+    'ephemeral-storage'?: Input<string>;
   };
 };
 
