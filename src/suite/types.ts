@@ -9,6 +9,7 @@ import {
   Spot,
 } from '../k8s';
 import * as gcp from '@pulumi/gcp';
+import type { Resources } from '../kubernetes';
 
 export type MetricMemoryCPU = {
   type: 'memory_cpu';
@@ -89,7 +90,8 @@ export type DebeziumArgs = {
   propsVars: Record<string, Input<string>>;
   dependenciesOnly?: boolean;
   version?: string;
-  limits?: PodResources;
+  requests: Resources['requests'];
+  limits: Resources['limits'];
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
   disableHealthCheck?: boolean;
   affinity?: Input<k8s.types.input.core.v1.Affinity>;

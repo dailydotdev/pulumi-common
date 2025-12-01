@@ -6,11 +6,10 @@ import { createServiceAccountAndGrantRoles } from './serviceAccount';
 import { Input, Output, ProviderResource } from '@pulumi/pulumi';
 import { PersistentVolumeClaim } from '@pulumi/kubernetes/core/v1';
 import { input as inputs } from '@pulumi/kubernetes/types';
-import { stripCpuFromLimits } from './utils';
-import { getSpotSettings, PodResources } from './k8s';
+import { getSpotSettings } from './k8s';
+import { configureResources, type Resources } from './kubernetes';
 
 type OptionalArgs = {
-  limits?: Input<PodResources>;
   env?: pulumi.Input<inputs.core.v1.EnvVar>[];
   image?: string;
   resourcePrefix?: string;
@@ -18,6 +17,7 @@ type OptionalArgs = {
   isAdhocEnv?: boolean;
   disableHealthCheck?: boolean;
   affinity?: pulumi.Input<k8s.types.input.core.v1.Affinity>;
+  version?: string;
 };
 
 /**
@@ -68,11 +68,8 @@ export function deployDebeziumKubernetesResources(
   namespace: string | Input<string>,
   debeziumPropsString: Output<string>,
   debeziumKey: gcp.serviceaccount.Key | undefined,
+  resources: Resources,
   {
-    limits: requests = {
-      cpu: '1',
-      memory: '1024Mi',
-    },
     env = [],
     image = 'debezium/server:1.6',
     resourcePrefix = '',
@@ -81,17 +78,7 @@ export function deployDebeziumKubernetesResources(
     disableHealthCheck,
     affinity,
     version,
-  }: Pick<
-    OptionalArgs,
-    | 'limits'
-    | 'env'
-    | 'image'
-    | 'resourcePrefix'
-    | 'provider'
-    | 'isAdhocEnv'
-    | 'disableHealthCheck'
-    | 'affinity'
-  > & { version?: string } = {},
+  }: OptionalArgs = {},
 ): void {
   const propsHash = debeziumPropsString.apply((props) =>
     createHash('md5').update(props).digest('hex'),
@@ -272,12 +259,10 @@ export function deployDebeziumKubernetesResources(
                   },
                   ...env,
                 ],
-                resources: !isAdhocEnv
-                  ? {
-                      limits: stripCpuFromLimits(requests),
-                      requests,
-                    }
-                  : undefined,
+                resources: configureResources({
+                  isAdhocEnv: !!isAdhocEnv,
+                  resources,
+                }),
                 livenessProbe,
               },
             ],

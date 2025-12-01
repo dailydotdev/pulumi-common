@@ -519,17 +519,26 @@ export function deployApplicationSuiteToProvider({
     // Useful if we want to migrate Debezium without affecting its dependencies
     if (!debezium.dependenciesOnly) {
       const debeziumDefault = isAdhocEnv ? '2.0' : '1.6';
-      deployDebeziumKubernetesResources(name, namespace, props, debeziumKey, {
-        image: `quay.io/debezium/server:${debezium.version ?? debeziumDefault}`,
-        provider,
-        resourcePrefix,
-        limits: debezium.limits,
-        isAdhocEnv,
-        env: debezium.env,
-        disableHealthCheck: debezium.disableHealthCheck,
-        affinity: debezium.affinity,
-        version: debezium.version ?? debeziumDefault,
-      });
+      deployDebeziumKubernetesResources(
+        name,
+        namespace,
+        props,
+        debeziumKey,
+        {
+          requests: debezium.requests,
+          limits: debezium.limits,
+        },
+        {
+          image: `quay.io/debezium/server:${debezium.version ?? debeziumDefault}`,
+          provider,
+          resourcePrefix,
+          isAdhocEnv,
+          env: debezium.env,
+          disableHealthCheck: debezium.disableHealthCheck,
+          affinity: debezium.affinity,
+          version: debezium.version ?? debeziumDefault,
+        },
+      );
     }
   }
 
