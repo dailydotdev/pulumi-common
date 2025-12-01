@@ -156,12 +156,12 @@ export const configureSidecarResources = (
   all([resources]).apply(([resources]) => ({
     requests: {
       cpu: resources?.requests?.cpu ?? '50m',
-      memory: resources?.requests?.memory ?? '50Mi',
-      'ephemeral-storage': resources?.requests?.['ephemeral-storage'],
+      memory: resources?.requests?.memory ?? '32Mi',
+      'ephemeral-storage': resources?.requests?.['ephemeral-storage'] ?? '50Mi',
     },
     limits: {
       memory: resources?.limits?.memory ?? '100Mi',
-      'ephemeral-storage': resources?.limits?.['ephemeral-storage'],
+      'ephemeral-storage': resources?.limits?.['ephemeral-storage'] ?? '2Gi',
     },
   }));
 

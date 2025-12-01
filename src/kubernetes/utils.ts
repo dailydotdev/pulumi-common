@@ -92,13 +92,13 @@ export const configureResources = (
   return all([args.resources]).apply(([resources]) => {
     return {
       requests: {
-        cpu: resources.requests.cpu,
-        memory: resources.requests.memory,
-        'ephemeral-storage': resources.requests?.['ephemeral-storage'],
+        cpu: resources?.requests?.cpu,
+        memory: resources?.requests?.memory,
+        'ephemeral-storage': resources?.requests?.['ephemeral-storage'],
       },
       limits: {
-        memory: resources.limits.memory,
-        'ephemeral-storage': resources.limits?.['ephemeral-storage'],
+        memory: resources?.limits?.memory,
+        'ephemeral-storage': resources?.limits?.['ephemeral-storage'],
       },
     };
   });
