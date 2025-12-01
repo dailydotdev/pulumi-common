@@ -6,7 +6,7 @@ import {
 import { urnPrefix } from '../../constants';
 import { apps, core, rbac } from '@pulumi/kubernetes';
 
-import { isNullOrUndefined, type AdhocEnv } from '../../utils';
+import { type AdhocEnv } from '../../utils';
 import { image, type Image, type Resources } from '../..';
 
 export type K8sRedisSentinelMonitorArgs = Partial<AdhocEnv> & {
@@ -157,18 +157,15 @@ export class KubernetesSentinelMonitor extends ComponentResource {
                     ...defaults.image,
                     ...args.image,
                   } as Image),
-                  resources: isNullOrUndefined(args.resources)
-                    ? undefined
-                    : {
-                        requests: {
-                          cpu:
-                            args.resources.requests?.cpu?.toString() ?? '50m',
-                          memory: args.resources.requests?.memory ?? '32Mi',
-                        },
-                        limits: {
-                          memory: args.resources.limits?.memory ?? '128Mi',
-                        },
-                      },
+                  resources: {
+                    requests: {
+                      cpu: args?.resources?.requests?.cpu?.toString() ?? '10m',
+                      memory: args?.resources?.requests?.memory ?? '16Mi',
+                    },
+                    limits: {
+                      memory: args?.resources?.limits?.memory ?? '128Mi',
+                    },
+                  },
                   env: [
                     {
                       name: 'ENVIRONMENT',
