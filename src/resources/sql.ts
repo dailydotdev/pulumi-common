@@ -45,12 +45,13 @@ export class SqlInstance extends pulumi.ComponentResource {
 }
 
 export type SqlDatabaseArgs = gcp.sql.DatabaseArgs & {
+  name: string;
   isAdhocEnv: boolean;
 };
 
 export class SqlDatabase extends pulumi.ComponentResource {
   private readonly instance: gcp.sql.Database | undefined;
-  private readonly databaseName: pulumi.Input<string>;
+  public readonly name: pulumi.Output<string>;
 
   constructor(
     name: string,
@@ -58,8 +59,8 @@ export class SqlDatabase extends pulumi.ComponentResource {
     opts?: pulumi.CustomResourceOptions,
   ) {
     super(`${urnPrefix}:SqlDatabase`, name, args, opts);
+    this.name = pulumi.output(args.name);
 
-    this.databaseName = args.name as pulumi.Input<string>;
     if (args.isAdhocEnv) {
       new LocalSqlDatabase(name, args, {
         ...opts,
@@ -72,10 +73,6 @@ export class SqlDatabase extends pulumi.ComponentResource {
         aliases: [{ name, parent: pulumi.rootStackResource }],
       });
     }
-  }
-
-  get name(): pulumi.Output<string> {
-    return pulumi.interpolate`${this.databaseName}`;
   }
 }
 
