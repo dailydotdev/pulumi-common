@@ -169,7 +169,7 @@ function deployCron(
     limits,
     requests,
     dependsOn,
-    spot,
+    spot = { enabled: true },
     suspend = false,
     podAnnotations,
   }: CronArgs,
