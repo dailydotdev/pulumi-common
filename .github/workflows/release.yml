@@ -14,6 +14,10 @@ on:
           - 'minor'
           - 'patch'
 
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,8 +34,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: 'https://registry.npmjs.org'
-          token: ${{ secrets.NPM_TOKEN }}
 
       - name: Cache node_modules
         id: cache-node_modules
@@ -57,8 +59,6 @@ jobs:
           npm version ${{ github.event.inputs.version }} --sign-git-tag
 
       - name: Publish to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm publish --access public
 
