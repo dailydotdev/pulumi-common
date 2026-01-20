@@ -31,22 +31,22 @@ jobs:
 
       - uses: chainguard-dev/actions/setup-gitsign@main
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: 'pnpm'
           registry-url: 'https://registry.npmjs.org'
-
-      # Ensure npm 11.5.1 or later is installed
-      - name: Update npm
-        run: npm install -g npm@latest
 
       - name: Cache node_modules
         id: cache-node_modules
         uses: actions/cache@v4
         with:
           path: node_modules
-          key: ${{ runner.os }}-node_modules-${{ hashFiles('**/package-lock.json') }}
+          key: ${{ runner.os }}-node_modules-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-node_modules-
             ${{ runner.os }}-
@@ -54,7 +54,7 @@ jobs:
       - name: Install dependencies
         if: steps.cache-node_modules.outputs.cache-hit != 'true'
         run: |
-          npm ci
+          pnpm install --frozen-lockfile
 
       - name: Setup git
         run: |
@@ -62,11 +62,11 @@ jobs:
 
       - name: Bump version
         run: |
-          npm version ${{ github.event.inputs.version }} --sign-git-tag
+          pnpm version ${{ github.event.inputs.version }} --sign-git-tag
 
       - name: Publish to npm
         run: |
-          npm publish --access public
+          pnpm publish --access public
 
       - name: Push changes
         env:

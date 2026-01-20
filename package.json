@@ -7,7 +7,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "prebuild": "rm -rf lib",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "pnpm run build"
   },
   "repository": {
     "type": "git",

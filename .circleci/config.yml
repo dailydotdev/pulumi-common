@@ -5,21 +5,24 @@ jobs:
       - image: cimg/node:22.14
     steps:
       - checkout
+      - run:
+          name: Install pnpm
+          command: npm install -g pnpm@latest
       - restore_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}
+          key: dependency-cache-{{ checksum "pnpm-lock.yaml" }}
       - run:
           name: Install dependencies
-          command: npm install
+          command: pnpm install --frozen-lockfile
       - save_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}
+          key: dependency-cache-{{ checksum "pnpm-lock.yaml" }}
           paths:
             - ./node_modules
       - run:
           name: Lint
-          command: npm run lint
+          command: pnpm run lint
       - run:
           name: Build
-          command: npm run build
+          command: pnpm run build
 workflows:
   build:
     jobs:
