@@ -1,29 +1,24 @@
 version: 2.1
+
+orbs:
+  common: dailydotdev/common@0.0.14
+
 jobs:
-  build:
-    docker:
-      - image: cimg/node:22.14
+  build-package:
+    executor:
+      name: common/node
+      tag: "24.13"
     steps:
-      - checkout
-      - run:
-          name: Install pnpm
-          command: npm install -g pnpm@latest
-      - restore_cache:
-          key: dependency-cache-{{ checksum "pnpm-lock.yaml" }}
-      - run:
-          name: Install dependencies
-          command: pnpm install --frozen-lockfile
-      - save_cache:
-          key: dependency-cache-{{ checksum "pnpm-lock.yaml" }}
-          paths:
-            - ./node_modules
+      - common/setup-node
       - run:
           name: Lint
-          command: pnpm run lint
+          command: |
+            pnpm run lint
       - run:
           name: Build
-          command: pnpm run build
+          command: |
+            pnpm run build
 workflows:
   build:
     jobs:
-      - build
+      - build-package
