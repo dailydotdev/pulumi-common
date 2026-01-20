@@ -1,6 +1,11 @@
 import { Output, all } from '@pulumi/pulumi';
 import { version } from '../../package.json';
-import { Image, Resources } from './types';
+import {
+  Image,
+  Resources,
+  type AutocertCertificate,
+  type PodAnnotations,
+} from './types';
 import { AdhocEnv } from '../utils';
 
 export const NodeLabelKeys = {
@@ -102,4 +107,39 @@ export const configureResources = (
       },
     };
   });
+};
+
+export const configureAutocertAnnotations = (
+  certificate: AutocertCertificate,
+): PodAnnotations => {
+  if (!certificate || !certificate.enabled || !certificate.name) {
+    return {};
+  }
+
+  const extraAnnotations: PodAnnotations = {
+    'autocert.step.sm/name': certificate.name,
+    'autocert.step.sm/duration': certificate.duration || '720h', // 30 days
+  };
+
+  if (certificate.sans && certificate.sans.length > 0) {
+    extraAnnotations['autocert.step.sm/sans'] = certificate.sans.join(',');
+  }
+
+  if (certificate.initFirst) {
+    extraAnnotations['autocert.step.sm/init-first'] = 'true';
+  }
+
+  if (!certificate.autoRenew) {
+    extraAnnotations['autocert.step.sm/bootstrapper-only'] = 'true';
+  }
+
+  if (certificate.owner) {
+    extraAnnotations['autocert.step.sm/owner'] = certificate.owner;
+  }
+
+  if (certificate.mode) {
+    extraAnnotations['autocert.step.sm/mode'] = certificate.mode;
+  }
+
+  return extraAnnotations;
 };

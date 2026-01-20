@@ -35,6 +35,7 @@ import { isNullOrUndefined, stripCpuFromLimits } from '../utils';
 import { defaultSpotWeight } from '../constants';
 import { createHash } from 'crypto';
 import { existsSync, readFileSync } from 'fs';
+import { configureAutocertAnnotations } from '../kubernetes';
 
 /**
  * Takes a custom definition of an autoscaling metric and turn it into a k8s definition
@@ -172,6 +173,7 @@ function deployCron(
     spot = { enabled: true },
     suspend = false,
     podAnnotations,
+    certificate,
   }: CronArgs,
 ): k8s.batch.v1.CronJob {
   const appResourcePrefix = `${resourcePrefix}${
@@ -212,7 +214,16 @@ function deployCron(
                   'app-type': 'cron',
                   ...labels,
                 },
-                annotations: podAnnotations,
+                annotations: {
+                  ...podAnnotations,
+                  ...configureAutocertAnnotations({
+                    ...certificate,
+                    duration: '6h',
+                    name:
+                      certificate?.name ||
+                      `${appName}.${namespace}.svc.cluster.local`,
+                  }),
+                },
               },
               spec: {
                 restartPolicy: 'OnFailure',
@@ -290,6 +301,7 @@ function deployApplication(
     servicePorts = [],
     backendConfig,
     spot: requestedSpot,
+    certificate,
   }: ApplicationArgs,
 ): ApplicationReturn {
   const shouldCreateService = createService || servicePorts.length > 0;
@@ -311,7 +323,13 @@ function deployApplication(
     podSpec: {
       volumes,
     },
-    podAnnotations,
+    podAnnotations: {
+      ...podAnnotations,
+      ...configureAutocertAnnotations({
+        ...certificate,
+        name: certificate?.name || `${appName}.${namespace}.svc.cluster.local`,
+      }),
+    },
     containers: [
       {
         ...containerOpts,
@@ -484,6 +502,7 @@ export function deployApplicationSuiteToProvider({
       k8sServiceAccount,
       { provider, resourcePrefix, dependsOn },
       migration?.toleratesSpot ?? true,
+      migration?.certificate,
     );
     dependsOn.push(migrationJob);
   } else if (migrations) {
@@ -497,6 +516,7 @@ export function deployApplicationSuiteToProvider({
         k8sServiceAccount,
         { provider, resourcePrefix, dependsOn },
         migrations[key]?.toleratesSpot ?? true,
+        migrations[key]?.certificate,
       );
     });
     dependsOn.push(...jobs);

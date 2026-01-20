@@ -30,3 +30,20 @@ export const gcpProjectNumber = () => {
   const __config = new Config();
   return __config.require('projectNumber');
 };
+
+export type OctalDigit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7';
+export type OctalPermission =
+  | `${OctalDigit}${OctalDigit}${OctalDigit}`
+  | `${OctalDigit}${OctalDigit}${OctalDigit}${OctalDigit}`;
+
+type Id = `${number}`;
+type Name = string;
+export type ChownSpec =
+  | `${Name}` // owner
+  | `${Name}:${Name}` // owner:group
+  | `${Name}.${Name}` // owner.group
+  | `:${Name}` // group only (common)
+  | `.${Name}` // group only (dot form)
+  | `${Id}` // uid
+  | `${Id}:${Id}` // uid:gid
+  | `${Id}.${Id}`; // uid.gid
