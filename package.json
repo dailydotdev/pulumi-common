@@ -20,6 +20,7 @@
   "homepage": "https://github.com/dailydotdev/pulumi-common#readme",
   "dependencies": {
     "@google-cloud/pubsub": "^5.2.2",
+    "@grpc/grpc-js": "^1.14.3",
     "@pulumi/gcp": "^8.41.1",
     "@pulumi/kubernetes": "^4.25.0",
     "@pulumi/pulumi": "^3.216.0",
