@@ -10,7 +10,11 @@ import * as gcp from '@pulumi/gcp';
 import { autoscaling } from '@pulumi/kubernetes/types/input';
 import { Resource } from '@pulumi/pulumi/resource';
 import { camelToUnderscore, gcpProjectNumber } from './utils';
-import { NodeLabels } from './kubernetes';
+import {
+  configureAutocertAnnotations,
+  NodeLabels,
+  type AutocertCertificate,
+} from './kubernetes';
 import { defaultSpotWeight } from './constants';
 
 export type PodResources = { cpu?: string; memory?: string };
@@ -75,6 +79,7 @@ export function createMigrationJob(
     dependsOn?: Input<Resource>[];
   } = {},
   toleratesSpot: boolean = true,
+  certificate?: Omit<AutocertCertificate, 'duration'>,
 ): k8s.batch.v1.Job {
   const hash = image.split(':')[1];
   const name = `${baseName}-${hash.substring(hash.length - 8)}`;
@@ -86,6 +91,13 @@ export function createMigrationJob(
       metadata: {
         name,
         namespace,
+        annotations: {
+          ...configureAutocertAnnotations({
+            ...certificate,
+            duration: '6h', // A short duration for migration jobs
+            name: certificate?.name || `${name}.${namespace}.svc.cluster.local`,
+          }),
+        },
       },
       spec: {
         completions: 1,

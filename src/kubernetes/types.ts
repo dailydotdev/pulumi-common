@@ -1,5 +1,6 @@
 import { Input } from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
+import type { ChownSpec, OctalPermission } from '../utils';
 
 export type Image =
   | {
@@ -80,3 +81,16 @@ export type EnvVariable =
       value?: never;
       valueFrom: k8s.types.input.core.v1.EnvVarSource;
     };
+
+export type PodAnnotations = { [key: string]: Input<string> };
+
+export type AutocertCertificate = {
+  enabled?: boolean;
+  name?: string;
+  duration?: string;
+  sans?: string[];
+  initFirst?: boolean;
+  autoRenew?: boolean;
+  owner?: ChownSpec;
+  mode?: OctalPermission;
+};

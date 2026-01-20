@@ -9,7 +9,11 @@ import {
   Spot,
 } from '../k8s';
 import * as gcp from '@pulumi/gcp';
-import type { Resources } from '../kubernetes';
+import type {
+  AutocertCertificate,
+  PodAnnotations,
+  Resources,
+} from '../kubernetes';
 
 export type MetricMemoryCPU = {
   type: 'memory_cpu';
@@ -49,11 +53,12 @@ export type ApplicationArgs = {
   volumes?: Input<Input<k8s.types.input.core.v1.Volume>[]>;
   volumeMounts?: Input<Input<k8s.types.input.core.v1.VolumeMount>[]>;
   disableLifecycle?: boolean;
-  podAnnotations?: Input<{ [key: string]: Input<string> }>;
+  podAnnotations?: Input<PodAnnotations>;
   ports?: k8s.types.input.core.v1.ContainerPort[];
   servicePorts?: k8s.types.input.core.v1.ServicePort[];
   backendConfig?: KubernetesApplicationArgs['backendConfig'];
   spot?: Spot;
+  certificate?: AutocertCertificate;
 };
 
 export type ApplicationReturn = KubernetesApplicationReturn & {
@@ -63,6 +68,7 @@ export type ApplicationReturn = KubernetesApplicationReturn & {
 export type MigrationArgs = {
   args: string[];
   toleratesSpot?: boolean;
+  certificate?: Omit<AutocertCertificate, 'duration'>;
 };
 
 export type CronArgs = {
@@ -82,6 +88,7 @@ export type CronArgs = {
   spot?: Spot;
   suspend?: boolean;
   podAnnotations?: Input<{ [key: string]: Input<string> }>;
+  certificate?: Omit<AutocertCertificate, 'duration'>;
 };
 
 export type DebeziumArgs = {
@@ -95,6 +102,7 @@ export type DebeziumArgs = {
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
   disableHealthCheck?: boolean;
   affinity?: Input<k8s.types.input.core.v1.Affinity>;
+  certificate?: AutocertCertificate;
 };
 
 export type AdditionalSecret = {
