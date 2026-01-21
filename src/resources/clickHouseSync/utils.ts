@@ -1,4 +1,4 @@
-import { Input, all } from '@pulumi/pulumi';
+import { all, type Input } from '@pulumi/pulumi';
 import { readFile } from 'fs/promises';
 import { parse } from 'yaml';
 

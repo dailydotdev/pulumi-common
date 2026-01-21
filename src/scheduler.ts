@@ -1,11 +1,11 @@
-import { Output } from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
+import { type Output } from '@pulumi/pulumi';
 
-type Cron = {
+interface Cron {
   name: string;
   schedule: string;
   body?: string;
-};
+}
 
 export type CronPubSub = Cron & { topic?: string };
 export type CronHttp = Cron & {

@@ -1,24 +1,24 @@
 import * as k8s from '@pulumi/kubernetes';
 import {
   ComponentResource,
-  CustomResourceOptions,
-  Input,
+  type CustomResourceOptions,
+  type Input,
 } from '@pulumi/pulumi';
+import { createHash } from 'crypto';
+import { stringify } from 'yaml';
 
 import { urnPrefix } from '../../constants';
-import { AdhocEnv } from '../../utils';
+import { getSpotSettings } from '../../k8s';
 import {
-  EnvVariable,
-  Image,
-  Resources,
   commonLabels,
   configureResources,
+  type EnvVariable,
+  type Image,
   image,
+  type Resources,
 } from '../../kubernetes';
-import { ClickHouseSyncConfig, loadConfig } from './utils';
-import { stringify } from 'yaml';
-import { createHash } from 'crypto';
-import { getSpotSettings } from '../../k8s';
+import { type AdhocEnv } from '../../utils';
+import { type ClickHouseSyncConfig, loadConfig } from './utils';
 
 export type ClickHouseSyncArgs = Partial<AdhocEnv> & {
   props: {

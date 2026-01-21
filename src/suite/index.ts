@@ -1,10 +1,23 @@
-import { readFile } from 'fs/promises';
-import { Input, Output, all, ProviderResource } from '@pulumi/pulumi';
-import * as k8s from '@pulumi/kubernetes';
-import { Resource } from '@pulumi/pulumi/resource';
 import * as gcp from '@pulumi/gcp';
+import * as k8s from '@pulumi/kubernetes';
 import {
-  ContainerOptions,
+  all,
+  type Input,
+  type Output,
+  type ProviderResource,
+} from '@pulumi/pulumi';
+import { type Resource } from '@pulumi/pulumi/resource';
+import { createHash } from 'crypto';
+import { existsSync, readFileSync } from 'fs';
+import { readFile } from 'fs/promises';
+
+import { defaultSpotWeight } from '../constants';
+import {
+  deployDebeziumKubernetesResources,
+  deployDebeziumSharedDependencies,
+} from '../debezium';
+import {
+  type ContainerOptions,
   createAutoscaledApplication,
   createAutoscaledExposedApplication,
   createK8sServiceAccountFromGCPServiceAccount,
@@ -16,26 +29,19 @@ import {
   getSpotSettings,
   gracefulTerminationHook,
   k8sServiceAccountToIdentity,
-  KubernetesApplicationArgs,
+  type KubernetesApplicationArgs,
 } from '../k8s';
-import { getVpcNativeCluster, GkeCluster } from '../providers/gkeCluster';
-import {
-  ApplicationArgs,
-  ApplicationContext,
-  ApplicationReturn,
-  ApplicationSuiteArgs,
-  CronArgs,
-  CustomMetric,
-} from './types';
-import {
-  deployDebeziumKubernetesResources,
-  deployDebeziumSharedDependencies,
-} from '../debezium';
-import { isNullOrUndefined, stripCpuFromLimits } from '../utils';
-import { defaultSpotWeight } from '../constants';
-import { createHash } from 'crypto';
-import { existsSync, readFileSync } from 'fs';
 import { configureAutocertAnnotations } from '../kubernetes';
+import { getVpcNativeCluster, type GkeCluster } from '../providers/gkeCluster';
+import { isNullOrUndefined, stripCpuFromLimits } from '../utils';
+import {
+  type ApplicationArgs,
+  type ApplicationContext,
+  type ApplicationReturn,
+  type ApplicationSuiteArgs,
+  type CronArgs,
+  type CustomMetric,
+} from './types';
 
 /**
  * Takes a custom definition of an autoscaling metric and turn it into a k8s definition
@@ -44,7 +50,7 @@ export function customMetricToK8s(
   metric: CustomMetric,
 ): Input<Input<k8s.types.input.autoscaling.v2.MetricSpec>[]> {
   switch (metric.type) {
-    case 'pubsub':
+    case 'pubsub': {
       // Expand the short label keys to full labels
       const fullLabels = Object.keys(metric.labels).reduce(
         (acc, key) => ({
@@ -70,6 +76,7 @@ export function customMetricToK8s(
           type: 'External',
         },
       ];
+    }
     case 'memory_cpu':
       return getMemoryAndCpuMetrics(metric.cpu, metric.memory ?? metric.cpu);
   }

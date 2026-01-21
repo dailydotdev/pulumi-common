@@ -1,13 +1,13 @@
-import { all, Input, Output } from '@pulumi/pulumi';
+import { all, type Input, type Output } from '@pulumi/pulumi';
 
 import {
-  Affinity,
-  Image,
-  Tolerations,
+  type Affinity,
+  type Image,
   type PriorityClassInput,
   type Resources,
+  type Tolerations,
 } from '../../kubernetes';
-import { AdhocEnv } from '../../utils';
+import { type AdhocEnv } from '../../utils';
 
 /**
  * Default modules to load in the Redis configuration.
@@ -86,7 +86,7 @@ export const configureConfiguration = (
       memorySizeGb,
       maxMemoryPercentage = 80,
     ]) => {
-      let configurationString = !!configurationOld
+      let configurationString = configurationOld
         ? configurationOld
         : Object.entries(configuration)
             .map(([key, value]) => `${key} ${value}`)

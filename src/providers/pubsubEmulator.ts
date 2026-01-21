@@ -1,8 +1,9 @@
-import * as pulumi from '@pulumi/pulumi';
-import * as gcp from '@pulumi/gcp';
-import { PubSub, ServiceError } from '@google-cloud/pubsub';
+import { PubSub, type ServiceError } from '@google-cloud/pubsub';
 import { Status } from '@grpc/grpc-js/build/src/constants';
-import * as resource from '@pulumi/pulumi/resource';
+import type * as gcp from '@pulumi/gcp';
+import * as pulumi from '@pulumi/pulumi';
+import type * as resource from '@pulumi/pulumi/resource';
+
 import { config } from '../config';
 
 const PUBSUB_LOCAL_URL = config.get<string>('pubsubUrl') || 'localhost:8085';

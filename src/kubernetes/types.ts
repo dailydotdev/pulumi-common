@@ -1,5 +1,6 @@
-import { Input } from '@pulumi/pulumi';
-import * as k8s from '@pulumi/kubernetes';
+import type * as k8s from '@pulumi/kubernetes';
+import { type Input } from '@pulumi/pulumi';
+
 import type { ChownSpec, OctalPermission } from '../utils';
 
 export type Image =
@@ -16,7 +17,7 @@ export type Image =
       registry?: Input<string>;
     };
 
-export type Resources = {
+export interface Resources {
   requests?: {
     cpu?: Input<string>;
     memory?: Input<string>;
@@ -26,14 +27,14 @@ export type Resources = {
     memory?: Input<string>;
     'ephemeral-storage'?: Input<string>;
   };
-};
+}
 
-export type Tolerations = {
+export interface Tolerations {
   key: Input<string>;
   value: Input<string>;
   operator: Input<'Exists' | 'Equal'>;
   effect: Input<'NoExecute' | 'NoSchedule' | 'PreferNoSchedule'>;
-};
+}
 
 export type LabelSelectorRequirement = {
   key: Input<string>;
@@ -48,7 +49,7 @@ export type LabelSelectorRequirement = {
     }
 );
 
-export type NodeAffinity = {
+export interface NodeAffinity {
   requiredDuringSchedulingIgnoredDuringExecution?: Input<{
     nodeSelectorTerms: Input<
       {
@@ -64,11 +65,11 @@ export type NodeAffinity = {
       }>;
     }[]
   >;
-};
+}
 
-export type Affinity = {
+export interface Affinity {
   nodeAffinity?: Input<NodeAffinity>;
-};
+}
 
 export type EnvVariable =
   | {
@@ -82,9 +83,9 @@ export type EnvVariable =
       valueFrom: k8s.types.input.core.v1.EnvVarSource;
     };
 
-export type PodAnnotations = { [key: string]: Input<string> };
+export type PodAnnotations = Record<string, Input<string>>;
 
-export type AutocertCertificate = {
+export interface AutocertCertificate {
   enabled?: boolean;
   name?: string;
   duration?: string;
@@ -93,4 +94,4 @@ export type AutocertCertificate = {
   autoRenew?: boolean;
   owner?: ChownSpec;
   mode?: OctalPermission;
-};
+}

@@ -1,23 +1,24 @@
-import * as k8s from '@pulumi/kubernetes';
-import {
-  Input,
-  Output,
-  interpolate,
-  ProviderResource,
-  all,
-} from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
-import { autoscaling } from '@pulumi/kubernetes/types/input';
-import { Resource } from '@pulumi/pulumi/resource';
-import { camelToUnderscore, gcpProjectNumber } from './utils';
+import * as k8s from '@pulumi/kubernetes';
+import { type autoscaling } from '@pulumi/kubernetes/types/input';
 import {
+  all,
+  type Input,
+  interpolate,
+  type Output,
+  type ProviderResource,
+} from '@pulumi/pulumi';
+import { type Resource } from '@pulumi/pulumi/resource';
+
+import { defaultSpotWeight } from './constants';
+import {
+  type AutocertCertificate,
   configureAutocertAnnotations,
   NodeLabels,
-  type AutocertCertificate,
 } from './kubernetes';
-import { defaultSpotWeight } from './constants';
+import { camelToUnderscore, gcpProjectNumber } from './utils';
 
-export type PodResources = { cpu?: string; memory?: string };
+export type PodResources = Record<'cpu' | 'memory', string>;
 export type ContainerOptions = Pick<
   k8s.types.input.core.v1.Container,
   'envFrom'
@@ -78,7 +79,7 @@ export function createMigrationJob(
     resourcePrefix?: string;
     dependsOn?: Input<Resource>[];
   } = {},
-  toleratesSpot: boolean = true,
+  toleratesSpot = true,
   certificate?: Omit<AutocertCertificate, 'duration'>,
 ): k8s.batch.v1.Job {
   const hash = image.split(':')[1];
@@ -218,7 +219,7 @@ export const bindK8sServiceAccountToGCP = (
   return k8sServiceAccount;
 };
 
-export type KubernetesApplicationArgs = {
+export interface KubernetesApplicationArgs {
   name: string;
   namespace: string;
   version: string;
@@ -229,14 +230,12 @@ export type KubernetesApplicationArgs = {
   metrics: Input<Input<k8s.types.input.autoscaling.v2.MetricSpec>[]>;
   resourcePrefix?: string;
   deploymentDependsOn?: Input<Resource>[];
-  labels?: {
-    [key: string]: Input<string>;
-  };
+  labels?: Record<string, Input<string>>;
   shouldCreatePDB?: boolean;
   podSpec?: Input<
     Omit<k8s.types.input.core.v1.PodSpec, 'containers' | 'serviceAccountName'>
   >;
-  podAnnotations?: Input<{ [key: string]: Input<string> }>;
+  podAnnotations?: Input<Record<string, Input<string>>>;
   provider?: ProviderResource;
   isAdhocEnv?: boolean;
   strategy?: k8s.types.input.apps.v1.DeploymentStrategy;
@@ -253,12 +252,12 @@ export type KubernetesApplicationArgs = {
     weight?: number;
     required?: boolean;
   };
-};
+}
 
-export type KubernetesApplicationReturn = {
-  labels: Input<{ [key: string]: Input<string> }>;
+export interface KubernetesApplicationReturn {
+  labels: Input<Record<string, Input<string>>>;
   deployment: k8s.apps.v1.Deployment;
-};
+}
 
 export const gracefulTerminationHook = (
   delay = 15,
@@ -270,11 +269,11 @@ export const gracefulTerminationHook = (
   },
 });
 
-export type Spot = {
+export interface Spot {
   enabled: boolean;
   weight?: number;
   required?: boolean;
-};
+}
 
 export const getSpotSettings = (
   spot: Spot = { enabled: false, weight: defaultSpotWeight, required: false },
@@ -361,16 +360,12 @@ export const createAutoscaledApplication = ({
   strategy,
   spot,
 }: KubernetesApplicationArgs): KubernetesApplicationReturn => {
-  const labels: Input<{
-    [key: string]: Input<string>;
-  }> = {
+  const labels: Input<Record<string, Input<string>>> = {
     app: name,
     ...extraLabels,
   };
 
-  const versionLabels: Input<{
-    [key: string]: Input<string>;
-  }> = {
+  const versionLabels: Input<Record<string, Input<string>>> = {
     ...labels,
     version,
   };

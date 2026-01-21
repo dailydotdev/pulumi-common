@@ -1,10 +1,10 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as k8s from '@pulumi/kubernetes';
-import { urnPrefix } from '../../constants';
+import * as pulumi from '@pulumi/pulumi';
 
+import { urnPrefix } from '../../constants';
 import { charts } from '../../kubernetes';
 import {
-  CommonK8sRedisArgs,
+  type CommonK8sRedisArgs,
   configureConfiguration,
   configurePersistence,
   configurePriorityClass,
