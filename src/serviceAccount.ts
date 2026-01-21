@@ -1,5 +1,5 @@
 import * as gcp from '@pulumi/gcp';
-import { Output } from '@pulumi/pulumi';
+import { type Output } from '@pulumi/pulumi';
 
 export function serviceAccountToMember(
   serviceAccount:
@@ -9,7 +9,10 @@ export function serviceAccountToMember(
   return serviceAccount.email.apply((email) => `serviceAccount:${email}`);
 }
 
-export type IAMRole = { name: string; role: string };
+export interface IAMRole {
+  name: string;
+  role: string;
+}
 
 export function addIAMRolesToServiceAccount(
   prefix: string,

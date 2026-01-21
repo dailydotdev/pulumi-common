@@ -1,12 +1,13 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
+import * as pulumi from '@pulumi/pulumi';
+import { type Output } from '@pulumi/pulumi';
+
 import { urnPrefix } from '../constants';
 import {
   getLocalSqlConfig,
-  LocalSqlConfig,
+  type LocalSqlConfig,
   LocalSqlDatabase,
 } from '../providers/localSql';
-import { Output } from '@pulumi/pulumi';
 
 export type SqlInstanceArgs = gcp.sql.DatabaseInstanceArgs & {
   isAdhocEnv: boolean;
