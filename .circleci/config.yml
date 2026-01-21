@@ -1,26 +1,24 @@
 version: 2.1
+
+orbs:
+  common: dailydotdev/common@0.0.14
+
 jobs:
-  build:
-    docker:
-      - image: cimg/node:22.14
+  build-package:
+    executor:
+      name: common/node
+      tag: "24.13"
     steps:
-      - checkout
-      - restore_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}
-      - run:
-          name: Install dependencies
-          command: npm install
-      - save_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}
-          paths:
-            - ./node_modules
+      - common/setup-node
       - run:
           name: Lint
-          command: npm run lint
+          command: |
+            pnpm run lint
       - run:
           name: Build
-          command: npm run build
+          command: |
+            pnpm run build
 workflows:
   build:
     jobs:
-      - build
+      - build-package

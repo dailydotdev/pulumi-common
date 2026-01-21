@@ -7,7 +7,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "prebuild": "rm -rf lib",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "pnpm run build"
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
   "homepage": "https://github.com/dailydotdev/pulumi-common#readme",
   "dependencies": {
     "@google-cloud/pubsub": "^5.2.2",
+    "@grpc/grpc-js": "^1.14.3",
     "@pulumi/gcp": "^8.41.1",
     "@pulumi/kubernetes": "^4.25.0",
     "@pulumi/pulumi": "^3.216.0",
@@ -37,5 +38,6 @@
     "eslint-plugin-prettier": "^5.5.5",
     "prettier": "^3.8.0",
     "typescript": "^5.9.3"
-  }
+  },
+  "packageManager": "pnpm@10.28.1"
 }
