@@ -27,15 +27,13 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: chainguard-dev/actions/setup-gitsign@main
 
       - uses: pnpm/action-setup@v4
-        with:
-          version: latest
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'pnpm'
@@ -43,7 +41,7 @@ jobs:
 
       - name: Cache node_modules
         id: cache-node_modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: node_modules
           key: pnpm-${{ runner.os }}-node_modules-${{ hashFiles('**/pnpm-lock.yaml') }}
