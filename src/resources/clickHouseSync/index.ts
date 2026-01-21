@@ -47,7 +47,6 @@ const defaults: {
 };
 
 export class ClickHouseSync extends ComponentResource {
-  private deployment: k8s.apps.v1.Deployment;
   private config: k8s.core.v1.Secret;
 
   constructor(
@@ -96,7 +95,7 @@ export class ClickHouseSync extends ComponentResource {
       resourceOptions,
     );
 
-    this.deployment = new k8s.apps.v1.Deployment(
+    new k8s.apps.v1.Deployment(
       `${name}-clickhouse-sync`,
       {
         metadata: {

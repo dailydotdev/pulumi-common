@@ -49,7 +49,6 @@ export type SqlDatabaseArgs = gcp.sql.DatabaseArgs & {
 };
 
 export class SqlDatabase extends pulumi.ComponentResource {
-  private readonly instance: gcp.sql.Database | undefined;
   private readonly databaseName: pulumi.Input<string>;
 
   constructor(
@@ -66,7 +65,7 @@ export class SqlDatabase extends pulumi.ComponentResource {
         parent: this,
       });
     } else {
-      this.instance = new gcp.sql.Database(name, args, {
+      new gcp.sql.Database(name, args, {
         ...opts,
         parent: this,
         aliases: [{ name, parent: pulumi.rootStackResource }],
