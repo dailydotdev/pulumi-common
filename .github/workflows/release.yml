@@ -1,7 +1,7 @@
 name: release
 run-name: >-
   release `${{ github.event.inputs.version }}` version by `@${{ github.actor }}`
-  ${{ github.ref_name != 'main' && format(' on {0}', github.ref_name) || '' }}
+  ${{ github.ref_name != 'main' && format(' on `{0}`', github.ref_name) || '' }}
 
 on:
   workflow_dispatch:
@@ -68,8 +68,7 @@ jobs:
 
       - name: Publish to npm
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          npm publish --access public --tag "${VERSION}"
+          npm publish --access public --tag 2.17
 
       - name: Push changes
         env:
