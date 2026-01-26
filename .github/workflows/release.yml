@@ -68,7 +68,26 @@ jobs:
 
       - name: Publish to npm
         run: |
-          npm publish --access public --tag backport2.17
+          set -euo pipefail
+
+          BRANCH="${GITHUB_REF_NAME}"
+
+          if [ "$BRANCH" = "main" ]; then
+            echo "Branch=$BRANCH, publishing with default dist-tag (latest)"
+            npm publish --access public
+            exit 0
+          fi
+
+          if echo "$BRANCH" | grep -Eq '^release/[0-9]+\.[0-9]+$'; then
+            MM="$(echo "$BRANCH" | sed -E 's|^release/([0-9]+\.[0-9]+)$|\1|')"
+            TAG="backport-${MM}" # must NOT be "2.17", npm rejects that
+            echo "Branch=$BRANCH, publishing with dist-tag $TAG"
+            npm publish --access public --tag "$TAG"
+            exit 0
+          fi
+
+          echo "Branch=$BRANCH, publishing with dist-tag next"
+          npm publish --access public --tag next
 
       - name: Push changes
         env:
