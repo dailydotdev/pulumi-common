@@ -64,7 +64,26 @@ jobs:
 
       - name: Publish to npm
         run: |
-          pnpm publish --access public --provenance
+          set -euo pipefail
+
+          BRANCH="${GITHUB_REF_NAME}"
+
+          if [ "$BRANCH" = "main" ]; then
+            echo "Branch=$BRANCH, publishing with default dist-tag (latest)"
+            pnpm publish --access public --provenance
+            exit 0
+          fi
+
+          if echo "$BRANCH" | grep -Eq '^release/[0-9]+\.[0-9]+$'; then
+            MM="$(echo "$BRANCH" | sed -E 's|^release/([0-9]+\.[0-9]+)$|\1|')"
+            TAG="backport-${MM}" # must NOT be "2.17", npm rejects that
+            echo "Branch=$BRANCH, publishing with dist-tag $TAG"
+            pnpm publish --access public --provenance --tag "$TAG"
+            exit 0
+          fi
+
+          echo "Branch=$BRANCH, publishing with dist-tag next"
+          pnpm publish --access public --provenance --tag next
 
       - name: Push changes
         env:
