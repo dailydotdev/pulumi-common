@@ -68,7 +68,7 @@ jobs:
 
       - name: Publish to npm
         run: |
-          npm publish --access public --tag 2.17
+          npm publish --access public --tag backport2.17
 
       - name: Push changes
         env:
