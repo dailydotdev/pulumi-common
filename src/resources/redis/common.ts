@@ -36,8 +36,6 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
 
   modules?: Input<string[]>;
   configuration?: Input<Record<string, string> | string>;
-  // @deprecated use `configuration` instead
-  configurationOld?: Input<string>;
   disableCommands?: Input<string[]>;
 
   persistence?: Input<{
@@ -65,44 +63,51 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
 export const configureConfiguration = (
   args: Pick<
     CommonK8sRedisArgs,
-    | 'modules'
-    | 'configuration'
-    | 'configurationOld'
-    | 'memorySizeGb'
-    | 'maxMemoryPercentage'
+    'modules' | 'configuration' | 'memorySizeGb' | 'maxMemoryPercentage'
   >,
 ) => {
   return all([
     args.modules,
     args.configuration,
-    args.configurationOld,
     args.memorySizeGb,
     args.maxMemoryPercentage,
   ]).apply(
     ([
       modules = defaultModules,
       configuration = {},
-      configurationOld,
       memorySizeGb,
       maxMemoryPercentage = 80,
     ]) => {
-      let configurationString = !!configurationOld
-        ? configurationOld
-        : Object.entries(configuration)
-            .map(([key, value]) => `${key} ${value}`)
-            .join('\n');
+      const hasLoadmoduleKey = Object.keys(configuration).some(
+        (k) => k.trim().toLowerCase() === 'loadmodule',
+      );
 
-      modules.forEach((module) => {
-        configurationString += `\nloadmodule ${module}`;
-      });
-      if (maxMemoryPercentage && memorySizeGb && !configurationOld) {
+      const hasMaxmemoryKey = Object.keys(configuration).some(
+        (k) => k.trim().toLowerCase() === 'maxmemory',
+      );
+
+      if (hasLoadmoduleKey) {
+        throw new Error(
+          'Invalid configuration: "loadmodule" must be provided via `modules`, not `configuration`.',
+        );
+      }
+
+      const configurationLines = [
+        ...Object.entries(configuration).map(
+          ([key, value]) => `${key} ${value}`,
+        ),
+        ...modules.map((m) => `loadmodule ${m}`),
+      ];
+
+      if (!hasMaxmemoryKey && maxMemoryPercentage && memorySizeGb) {
         const maxMemory = Math.floor(
           memorySizeGb * 1024 * (maxMemoryPercentage / 100),
         );
 
-        configurationString += `\nmaxmemory ${maxMemory}mb`;
+        configurationLines.push(`maxmemory ${maxMemory}mb`);
       }
-      return configurationString;
+
+      return configurationLines.join('\n');
     },
   );
 };
