@@ -1,10 +1,14 @@
-import { Output } from '@pulumi/pulumi';
-import * as pulumi from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
-import { camelToUnderscore } from './utils';
-import { config } from './config';
+import { type Output } from '@pulumi/pulumi';
+import * as pulumi from '@pulumi/pulumi';
 
-export type Secret = { name: string; value: string | Output<string> };
+import { config } from './config';
+import { camelToUnderscore } from './utils';
+
+export interface Secret {
+  name: string;
+  value: string | Output<string>;
+}
 
 export function createEncryptedEnvVar(
   prefix: string,

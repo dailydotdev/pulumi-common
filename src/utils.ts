@@ -1,7 +1,10 @@
-import { all, Config, Input, Output } from '@pulumi/pulumi';
-import { PodResources } from './k8s';
+import { all, Config, type Input, type Output } from '@pulumi/pulumi';
 
-export type AdhocEnv = { isAdhocEnv: boolean };
+import { type PodResources } from './k8s';
+
+export interface AdhocEnv {
+  isAdhocEnv: boolean;
+}
 
 export const isNullOrUndefined = (value: unknown) =>
   typeof value === 'undefined' || value === null;

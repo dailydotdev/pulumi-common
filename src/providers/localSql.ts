@@ -1,14 +1,14 @@
+import type * as gcp from '@pulumi/gcp';
 import * as pulumi from '@pulumi/pulumi';
-import * as gcp from '@pulumi/gcp';
-import { Knex } from 'knex';
+import type * as resource from '@pulumi/pulumi/resource';
+import { type Knex } from 'knex';
 import knex from 'knex';
-import * as resource from '@pulumi/pulumi/resource';
 
-export type LocalSqlConfig = {
+export interface LocalSqlConfig {
   user: string;
   password: string;
   database: string;
-};
+}
 
 export function getLocalSqlConfig(databaseType: string): LocalSqlConfig {
   switch (databaseType) {
@@ -45,7 +45,7 @@ class LocalSqlDatabaseProvider implements pulumi.dynamic.ResourceProvider {
     const name = (await nameInput) as string;
     const client = getClient(instance);
     switch (instance) {
-      case 'postgres':
+      case 'postgres': {
         const res = await client.raw<{ rowCount: number }>(
           `SELECT
            FROM pg_catalog.pg_database
@@ -55,9 +55,11 @@ class LocalSqlDatabaseProvider implements pulumi.dynamic.ResourceProvider {
           await client.raw(`CREATE DATABASE ${name}`);
         }
         break;
-      case 'mysql':
+      }
+      case 'mysql': {
         await client.raw(`CREATE DATABASE IF NOT EXISTS ${name}`);
         break;
+      }
     }
     return { id: `${name}_${instance}` };
   }

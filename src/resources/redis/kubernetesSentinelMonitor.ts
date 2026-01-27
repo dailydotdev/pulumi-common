@@ -1,13 +1,13 @@
+import { apps, core, rbac } from '@pulumi/kubernetes';
 import {
   ComponentResource,
   type CustomResourceOptions,
   type Input,
 } from '@pulumi/pulumi';
-import { urnPrefix } from '../../constants';
-import { apps, core, rbac } from '@pulumi/kubernetes';
 
+import { type Image, image, type Resources } from '../..';
+import { urnPrefix } from '../../constants';
 import { type AdhocEnv } from '../../utils';
-import { image, type Image, type Resources } from '../..';
 
 export type K8sRedisSentinelMonitorArgs = Partial<AdhocEnv> & {
   namespace: Input<string>;

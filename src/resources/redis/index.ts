@@ -1,7 +1,8 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
+import * as pulumi from '@pulumi/pulumi';
+
 import { urnPrefix } from '../../constants';
-import { AdhocEnv } from '../../utils';
+import { type AdhocEnv } from '../../utils';
 
 export type RedisArgs = AdhocEnv & gcp.redis.InstanceArgs;
 

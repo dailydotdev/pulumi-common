@@ -1,12 +1,13 @@
-import * as pulumi from '@pulumi/pulumi';
 import * as gcp from '@pulumi/gcp';
+import * as pulumi from '@pulumi/pulumi';
+import { type Output } from '@pulumi/pulumi';
+
 import { urnPrefix } from '../constants';
 import {
   getLocalSqlConfig,
-  LocalSqlConfig,
+  type LocalSqlConfig,
   LocalSqlDatabase,
 } from '../providers/localSql';
-import { Output } from '@pulumi/pulumi';
 
 export type SqlInstanceArgs = gcp.sql.DatabaseInstanceArgs & {
   isAdhocEnv: boolean;
@@ -49,7 +50,6 @@ export type SqlDatabaseArgs = gcp.sql.DatabaseArgs & {
 };
 
 export class SqlDatabase extends pulumi.ComponentResource {
-  private readonly instance: gcp.sql.Database | undefined;
   private readonly databaseName: pulumi.Input<string>;
 
   constructor(
@@ -66,7 +66,7 @@ export class SqlDatabase extends pulumi.ComponentResource {
         parent: this,
       });
     } else {
-      this.instance = new gcp.sql.Database(name, args, {
+      new gcp.sql.Database(name, args, {
         ...opts,
         parent: this,
         aliases: [{ name, parent: pulumi.rootStackResource }],

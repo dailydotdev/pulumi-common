@@ -1,11 +1,12 @@
+import { helm } from '@pulumi/kubernetes';
 import {
   ComponentResource,
-  output,
   type CustomResourceOptions,
   type Input,
+  output,
 } from '@pulumi/pulumi';
+
 import { urnPrefix } from '../../constants';
-import { helm } from '@pulumi/kubernetes';
 import { charts, type PriorityClassInput } from '../../kubernetes';
 import type { AdhocEnv } from '../../utils';
 
