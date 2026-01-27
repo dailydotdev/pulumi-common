@@ -76,7 +76,6 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
             configmap: configureConfiguration({
               modules: args.modules,
               configuration: args.configuration,
-              configurationOld: args.configurationOld,
               memorySizeGb: args.memorySizeGb,
             }),
           },
