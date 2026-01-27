@@ -22,10 +22,7 @@ import {
   type K8sRedisSentinelMonitorArgs,
 } from './kubernetesSentinelMonitor';
 
-export type K8sRedisSentinelArgs = Omit<
-  CommonK8sRedisArgs,
-  'configurationOld'
-> & {
+export type K8sRedisSentinelArgs = CommonK8sRedisArgs & {
   spot?: Spot;
   monitor?: {
     enabled?: boolean;

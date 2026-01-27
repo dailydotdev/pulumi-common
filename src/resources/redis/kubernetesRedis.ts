@@ -54,7 +54,6 @@ export class KubernetesRedis extends pulumi.ComponentResource {
           commonConfiguration: configureConfiguration({
             modules: args.modules,
             configuration: args.configuration,
-            configurationOld: args.configurationOld,
             memorySizeGb: args.memorySizeGb,
           }),
           commonAnnotations: {
