@@ -23,7 +23,7 @@
     "@grpc/grpc-js": "^1.14.3",
     "@pulumi/gcp": "^9.10.0",
     "@pulumi/kubernetes": "^4.25.0",
-    "@pulumi/pulumi": "^3.216.0",
+    "@pulumi/pulumi": "^3.217.1",
     "knex": "^3.1.0",
     "mysql": "^2.18.1",
     "pg": "^8.17.2",
@@ -38,9 +38,9 @@
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-unused-imports": "^4.3.0",
-    "globals": "^17.0.0",
+    "globals": "^17.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.53.1"
+    "typescript-eslint": "^8.54.0"
   },
-  "packageManager": "pnpm@10.28.1"
+  "packageManager": "pnpm@10.28.2"
 }
