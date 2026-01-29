@@ -1,7 +1,8 @@
 import * as gcp from '@pulumi/gcp';
 import * as k8s from '@pulumi/kubernetes';
 import * as pulumi from '@pulumi/pulumi';
-import { Output } from '@pulumi/pulumi';
+import { type Output } from '@pulumi/pulumi';
+
 import { getInfra } from '../config';
 
 // https://www.pulumi.com/registry/packages/kubernetes/how-to-guides/kubernetes-ts-multicloud/

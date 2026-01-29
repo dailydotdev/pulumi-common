@@ -1,25 +1,25 @@
+import { helm } from '@pulumi/kubernetes';
 import {
   all,
   ComponentResource,
   type CustomResourceOptions,
   type Input,
 } from '@pulumi/pulumi';
-import { urnPrefix } from '../../constants';
-import { helm } from '@pulumi/kubernetes';
 
+import { urnPrefix } from '../../constants';
+import { getSpotSettings, type Spot } from '../../k8s';
+import { charts, type Image, type Resources } from '../../kubernetes';
 import {
-  CommonK8sRedisArgs,
+  type CommonK8sRedisArgs,
   configureConfiguration,
   configurePersistence,
   configurePriorityClass,
   configureResources,
   configureSidecarResources,
 } from './common';
-import { getSpotSettings, type Spot } from '../../k8s';
-import { charts, type Image, type Resources } from '../../kubernetes';
 import {
-  KubernetesSentinelMonitor,
   type K8sRedisSentinelMonitorArgs,
+  KubernetesSentinelMonitor,
 } from './kubernetesSentinelMonitor';
 
 export type K8sRedisSentinelArgs = CommonK8sRedisArgs & {

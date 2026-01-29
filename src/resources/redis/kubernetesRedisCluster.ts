@@ -1,15 +1,16 @@
-import * as pulumi from '@pulumi/pulumi';
 import { helm } from '@pulumi/kubernetes';
+import * as pulumi from '@pulumi/pulumi';
+
 import { urnPrefix } from '../../constants';
+import { charts } from '../../kubernetes';
 import {
-  CommonK8sRedisArgs,
+  type CommonK8sRedisArgs,
   configureConfiguration,
   configurePersistence,
   configurePriorityClass,
   configureResources,
   configureSidecarResources,
 } from './common';
-import { charts } from '../../kubernetes';
 
 export type K8sRedisClusterArgs = Omit<CommonK8sRedisArgs, 'authKey'> & {
   nodes: pulumi.Input<number>;

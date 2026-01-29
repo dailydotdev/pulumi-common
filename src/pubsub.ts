@@ -1,16 +1,17 @@
-import { Output } from '@pulumi/pulumi';
-import * as gcp from '@pulumi/gcp';
-import { SubscriptionArgs } from '@pulumi/gcp/pubsub/subscription';
-import { Input } from '@pulumi/pulumi/output';
-import { Resource } from '@pulumi/pulumi/resource';
+import type * as gcp from '@pulumi/gcp';
+import { type SubscriptionArgs } from '@pulumi/gcp/pubsub/subscription';
+import { type Output } from '@pulumi/pulumi';
+import { type Input } from '@pulumi/pulumi/output';
+import { type Resource } from '@pulumi/pulumi/resource';
+
 import { StreamSubscription } from './resources/stream';
 
-export type Worker = {
+export interface Worker {
   topic: string;
   subscription: string;
   endpoint?: string;
   args?: Partial<SubscriptionArgs>;
-};
+}
 
 export function createSubscriptionsFromWorkers(
   name: string,
@@ -62,9 +63,7 @@ export function createSubscriptionsFromWorkers(
 
 export function addLabelsToWorkers(
   workers: Worker[],
-  labels: Input<{
-    [key: string]: Input<string>;
-  }>,
+  labels: Input<Record<string, Input<string>>>,
 ): Worker[] {
   return workers.map((worker: Worker) => ({
     ...worker,

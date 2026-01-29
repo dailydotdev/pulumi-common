@@ -1,15 +1,16 @@
 import * as gcp from '@pulumi/gcp';
 import * as k8s from '@pulumi/kubernetes';
-import * as pulumi from '@pulumi/pulumi';
-import { createHash } from 'crypto';
-import { createServiceAccountAndGrantRoles } from './serviceAccount';
-import { Input, Output, ProviderResource } from '@pulumi/pulumi';
 import { PersistentVolumeClaim } from '@pulumi/kubernetes/core/v1';
-import { input as inputs } from '@pulumi/kubernetes/types';
+import { type input as inputs } from '@pulumi/kubernetes/types';
+import type * as pulumi from '@pulumi/pulumi';
+import { type Input, type Output, type ProviderResource } from '@pulumi/pulumi';
+import { createHash } from 'crypto';
+
 import { getSpotSettings } from './k8s';
 import { configureResources, type Resources } from './kubernetes';
+import { createServiceAccountAndGrantRoles } from './serviceAccount';
 
-type OptionalArgs = {
+interface OptionalArgs {
   env?: pulumi.Input<inputs.core.v1.EnvVar>[];
   image?: string;
   resourcePrefix?: string;
@@ -18,7 +19,7 @@ type OptionalArgs = {
   disableHealthCheck?: boolean;
   affinity?: pulumi.Input<k8s.types.input.core.v1.Affinity>;
   version?: string;
-};
+}
 
 /**
  * Deploys only the shared dependencies for Debezium.
@@ -100,9 +101,7 @@ export function deployDebeziumKubernetesResources(
     { provider },
   );
 
-  const labels: Input<{
-    [key: string]: Input<string>;
-  }> = {
+  const labels: Input<Record<string, Input<string>>> = {
     parent: name,
     app: 'debezium',
   };

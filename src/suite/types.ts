@@ -1,35 +1,36 @@
-import { Input, ProviderResource } from '@pulumi/pulumi';
-import { Resource } from '@pulumi/pulumi/resource';
-import * as k8s from '@pulumi/kubernetes';
+import type * as gcp from '@pulumi/gcp';
+import type * as k8s from '@pulumi/kubernetes';
+import { type Input, type ProviderResource } from '@pulumi/pulumi';
+import { type Resource } from '@pulumi/pulumi/resource';
+
 import {
-  ContainerOptions,
-  KubernetesApplicationArgs,
-  KubernetesApplicationReturn,
-  PodResources,
-  Spot,
+  type ContainerOptions,
+  type KubernetesApplicationArgs,
+  type KubernetesApplicationReturn,
+  type PodResources,
+  type Spot,
 } from '../k8s';
-import * as gcp from '@pulumi/gcp';
 import type {
   AutocertCertificate,
   PodAnnotations,
   Resources,
 } from '../kubernetes';
 
-export type MetricMemoryCPU = {
+export interface MetricMemoryCPU {
   type: 'memory_cpu';
   memory?: number;
   cpu: number;
-};
+}
 
-export type MetricPubsub = {
+export interface MetricPubsub {
   type: 'pubsub';
-  labels: { [key: string]: string };
+  labels: Record<string, string>;
   targetAverageValue: number;
-};
+}
 
 export type CustomMetric = MetricPubsub | MetricMemoryCPU;
 
-export type ApplicationArgs = {
+export interface ApplicationArgs {
   nameSuffix?: string;
   minReplicas?: number;
   maxReplicas: number;
@@ -45,7 +46,7 @@ export type ApplicationArgs = {
   isApi?: boolean;
   serviceType?: k8s.types.enums.core.v1.ServiceSpecType;
   metric: CustomMetric;
-  labels?: { [key: string]: string };
+  labels?: Record<string, string>;
   command?: Input<Input<string>[]>;
   args?: Input<Input<string>[]>;
   enableCdn?: boolean;
@@ -59,19 +60,19 @@ export type ApplicationArgs = {
   backendConfig?: KubernetesApplicationArgs['backendConfig'];
   spot?: Spot;
   certificate?: AutocertCertificate;
-};
+}
 
 export type ApplicationReturn = KubernetesApplicationReturn & {
   service?: k8s.core.v1.Service;
 };
 
-export type MigrationArgs = {
+export interface MigrationArgs {
   args: string[];
   toleratesSpot?: boolean;
   certificate?: Omit<AutocertCertificate, 'duration'>;
-};
+}
 
-export type CronArgs = {
+export interface CronArgs {
   nameSuffix?: string;
   schedule?: string;
   concurrencyPolicy?: string;
@@ -80,18 +81,18 @@ export type CronArgs = {
   requests?: Input<PodResources>;
   dependsOn?: Input<Resource>[];
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
-  labels?: { [key: string]: string };
+  labels?: Record<string, string>;
   command?: Input<Input<string>[]>;
   args?: Input<Input<string>[]>;
   volumes?: Input<Input<k8s.types.input.core.v1.Volume>[]>;
   volumeMounts?: Input<Input<k8s.types.input.core.v1.VolumeMount>[]>;
   spot?: Spot;
   suspend?: boolean;
-  podAnnotations?: Input<{ [key: string]: Input<string> }>;
+  podAnnotations?: Input<Record<string, Input<string>>>;
   certificate?: Omit<AutocertCertificate, 'duration'>;
-};
+}
 
-export type DebeziumArgs = {
+export interface DebeziumArgs {
   topicName?: string;
   propsPath: string;
   propsVars: Record<string, Input<string>>;
@@ -103,14 +104,14 @@ export type DebeziumArgs = {
   disableHealthCheck?: boolean;
   affinity?: Input<k8s.types.input.core.v1.Affinity>;
   certificate?: AutocertCertificate;
-};
+}
 
-export type AdditionalSecret = {
+export interface AdditionalSecret {
   name: string;
-  data: Input<{ [key: string]: Input<string> }>;
-};
+  data: Input<Record<string, Input<string>>>;
+}
 
-export type ApplicationSuiteArgs = {
+export interface ApplicationSuiteArgs {
   name: string;
   namespace: string;
   serviceAccount?: gcp.serviceaccount.Account;
@@ -122,16 +123,16 @@ export type ApplicationSuiteArgs = {
   provider?: ProviderResource;
   resourcePrefix?: string;
   migration?: MigrationArgs;
-  migrations?: { [key: string]: MigrationArgs };
+  migrations?: Record<string, MigrationArgs>;
   debezium?: DebeziumArgs;
   crons?: CronArgs[];
   shouldBindIamUser: boolean;
   isAdhocEnv?: boolean;
   dependsOn?: Input<Resource>[];
   dotEnvFileName?: string | null;
-};
+}
 
-export type ApplicationContext = {
+export interface ApplicationContext {
   resourcePrefix: string;
   name: string;
   namespace: string;
@@ -141,4 +142,4 @@ export type ApplicationContext = {
   containerOpts: ContainerOptions;
   provider?: ProviderResource;
   isAdhocEnv?: boolean;
-};
+}

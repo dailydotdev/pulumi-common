@@ -1,12 +1,13 @@
-import { Output, all } from '@pulumi/pulumi';
+import { all, type Output } from '@pulumi/pulumi';
+
 import { version } from '../../package.json';
+import { type AdhocEnv } from '../utils';
 import {
-  Image,
-  Resources,
   type AutocertCertificate,
+  type Image,
   type PodAnnotations,
+  type Resources,
 } from './types';
-import { AdhocEnv } from '../utils';
 
 export const NodeLabelKeys = {
   Type: 'node.daily.dev/type',
@@ -15,10 +16,10 @@ export const NodeLabelKeys = {
   Spot: 'node.daily.dev/spot',
 } as const;
 
-export type NodeLabel = {
+export interface NodeLabel {
   key: (typeof NodeLabelKeys)[keyof typeof NodeLabelKeys];
   value: string;
-};
+}
 
 /**
  * A set of common node labels used in the daily.dev infrastructure.
@@ -55,7 +56,7 @@ export const NodeLabels = {
  */
 export const extractNodeLabels = (
   labels: NodeLabel | NodeLabel[],
-): { [key: string]: string } => {
+): Record<string, string> => {
   if (Array.isArray(labels)) {
     return labels.reduce(
       (acc, curr) => ({ ...acc, ...extractNodeLabels(curr) }),
