@@ -109,6 +109,10 @@ export function createMigrationJob(
                 name: 'app',
                 image,
                 args,
+                env: [
+                  { name: 'OTEL_SERVICE_NAME', value: baseName },
+                  { name: 'OTEL_SERVICE_VERSION', value: hash },
+                ],
               },
             ],
             serviceAccountName: serviceAccount?.metadata.name,
