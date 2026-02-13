@@ -151,6 +151,7 @@ function deployCron(
     name,
     namespace,
     image,
+    imageTag,
     provider,
     containerOpts,
     serviceAccount,
@@ -180,6 +181,11 @@ function deployCron(
     nameSuffix ? `${nameSuffix}-` : ''
   }`;
   const appName = `${name}${nameSuffix ? `-${nameSuffix}` : ''}`;
+  const appEnv: Input<k8s.types.input.core.v1.EnvVar>[] = [
+    { name: 'OTEL_SERVICE_NAME', value: appName },
+    { name: 'OTEL_SERVICE_VERSION', value: imageTag },
+    ...env,
+  ];
 
   const { tolerations, affinity } = getSpotSettings(spot, isAdhocEnv);
 
@@ -237,7 +243,7 @@ function deployCron(
                     command,
                     args,
                     volumeMounts,
-                    env,
+                    env: appEnv,
                     resources: {
                       requests: requests ?? limits,
                       limits: stripCpuFromLimits(limits),
@@ -310,6 +316,11 @@ function deployApplication(
     nameSuffix ? `${nameSuffix}-` : ''
   }`;
   const appName = `${name}${nameSuffix ? `-${nameSuffix}` : ''}`;
+  const appEnv: Input<k8s.types.input.core.v1.EnvVar>[] = [
+    { name: 'OTEL_SERVICE_NAME', value: appName },
+    { name: 'OTEL_SERVICE_VERSION', value: imageTag },
+    ...env,
+  ];
   const appArgs: KubernetesApplicationArgs = {
     resourcePrefix: appResourcePrefix,
     name: appName,
@@ -340,7 +351,7 @@ function deployApplication(
         ports,
         readinessProbe,
         livenessProbe,
-        env,
+        env: appEnv,
         resources: !isAdhocEnv
           ? { requests: requests ?? limits, limits: stripCpuFromLimits(limits) }
           : undefined,
