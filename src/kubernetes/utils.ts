@@ -14,6 +14,7 @@ export const NodeLabelKeys = {
   OptimizedRedis: 'node.daily.dev/optimized-redis',
   DiskType: 'node.daily.dev/disk-type',
   Spot: 'node.daily.dev/spot',
+  Preemptible: 'node.daily.dev/preemptible',
 } as const;
 
 export interface NodeLabel {
@@ -31,6 +32,7 @@ export interface NodeLabel {
  */
 export const NodeLabels = {
   Spot: { key: NodeLabelKeys.Spot, value: 'true' },
+  Preemptible: { key: NodeLabelKeys.Preemptible, value: 'true' },
   HighMem: { key: NodeLabelKeys.Type, value: 'highmem' },
   HighCPU: { key: NodeLabelKeys.Type, value: 'highcpu' },
   OptimizedRedisMaster: {
