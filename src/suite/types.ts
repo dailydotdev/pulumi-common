@@ -34,7 +34,7 @@ export interface ApplicationArgs {
   nameSuffix?: string;
   minReplicas?: number;
   maxReplicas: number;
-  limits: Input<PodResources>;
+  limits: Input<Pick<PodResources, 'memory'>>;
   requests?: Input<PodResources>;
   dependsOn?: Input<Resource>[];
   /** @deprecated please use the new ports */
@@ -77,7 +77,7 @@ export interface CronArgs {
   schedule?: string;
   concurrencyPolicy?: string;
   activeDeadlineSeconds?: number;
-  limits: Input<PodResources>;
+  limits: Input<Pick<PodResources, 'memory'>>;
   requests?: Input<PodResources>;
   dependsOn?: Input<Resource>[];
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
