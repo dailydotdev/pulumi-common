@@ -106,7 +106,7 @@ export function createMigrationJob(
             containers: [
               {
                 ...containerOpts,
-                name: 'app',
+                name: baseName,
                 image,
                 args,
                 env: [
