@@ -238,7 +238,7 @@ function deployCron(
                 containers: [
                   {
                     ...containerOpts,
-                    name: 'app',
+                    name: appName,
                     image,
                     command,
                     args,
@@ -344,7 +344,7 @@ function deployApplication(
     containers: [
       {
         ...containerOpts,
-        name: 'app',
+        name: appName,
         image,
         command,
         args,
