@@ -23,8 +23,8 @@ export function nodeOptions(memory: number): { name: string; value: string } {
 
 // Do not limit cpu (https://home.robusta.dev/blog/stop-using-cpu-limits/)
 export function stripCpuFromLimits(
-  requests: Input<PodResources>,
-): Output<Omit<PodResources, 'cpu'>> {
+  requests: Input<Partial<PodResources>>,
+): Output<Omit<Partial<PodResources>, 'cpu'>> {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return all([requests]).apply(([{ cpu, ...rest }]) => rest);
 }
