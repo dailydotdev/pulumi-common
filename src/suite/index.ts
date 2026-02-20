@@ -207,6 +207,8 @@ function deployCron(
         namespace,
         labels: {
           app: appName,
+          'app.kubernetes.io/name': appName,
+          'app.kubernetes.io/version': imageTag,
           'app-type': 'cron',
           ...labels,
         },
@@ -224,6 +226,8 @@ function deployCron(
               metadata: {
                 labels: {
                   app: appName,
+                  'app.kubernetes.io/name': appName,
+                  'app.kubernetes.io/version': imageTag,
                   'app-type': 'cron',
                   ...labels,
                 },
