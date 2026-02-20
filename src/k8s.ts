@@ -388,9 +388,7 @@ export const createAutoscaledApplication = ({
     'app.kubernetes.io/version': version,
   };
 
-  const podLabels: Input<{
-    [key: string]: Input<string>;
-  }> = {
+  const podLabels: Input<Record<string, Input<string>>> = {
     ...labels,
     'app.kubernetes.io/version': version,
   };
