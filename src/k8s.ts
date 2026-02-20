@@ -292,6 +292,21 @@ export type Spot = {
   required?: boolean;
 };
 
+export const defaultTolerations: k8s.types.input.core.v1.Toleration[] = [
+  {
+    key: 'spot',
+    operator: 'Equal',
+    value: 'true',
+    effect: 'NoSchedule',
+  },
+  {
+    key: 'preemptible',
+    operator: 'Equal',
+    value: 'true',
+    effect: 'NoSchedule',
+  },
+];
+
 export const getSpotSettings = (
   spot: Spot = { enabled: false, weight: defaultSpotWeight, required: false },
   isAdhocEnv?: boolean,
@@ -303,14 +318,8 @@ export const getSpotSettings = (
   const affinity: k8s.types.input.core.v1.Affinity = {};
 
   if (spot?.enabled && !isAdhocEnv) {
-    const spotWeight = spot?.weight ?? defaultSpotWeight;
-    const nonSpotWeight = Math.max(1, 100 - spotWeight);
-    tolerations.push({
-      key: 'spot',
-      operator: 'Equal',
-      value: 'true',
-      effect: 'NoSchedule',
-    });
+    const spotWeight = Math.min(spot.weight ?? defaultSpotWeight, 1);
+    tolerations.push(...defaultTolerations);
     affinity.nodeAffinity = spot.required
       ? {
           requiredDuringSchedulingIgnoredDuringExecution: {
@@ -321,6 +330,15 @@ export const getSpotSettings = (
                     key: NodeLabels.Spot.key,
                     operator: 'In',
                     values: [NodeLabels.Spot.value],
+                  },
+                ],
+              },
+              {
+                matchExpressions: [
+                  {
+                    key: NodeLabels.Preemptible.key,
+                    operator: 'In',
+                    values: [NodeLabels.Preemptible.value],
                   },
                 ],
               },
@@ -341,12 +359,12 @@ export const getSpotSettings = (
               },
             },
             {
-              weight: nonSpotWeight,
+              weight: spotWeight,
               preference: {
                 matchExpressions: [
                   {
-                    key: NodeLabels.Spot.key,
-                    operator: 'DoesNotExist',
+                    key: NodeLabels.Preemptible.key,
+                    operator: 'Exists',
                   },
                 ],
               },
