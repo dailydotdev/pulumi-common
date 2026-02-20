@@ -91,6 +91,11 @@ export function createMigrationJob(
       metadata: {
         name,
         namespace,
+        labels: {
+          app: baseName,
+          'app.kubernetes.io/name': baseName,
+          'app.kubernetes.io/version': hash,
+        },
         annotations: {
           ...configureAutocertAnnotations({
             ...certificate,
@@ -102,6 +107,13 @@ export function createMigrationJob(
       spec: {
         completions: 1,
         template: {
+          metadata: {
+            labels: {
+              app: baseName,
+              'app.kubernetes.io/name': baseName,
+              'app.kubernetes.io/version': hash,
+            },
+          },
           spec: {
             containers: [
               {
@@ -369,6 +381,7 @@ export const createAutoscaledApplication = ({
     [key: string]: Input<string>;
   }> = {
     app: name,
+    'app.kubernetes.io/name': name,
     ...extraLabels,
   };
 
@@ -377,6 +390,14 @@ export const createAutoscaledApplication = ({
   }> = {
     ...labels,
     version,
+    'app.kubernetes.io/version': version,
+  };
+
+  const podLabels: Input<{
+    [key: string]: Input<string>;
+  }> = {
+    ...labels,
+    'app.kubernetes.io/version': version,
   };
 
   const { tolerations, affinity } = getSpotSettings(spot, isAdhocEnv);
@@ -393,7 +414,7 @@ export const createAutoscaledApplication = ({
         selector: { matchLabels: labels },
         strategy,
         template: {
-          metadata: { labels, annotations: podAnnotations },
+          metadata: { labels: podLabels, annotations: podAnnotations },
           spec: {
             containers,
             serviceAccountName: serviceAccount?.metadata.name,
