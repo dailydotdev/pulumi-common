@@ -263,10 +263,21 @@ export interface KubernetesApplicationArgs {
     iap?: Input<Record<string, unknown>>;
     securityPolicy?: Input<string>;
   }>;
+  service?: KubernetesServiceArgs;
   spot?: {
     enabled: boolean;
     weight?: number;
     required?: boolean;
+  };
+}
+
+export interface KubernetesServiceArgs {
+  type?: k8s.types.enums.core.v1.ServiceSpecType;
+  annotations?: Record<string, Input<string>>;
+  loadBalancerSourceRanges?: Input<string[]>;
+  gkeInternalLoadBalancer?: {
+    enabled: boolean;
+    allowGlobalAccess?: boolean;
   };
 }
 
@@ -496,6 +507,7 @@ export const createAutoscaledExposedApplication = ({
   shouldCreatePDB = true,
   provider,
   serviceType = 'ClusterIP',
+  service,
   strategy = {
     type: 'RollingUpdate',
     rollingUpdate: {
@@ -511,6 +523,15 @@ export const createAutoscaledExposedApplication = ({
   serviceType?: k8s.types.enums.core.v1.ServiceSpecType;
 }): KubernetesApplicationReturn & { service: k8s.core.v1.Service } => {
   const { resourcePrefix = '', name, namespace } = args;
+  const resolvedServiceType = service?.type ?? serviceType;
+  if (
+    service?.loadBalancerSourceRanges &&
+    resolvedServiceType !== 'LoadBalancer'
+  ) {
+    throw new Error(
+      'service.loadBalancerSourceRanges is supported only when service type is LoadBalancer',
+    );
+  }
   const returnObj = createAutoscaledApplication({
     ...args,
     shouldCreatePDB,
@@ -518,7 +539,18 @@ export const createAutoscaledExposedApplication = ({
     strategy,
   });
   const { labels } = returnObj;
-  const annotations: Record<string, Output<string>> = {};
+  const annotations: Record<string, Input<string>> = {
+    ...(service?.annotations ?? {}),
+  };
+  if (service?.gkeInternalLoadBalancer?.enabled) {
+    annotations['cloud.google.com/load-balancer-type'] = 'Internal';
+    annotations['networking.gke.io/load-balancer-type'] = 'Internal';
+    if (service.gkeInternalLoadBalancer.allowGlobalAccess) {
+      annotations[
+        'networking.gke.io/internal-load-balancer-allow-global-access'
+      ] = 'true';
+    }
+  }
   if (enableCdn || serviceTimeout || backendConfig) {
     const rawSpec: Record<string, unknown> = {};
     if (enableCdn) {
@@ -579,7 +611,7 @@ export const createAutoscaledExposedApplication = ({
       ? servicePorts
       : [{ port: 80, targetPort: 'http', protocol: 'TCP', name: 'http' }];
 
-  const service = new k8s.core.v1.Service(
+  const serviceResource = new k8s.core.v1.Service(
     `${resourcePrefix}service`,
     {
       metadata: {
@@ -589,14 +621,15 @@ export const createAutoscaledExposedApplication = ({
         annotations,
       },
       spec: {
-        type: serviceType,
+        type: resolvedServiceType,
         ports,
         selector: labels,
+        loadBalancerSourceRanges: service?.loadBalancerSourceRanges,
       },
     },
     { provider, dependsOn: [returnObj.deployment] },
   );
-  return { ...returnObj, service };
+  return { ...returnObj, service: serviceResource };
 };
 
 export function createKubernetesSecretFromRecord({

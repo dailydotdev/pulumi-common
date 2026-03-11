@@ -303,6 +303,7 @@ function deployApplication(
     env = [],
     createService,
     serviceType,
+    service,
     metric,
     labels,
     command,
@@ -385,6 +386,7 @@ function deployApplication(
     return createAutoscaledExposedApplication({
       ...appArgs,
       serviceType,
+      service,
       enableCdn,
       serviceTimeout,
       backendConfig,

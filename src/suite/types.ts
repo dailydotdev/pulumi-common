@@ -44,7 +44,9 @@ export interface ApplicationArgs {
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
   createService?: boolean;
   isApi?: boolean;
+  /** @deprecated prefer service.type */
   serviceType?: k8s.types.enums.core.v1.ServiceSpecType;
+  service?: KubernetesApplicationArgs['service'];
   metric: CustomMetric;
   labels?: Record<string, string>;
   command?: Input<Input<string>[]>;
