@@ -24,6 +24,14 @@ import {
 
 export type K8sRedisSentinelArgs = CommonK8sRedisArgs & {
   spot?: Spot;
+  startupProbe?: Input<{
+    enabled?: Input<boolean>;
+    initialDelaySeconds?: Input<number>;
+    periodSeconds?: Input<number>;
+    timeoutSeconds?: Input<number>;
+    failureThreshold?: Input<number>;
+    successThreshold?: Input<number>;
+  }>;
   monitor?: {
     enabled?: boolean;
     image?: K8sRedisSentinelMonitorArgs['image'];
@@ -122,8 +130,8 @@ export class KubernetesSentinel extends ComponentResource {
             enabled: !!args.authKey,
             password: args.authKey,
           },
-          replica: all([args.spot, args.isAdhocEnv]).apply(
-            ([spot, isAdhocEnv]) => {
+          replica: all([args.spot, args.isAdhocEnv, args.startupProbe]).apply(
+            ([spot, isAdhocEnv, startupProbe]) => {
               const { tolerations, affinity } = getSpotSettings(
                 spot,
                 isAdhocEnv,
@@ -131,8 +139,9 @@ export class KubernetesSentinel extends ComponentResource {
               return {
                 ...redisInstance,
                 replicaCount: args?.replicas,
-                tolerations: tolerations,
-                affinity: affinity,
+                tolerations,
+                affinity,
+                ...(startupProbe && { startupProbe }),
                 topologySpreadConstraints: [
                   {
                     maxSkew: 1,
