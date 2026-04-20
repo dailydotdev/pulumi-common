@@ -22,16 +22,22 @@ import {
   KubernetesSentinelMonitor,
 } from './kubernetesSentinelMonitor';
 
+export type ProbeConfig = Input<{
+  enabled?: Input<boolean>;
+  initialDelaySeconds?: Input<number>;
+  periodSeconds?: Input<number>;
+  timeoutSeconds?: Input<number>;
+  failureThreshold?: Input<number>;
+  successThreshold?: Input<number>;
+}>;
+
 export type K8sRedisSentinelArgs = CommonK8sRedisArgs & {
   spot?: Spot;
-  startupProbe?: Input<{
-    enabled?: Input<boolean>;
-    initialDelaySeconds?: Input<number>;
-    periodSeconds?: Input<number>;
-    timeoutSeconds?: Input<number>;
-    failureThreshold?: Input<number>;
-    successThreshold?: Input<number>;
-  }>;
+  probes?: {
+    startup?: ProbeConfig;
+    liveness?: ProbeConfig;
+    readiness?: ProbeConfig;
+  };
   monitor?: {
     enabled?: boolean;
     image?: K8sRedisSentinelMonitorArgs['image'];
@@ -72,6 +78,10 @@ export class KubernetesSentinel extends ComponentResource {
       resourcesPreset: args.isAdhocEnv ? 'none' : undefined,
       priorityClassName: configurePriorityClass(args),
     };
+
+    const startupProbeArg = args.probes?.startup;
+    const livenessProbeArg = args.probes?.liveness;
+    const readinessProbeArg = args.probes?.readiness;
 
     this.chart = new helm.v4.Chart(
       name,
@@ -130,8 +140,20 @@ export class KubernetesSentinel extends ComponentResource {
             enabled: !!args.authKey,
             password: args.authKey,
           },
-          replica: all([args.spot, args.isAdhocEnv, args.startupProbe]).apply(
-            ([spot, isAdhocEnv, startupProbe]) => {
+          replica: all([
+            args.spot,
+            args.isAdhocEnv,
+            startupProbeArg,
+            livenessProbeArg,
+            readinessProbeArg,
+          ]).apply(
+            ([
+              spot,
+              isAdhocEnv,
+              startupProbe,
+              livenessProbe,
+              readinessProbe,
+            ]) => {
               const { tolerations, affinity } = getSpotSettings(
                 spot,
                 isAdhocEnv,
@@ -142,6 +164,8 @@ export class KubernetesSentinel extends ComponentResource {
                 tolerations,
                 affinity,
                 ...(startupProbe && { startupProbe }),
+                ...(livenessProbe && { livenessProbe }),
+                ...(readinessProbe && { readinessProbe }),
                 topologySpreadConstraints: [
                   {
                     maxSkew: 1,
