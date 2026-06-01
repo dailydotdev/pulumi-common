@@ -10,6 +10,7 @@ import {
   configurePriorityClass,
   configureResources,
   configureSidecarResources,
+  configureTerminationGracePeriod,
 } from './common';
 
 export type K8sRedisClusterArgs = Omit<CommonK8sRedisArgs, 'authKey'> & {
@@ -26,6 +27,21 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
     resourceOptions?: pulumi.CustomResourceOptions,
   ) {
     super(`${urnPrefix}:KubernetesRedisCluster`, name, args, resourceOptions);
+
+    // The bitnami redis-cluster chart does not expose terminationGracePeriodSeconds
+    // as a value, so patch it onto the rendered StatefulSet via a transform.
+    const chartOptions: pulumi.CustomResourceOptions =
+      args.terminationGracePeriodSeconds !== undefined
+        ? {
+            ...resourceOptions,
+            transforms: [
+              ...(resourceOptions?.transforms ?? []),
+              configureTerminationGracePeriod(
+                args.terminationGracePeriodSeconds,
+              ),
+            ],
+          }
+        : (resourceOptions ?? {});
 
     this.chart = new helm.v4.Chart(
       name,
@@ -87,7 +103,7 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
           }),
         },
       },
-      resourceOptions,
+      chartOptions,
     );
   }
 }

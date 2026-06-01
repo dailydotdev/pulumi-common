@@ -1,4 +1,9 @@
-import { all, type Input, type Output } from '@pulumi/pulumi';
+import {
+  all,
+  type Input,
+  type Output,
+  type ResourceTransform,
+} from '@pulumi/pulumi';
 
 import {
   type Affinity,
@@ -33,6 +38,16 @@ export type CommonK8sRedisArgs = Partial<AdhocEnv & PriorityClassInput> & {
   authKey?: Input<string>;
   timeout?: Input<number>;
   safeToEvict?: Input<boolean>;
+  /**
+   * Termination grace period (in seconds) for the Redis pods. On SIGTERM Redis
+   * flushes its AOF/RDB before exiting; if the grace period is too short the
+   * kubelet sends SIGKILL mid-write, which truncates the append-only file and
+   * leaves the pod in CrashLoopBackOff on reschedule. Raising this gives Redis
+   * room to shut down cleanly during node drains/upgrades.
+   *
+   * Defaults to the chart default (30s) when left unset.
+   */
+  terminationGracePeriodSeconds?: Input<number>;
 
   modules?: Input<string[]>;
   configuration?: Input<Record<string, string> | string>;
@@ -186,4 +201,27 @@ export const configurePriorityClass = (
     }
     return priorityClass ? priorityClass.name : priorityClassName;
   });
+};
+
+/**
+ * Builds a resource transform that sets `terminationGracePeriodSeconds` on every
+ * StatefulSet rendered by a Helm chart. Use this for charts (e.g. bitnami
+ * `redis-cluster`) that do not expose the grace period as a value, so it cannot
+ * be configured through `values` alone.
+ */
+export const configureTerminationGracePeriod = (
+  terminationGracePeriodSeconds: Input<number>,
+): ResourceTransform => {
+  return (args) => {
+    if (args.type !== 'kubernetes:apps/v1:StatefulSet') {
+      return undefined;
+    }
+    const props = args.props;
+    props.spec ??= {};
+    props.spec.template ??= {};
+    props.spec.template.spec ??= {};
+    props.spec.template.spec.terminationGracePeriodSeconds =
+      terminationGracePeriodSeconds;
+    return { props, opts: args.opts };
+  };
 };

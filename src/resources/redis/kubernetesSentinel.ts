@@ -146,6 +146,7 @@ export class KubernetesSentinel extends ComponentResource {
             startupProbeArg,
             livenessProbeArg,
             readinessProbeArg,
+            args.terminationGracePeriodSeconds,
           ]).apply(
             ([
               spot,
@@ -153,6 +154,7 @@ export class KubernetesSentinel extends ComponentResource {
               startupProbe,
               livenessProbe,
               readinessProbe,
+              terminationGracePeriodSeconds,
             ]) => {
               const { tolerations, affinity } = getSpotSettings(
                 spot,
@@ -166,6 +168,9 @@ export class KubernetesSentinel extends ComponentResource {
                 ...(startupProbe && { startupProbe }),
                 ...(livenessProbe && { livenessProbe }),
                 ...(readinessProbe && { readinessProbe }),
+                ...(terminationGracePeriodSeconds != null && {
+                  terminationGracePeriodSeconds,
+                }),
                 topologySpreadConstraints: [
                   {
                     maxSkew: 1,
