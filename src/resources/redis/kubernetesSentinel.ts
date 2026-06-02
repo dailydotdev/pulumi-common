@@ -130,6 +130,14 @@ export class KubernetesSentinel extends ComponentResource {
               tag: image?.tag ?? '7.2.5-debian-12-r5',
             })),
             resources: configureSidecarResources(args.sentinel?.resources),
+            // In sentinel mode the deployed StatefulSet is rendered from the
+            // chart's sentinel template, so this is the value that sets the pod
+            // grace period. The chart also derives its graceful failover /
+            // CLIENT PAUSE timing from it, so setting the value (rather than
+            // patching the pod) keeps shutdown behaviour consistent.
+            ...(args.terminationGracePeriodSeconds !== undefined && {
+              terminationGracePeriodSeconds: args.terminationGracePeriodSeconds,
+            }),
           },
           image: all([args.image]).apply(([image]) => ({
             repository: image?.repository ?? 'daily-ops/bitnami-redis',
@@ -146,7 +154,6 @@ export class KubernetesSentinel extends ComponentResource {
             startupProbeArg,
             livenessProbeArg,
             readinessProbeArg,
-            args.terminationGracePeriodSeconds,
           ]).apply(
             ([
               spot,
@@ -154,7 +161,6 @@ export class KubernetesSentinel extends ComponentResource {
               startupProbe,
               livenessProbe,
               readinessProbe,
-              terminationGracePeriodSeconds,
             ]) => {
               const { tolerations, affinity } = getSpotSettings(
                 spot,
@@ -168,9 +174,6 @@ export class KubernetesSentinel extends ComponentResource {
                 ...(startupProbe && { startupProbe }),
                 ...(livenessProbe && { livenessProbe }),
                 ...(readinessProbe && { readinessProbe }),
-                ...(terminationGracePeriodSeconds != null && {
-                  terminationGracePeriodSeconds,
-                }),
                 topologySpreadConstraints: [
                   {
                     maxSkew: 1,
