@@ -522,7 +522,7 @@ export const createAutoscaledExposedApplication = ({
   serviceTimeout?: number;
   serviceType?: k8s.types.enums.core.v1.ServiceSpecType;
 }): KubernetesApplicationReturn & { service: k8s.core.v1.Service } => {
-  const { resourcePrefix = '', name, namespace } = args;
+  const { resourcePrefix = '', name, namespace, isAdhocEnv } = args;
   const resolvedServiceType = service?.type ?? serviceType;
   if (
     service?.loadBalancerSourceRanges &&
@@ -551,59 +551,61 @@ export const createAutoscaledExposedApplication = ({
       ] = 'true';
     }
   }
-  const rawSpec: Record<string, unknown> = {};
-  if (enableCdn) {
-    rawSpec.cdn = {
-      enabled: true,
-      cachePolicy: {
-        includeHost: true,
-        includeProtocol: true,
-        includeQueryString: true,
-      },
-    };
-  }
-  if (serviceTimeout) {
-    rawSpec.timeoutSec = serviceTimeout;
-  }
-  const spec = all([backendConfig]).apply(([backendConfig]) => {
-    if (backendConfig?.customResponseHeaders) {
-      rawSpec.customResponseHeaders = {
-        headers: backendConfig.customResponseHeaders,
+  if (!isAdhocEnv) {
+    const rawSpec: Record<string, unknown> = {};
+    if (enableCdn) {
+      rawSpec.cdn = {
+        enabled: true,
+        cachePolicy: {
+          includeHost: true,
+          includeProtocol: true,
+          includeQueryString: true,
+        },
       };
     }
-    rawSpec.customRequestHeaders = {
-      headers: [
-        sanitizedForwardedForHeader,
-        ...(backendConfig?.customRequestHeaders ?? []),
-      ],
-    };
-    if (backendConfig?.iap) {
-      rawSpec.iap = backendConfig.iap;
+    if (serviceTimeout) {
+      rawSpec.timeoutSec = serviceTimeout;
     }
-    if (backendConfig?.securityPolicy) {
-      rawSpec.securityPolicy = {
-        name: backendConfig.securityPolicy,
+    const spec = all([backendConfig]).apply(([backendConfig]) => {
+      if (backendConfig?.customResponseHeaders) {
+        rawSpec.customResponseHeaders = {
+          headers: backendConfig.customResponseHeaders,
+        };
+      }
+      rawSpec.customRequestHeaders = {
+        headers: [
+          sanitizedForwardedForHeader,
+          ...(backendConfig?.customRequestHeaders ?? []),
+        ],
       };
-    }
-    return rawSpec;
-  });
-  const config = new k8s.apiextensions.CustomResource(
-    `${resourcePrefix}backend-config`,
-    {
-      apiVersion: 'cloud.google.com/v1',
-      kind: 'BackendConfig',
-      metadata: {
-        name,
-        namespace,
-        labels,
+      if (backendConfig?.iap) {
+        rawSpec.iap = backendConfig.iap;
+      }
+      if (backendConfig?.securityPolicy) {
+        rawSpec.securityPolicy = {
+          name: backendConfig.securityPolicy,
+        };
+      }
+      return rawSpec;
+    });
+    const config = new k8s.apiextensions.CustomResource(
+      `${resourcePrefix}backend-config`,
+      {
+        apiVersion: 'cloud.google.com/v1',
+        kind: 'BackendConfig',
+        metadata: {
+          name,
+          namespace,
+          labels,
+        },
+        spec,
       },
-      spec,
-    },
-    { provider },
-  );
-  annotations['cloud.google.com/backend-config'] = config.metadata.name.apply(
-    (name) => `{"default": "${name}"}`,
-  );
+      { provider },
+    );
+    annotations['cloud.google.com/backend-config'] = config.metadata.name.apply(
+      (name) => `{"default": "${name}"}`,
+    );
+  }
 
   const ports =
     servicePorts.length > 0
