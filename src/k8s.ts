@@ -10,7 +10,7 @@ import {
 } from '@pulumi/pulumi';
 import { type Resource } from '@pulumi/pulumi/resource';
 
-import { defaultSpotWeight } from './constants';
+import { defaultSpotWeight, sanitizedForwardedForHeader } from './constants';
 import {
   type AutocertCertificate,
   configureAutocertAnnotations,
@@ -551,60 +551,59 @@ export const createAutoscaledExposedApplication = ({
       ] = 'true';
     }
   }
-  if (enableCdn || serviceTimeout || backendConfig) {
-    const rawSpec: Record<string, unknown> = {};
-    if (enableCdn) {
-      rawSpec.cdn = {
-        enabled: true,
-        cachePolicy: {
-          includeHost: true,
-          includeProtocol: true,
-          includeQueryString: true,
-        },
+  const rawSpec: Record<string, unknown> = {};
+  if (enableCdn) {
+    rawSpec.cdn = {
+      enabled: true,
+      cachePolicy: {
+        includeHost: true,
+        includeProtocol: true,
+        includeQueryString: true,
+      },
+    };
+  }
+  if (serviceTimeout) {
+    rawSpec.timeoutSec = serviceTimeout;
+  }
+  const spec = all([backendConfig]).apply(([backendConfig]) => {
+    if (backendConfig?.customResponseHeaders) {
+      rawSpec.customResponseHeaders = {
+        headers: backendConfig.customResponseHeaders,
       };
     }
-    if (serviceTimeout) {
-      rawSpec.timeoutSec = serviceTimeout;
+    rawSpec.customRequestHeaders = {
+      headers: [
+        sanitizedForwardedForHeader,
+        ...(backendConfig?.customRequestHeaders ?? []),
+      ],
+    };
+    if (backendConfig?.iap) {
+      rawSpec.iap = backendConfig.iap;
     }
-    const spec = all([backendConfig]).apply(([backendConfig]) => {
-      if (backendConfig?.customResponseHeaders) {
-        rawSpec.customResponseHeaders = {
-          headers: backendConfig.customResponseHeaders,
-        };
-      }
-      if (backendConfig?.customRequestHeaders) {
-        rawSpec.customRequestHeaders = {
-          headers: backendConfig.customRequestHeaders,
-        };
-      }
-      if (backendConfig?.iap) {
-        rawSpec.iap = backendConfig.iap;
-      }
-      if (backendConfig?.securityPolicy) {
-        rawSpec.securityPolicy = {
-          name: backendConfig.securityPolicy,
-        };
-      }
-      return rawSpec;
-    });
-    const config = new k8s.apiextensions.CustomResource(
-      `${resourcePrefix}backend-config`,
-      {
-        apiVersion: 'cloud.google.com/v1',
-        kind: 'BackendConfig',
-        metadata: {
-          name,
-          namespace,
-          labels,
-        },
-        spec,
+    if (backendConfig?.securityPolicy) {
+      rawSpec.securityPolicy = {
+        name: backendConfig.securityPolicy,
+      };
+    }
+    return rawSpec;
+  });
+  const config = new k8s.apiextensions.CustomResource(
+    `${resourcePrefix}backend-config`,
+    {
+      apiVersion: 'cloud.google.com/v1',
+      kind: 'BackendConfig',
+      metadata: {
+        name,
+        namespace,
+        labels,
       },
-      { provider },
-    );
-    annotations['cloud.google.com/backend-config'] = config.metadata.name.apply(
-      (name) => `{"default": "${name}"}`,
-    );
-  }
+      spec,
+    },
+    { provider },
+  );
+  annotations['cloud.google.com/backend-config'] = config.metadata.name.apply(
+    (name) => `{"default": "${name}"}`,
+  );
 
   const ports =
     servicePorts.length > 0
