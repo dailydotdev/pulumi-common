@@ -41,6 +41,7 @@ export interface ApplicationArgs {
   port?: number;
   readinessProbe?: Input<k8s.types.input.core.v1.Probe>;
   livenessProbe?: Input<k8s.types.input.core.v1.Probe>;
+  startupProbe?: Input<k8s.types.input.core.v1.Probe>;
   env?: Input<k8s.types.input.core.v1.EnvVar>[];
   createService?: boolean;
   isApi?: boolean;
@@ -62,6 +63,8 @@ export interface ApplicationArgs {
   backendConfig?: KubernetesApplicationArgs['backendConfig'];
   spot?: Spot;
   certificate?: AutocertCertificate;
+  strategy?: KubernetesApplicationArgs['strategy'];
+  minReadySeconds?: number;
 }
 
 export type ApplicationReturn = KubernetesApplicationReturn & {
