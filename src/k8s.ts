@@ -255,6 +255,7 @@ export interface KubernetesApplicationArgs {
   provider?: ProviderResource;
   isAdhocEnv?: boolean;
   strategy?: k8s.types.input.apps.v1.DeploymentStrategy;
+  minReadySeconds?: number;
   ports?: k8s.types.input.core.v1.ContainerPort[];
   servicePorts?: k8s.types.input.core.v1.ServicePort[];
   backendConfig?: Input<{
@@ -403,6 +404,7 @@ export const createAutoscaledApplication = ({
   provider,
   isAdhocEnv,
   strategy,
+  minReadySeconds,
   spot,
 }: KubernetesApplicationArgs): KubernetesApplicationReturn => {
   const labels: Input<Record<string, Input<string>>> = {
@@ -435,6 +437,7 @@ export const createAutoscaledApplication = ({
       spec: {
         selector: { matchLabels: labels },
         strategy,
+        minReadySeconds,
         template: {
           metadata: { labels: podLabels, annotations: podAnnotations },
           spec: {

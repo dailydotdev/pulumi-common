@@ -300,6 +300,7 @@ function deployApplication(
     dependsOn,
     readinessProbe,
     livenessProbe = readinessProbe,
+    startupProbe,
     env = [],
     createService,
     serviceType,
@@ -320,6 +321,8 @@ function deployApplication(
     backendConfig,
     spot: requestedSpot,
     certificate,
+    strategy,
+    minReadySeconds,
   }: ApplicationArgs,
 ): ApplicationReturn {
   const shouldCreateService = createService || servicePorts.length > 0;
@@ -363,6 +366,7 @@ function deployApplication(
         ports,
         readinessProbe,
         livenessProbe,
+        startupProbe,
         env: appEnv,
         resources: !isAdhocEnv
           ? { requests: requests ?? limits, limits: stripCpuFromLimits(limits) }
@@ -376,6 +380,8 @@ function deployApplication(
     ],
     deploymentDependsOn: dependsOn,
     shouldCreatePDB: isApi,
+    strategy,
+    minReadySeconds,
     provider,
     isAdhocEnv,
     ports,
