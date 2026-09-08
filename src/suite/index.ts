@@ -323,6 +323,7 @@ function deployApplication(
     certificate,
     strategy,
     minReadySeconds,
+    hpaBehavior,
   }: ApplicationArgs,
 ): ApplicationReturn {
   const shouldCreateService = createService || servicePorts.length > 0;
@@ -382,6 +383,7 @@ function deployApplication(
     shouldCreatePDB: isApi,
     strategy,
     minReadySeconds,
+    hpaBehavior,
     provider,
     isAdhocEnv,
     ports,

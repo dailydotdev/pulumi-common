@@ -256,6 +256,9 @@ export interface KubernetesApplicationArgs {
   isAdhocEnv?: boolean;
   strategy?: k8s.types.input.apps.v1.DeploymentStrategy;
   minReadySeconds?: number;
+  hpaBehavior?: Input<
+    k8s.types.input.autoscaling.v2.HorizontalPodAutoscalerBehavior
+  >;
   ports?: k8s.types.input.core.v1.ContainerPort[];
   servicePorts?: k8s.types.input.core.v1.ServicePort[];
   backendConfig?: Input<{
@@ -405,6 +408,7 @@ export const createAutoscaledApplication = ({
   isAdhocEnv,
   strategy,
   minReadySeconds,
+  hpaBehavior,
   spot,
 }: KubernetesApplicationArgs): KubernetesApplicationReturn => {
   const labels: Input<Record<string, Input<string>>> = {
@@ -475,6 +479,7 @@ export const createAutoscaledApplication = ({
           maxReplicas: maxReplicas,
           metrics,
           scaleTargetRef: targetRef,
+          behavior: hpaBehavior,
         },
       },
       { provider },

@@ -65,6 +65,7 @@ export interface ApplicationArgs {
   certificate?: AutocertCertificate;
   strategy?: KubernetesApplicationArgs['strategy'];
   minReadySeconds?: number;
+  hpaBehavior?: KubernetesApplicationArgs['hpaBehavior'];
 }
 
 export type ApplicationReturn = KubernetesApplicationReturn & {
