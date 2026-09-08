@@ -256,9 +256,7 @@ export interface KubernetesApplicationArgs {
   isAdhocEnv?: boolean;
   strategy?: k8s.types.input.apps.v1.DeploymentStrategy;
   minReadySeconds?: number;
-  hpaBehavior?: Input<
-    k8s.types.input.autoscaling.v2.HorizontalPodAutoscalerBehavior
-  >;
+  hpaBehavior?: Input<k8s.types.input.autoscaling.v2.HorizontalPodAutoscalerBehavior>;
   ports?: k8s.types.input.core.v1.ContainerPort[];
   servicePorts?: k8s.types.input.core.v1.ServicePort[];
   backendConfig?: Input<{
