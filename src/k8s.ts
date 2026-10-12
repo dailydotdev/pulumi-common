@@ -330,7 +330,11 @@ export const getSpotSettings = (
   const affinity: k8s.types.input.core.v1.Affinity = {};
 
   if (spot?.enabled && !isAdhocEnv) {
-    const spotWeight = Math.min(spot.weight ?? defaultSpotWeight, 1);
+    // Kubernetes accepts preferred scheduling weights in the 1-100 range.
+    const spotWeight = Math.min(
+      Math.max(spot.weight ?? defaultSpotWeight, 1),
+      100,
+    );
     tolerations.push(...defaultTolerations);
     affinity.nodeAffinity = spot.required
       ? {
