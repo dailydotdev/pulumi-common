@@ -18,7 +18,8 @@ import type {
 
 export interface MetricMemoryCPU {
   type: 'memory_cpu';
-  memory?: number;
+  /** Memory utilization target; defaults to `cpu`, `false` scales on CPU only. */
+  memory?: number | false;
   cpu: number;
 }
 
