@@ -182,9 +182,14 @@ export const getFullSubscriptionLabel = (label: string): string =>
 export const getPubSubUndeliveredMessagesMetric = (): string =>
   'pubsub.googleapis.com|subscription|num_undelivered_messages';
 
+/**
+ * Pass `false` as `memoryUtilization` to scale on CPU only. Memory per pod
+ * usually doesn't drop when replicas are added, so a memory target can add
+ * pods that never scale back down.
+ */
 export const getMemoryAndCpuMetrics = (
   cpuUtilization = 70,
-  memoryUtilization = cpuUtilization,
+  memoryUtilization: number | false = cpuUtilization,
 ): Input<Input<k8s.types.input.autoscaling.v2.MetricSpec>[]> => [
   {
     type: 'Resource',
@@ -196,16 +201,20 @@ export const getMemoryAndCpuMetrics = (
       },
     },
   },
-  {
-    type: 'Resource',
-    resource: {
-      name: 'memory',
-      target: {
-        type: 'Utilization',
-        averageUtilization: memoryUtilization,
-      },
-    },
-  },
+  ...(memoryUtilization === false
+    ? []
+    : [
+        {
+          type: 'Resource',
+          resource: {
+            name: 'memory',
+            target: {
+              type: 'Utilization',
+              averageUtilization: memoryUtilization,
+            },
+          },
+        },
+      ]),
 ];
 
 /**
