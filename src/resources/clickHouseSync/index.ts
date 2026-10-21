@@ -8,7 +8,7 @@ import { createHash } from 'crypto';
 import { stringify } from 'yaml';
 
 import { urnPrefix } from '../../constants';
-import { getSpotSettings } from '../../k8s';
+import { getSpotSettings, type Spot } from '../../k8s';
 import {
   commonLabels,
   configureResources,
@@ -33,7 +33,10 @@ export type ClickHouseSyncArgs = Partial<AdhocEnv> & {
   image?: Image;
   resources?: Resources;
   env?: Input<EnvVariable[]>;
+  /** Only adds the spot tolerations, with no affinity. Ignored when `spot` is set. */
   toleratesSpot?: boolean;
+  /** Spot tolerations and affinity (preferred, or required with `required: true`). */
+  spot?: Spot;
 };
 
 const defaults: {
@@ -72,10 +75,12 @@ export class ClickHouseSync extends ComponentResource {
       createHash('sha256').update(configString).digest('hex'),
     );
 
-    const { tolerations } = getSpotSettings(
-      { enabled: args?.toleratesSpot ?? true },
-      false,
-    );
+    const { tolerations, affinity } = args.spot
+      ? getSpotSettings(args.spot, isAdhocEnv)
+      : {
+          ...getSpotSettings({ enabled: args?.toleratesSpot ?? true }, false),
+          affinity: undefined,
+        };
 
     this.config = new k8s.core.v1.Secret(
       `${name}-clickhouse-sync-config`,
@@ -167,6 +172,7 @@ export class ClickHouseSync extends ComponentResource {
                 },
               ],
               tolerations: tolerations,
+              affinity: affinity,
             },
           },
         },
