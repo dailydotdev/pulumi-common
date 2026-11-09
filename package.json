@@ -40,7 +40,7 @@
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^17.2.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.54.0"
+    "typescript-eslint": "^8.69.0"
   },
   "packageManager": "pnpm@10.28.2",
   "volta": {
