@@ -11,6 +11,7 @@ import {
   configureResources,
   configureSidecarResources,
   defaultImage,
+  safeToEvictAnnotations,
 } from './common';
 
 export type K8sRedisArgs = CommonK8sRedisArgs & {
@@ -26,6 +27,8 @@ export class KubernetesRedis extends pulumi.ComponentResource {
     super(`${urnPrefix}:KubernetesRedis`, name, args, resourceOptions);
 
     const redisInstance = {
+      // Pod-level: this is the annotation the autoscaler actually reads.
+      podAnnotations: safeToEvictAnnotations(args.safeToEvict),
       disableCommands: args.disableCommands ?? [],
       persistence: configurePersistence({
         memorySizeGb: args.memorySizeGb,
@@ -56,10 +59,7 @@ export class KubernetesRedis extends pulumi.ComponentResource {
             configuration: args.configuration,
             memorySizeGb: args.memorySizeGb,
           }),
-          commonAnnotations: {
-            'cluster-autoscaler.kubernetes.io/safe-to-evict':
-              args?.safeToEvict?.valueOf() ?? 'false',
-          },
+          commonAnnotations: safeToEvictAnnotations(args.safeToEvict),
           commonLabels: {
             'app.kubernetes.io/instance': name,
           },

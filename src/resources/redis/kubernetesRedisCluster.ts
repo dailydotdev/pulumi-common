@@ -11,6 +11,7 @@ import {
   configureResources,
   configureSidecarResources,
   configureTerminationGracePeriod,
+  safeToEvictAnnotations,
 } from './common';
 
 export type K8sRedisClusterArgs = Omit<CommonK8sRedisArgs, 'authKey'> & {
@@ -50,10 +51,7 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
         namespace: args.namespace,
         values: {
           fullnameOverride: name,
-          commonAnnotations: {
-            'cluster-autoscaler.kubernetes.io/safe-to-evict':
-              args?.safeToEvict?.valueOf() ?? 'false',
-          },
+          commonAnnotations: safeToEvictAnnotations(args.safeToEvict),
           commonLabels: {
             'app.kubernetes.io/instance': name,
           },
@@ -82,6 +80,8 @@ export class KubernetesRedisCluster extends pulumi.ComponentResource {
             replicas: args.replicas,
           },
           redis: {
+            // Pod-level: this is the annotation the autoscaler actually reads.
+            podAnnotations: safeToEvictAnnotations(args.safeToEvict),
             resources: configureResources({
               isAdhocEnv: args.isAdhocEnv,
               memorySizeGb: args.memorySizeGb,
