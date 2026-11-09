@@ -16,6 +16,7 @@ import {
   configurePriorityClass,
   configureResources,
   configureSidecarResources,
+  safeToEvictAnnotations,
 } from './common';
 import {
   type K8sRedisSentinelMonitorArgs,
@@ -64,6 +65,8 @@ export class KubernetesSentinel extends ComponentResource {
     };
 
     const redisInstance = {
+      // Pod-level: this is the annotation the autoscaler actually reads.
+      podAnnotations: safeToEvictAnnotations(args.safeToEvict),
       disableCommands: args.disableCommands ?? [],
       persistence: configurePersistence({
         memorySizeGb: args.memorySizeGb,
@@ -101,10 +104,7 @@ export class KubernetesSentinel extends ComponentResource {
             maxMemoryPercentage: args.maxMemoryPercentage,
             memorySizeGb: args.memorySizeGb,
           }),
-          commonAnnotations: {
-            'cluster-autoscaler.kubernetes.io/safe-to-evict':
-              args?.safeToEvict?.valueOf() ?? 'false',
-          },
+          commonAnnotations: safeToEvictAnnotations(args.safeToEvict),
           commonLabels: commonLabels,
 
           metrics: all([args.metrics]).apply(([metrics]) => ({

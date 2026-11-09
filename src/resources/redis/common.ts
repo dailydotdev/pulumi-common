@@ -2,6 +2,7 @@ import {
   all,
   type Input,
   type Output,
+  output,
   type ResourceTransform,
 } from '@pulumi/pulumi';
 
@@ -225,3 +226,20 @@ export const configureTerminationGracePeriod = (
     return { props, opts: args.opts };
   };
 };
+
+/**
+ * The cluster-autoscaler eviction annotation, rendered as a string so the
+ * chart never emits a bare YAML boolean (annotation values must be strings).
+ *
+ * Pass it to the chart's pod-level `podAnnotations`, not only to
+ * `commonAnnotations`: the latter lands on the StatefulSet object, which the
+ * autoscaler never reads, so a StatefulSet-only annotation let it drain the
+ * nodes under the feed Redis clusters on 2026-11-08.
+ */
+export const safeToEvictAnnotations = (
+  safeToEvict?: Input<boolean>,
+): Record<string, Output<string>> => ({
+  'cluster-autoscaler.kubernetes.io/safe-to-evict': output(
+    safeToEvict ?? false,
+  ).apply((v) => (v ? 'true' : 'false')),
+});
